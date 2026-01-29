@@ -112,8 +112,13 @@
             </a>
         @endforeach --}}
     </nav>
-    <div class="sidebar-footer">
-        <img src="{{ asset('img/logo.png') }}" alt="PAD" class="sidebar-footer-logo">
-        <span>{{ config('app.name') }} · v1.0</span>
+    <div class="sidebar-logout-wrap">
+        <form method="post" action="{{ route('logout') }}" class="d-inline">
+            @csrf
+            <button type="submit" class="sidebar-logout-btn w-100 text-start" title="Se déconnecter">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Se déconnecter</span>
+            </button>
+        </form>
     </div>
 </aside>

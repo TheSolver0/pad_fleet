@@ -1,5 +1,4 @@
-{{-- Pied de page optionnel pour la zone contenu --}}
-<footer class="py-3 mt-auto border-top border-light text-muted small text-center d-flex flex-column flex-md-row align-items-center justify-content-center gap-2">
-    <img src="{{ asset('img/logo.png') }}" alt="PAD" class="footer-logo">
-    <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
+{{-- Pied de page fixé en bas du contenu (container) --}}
+<footer class="app-footer">
+    <span class="app-footer-text">Powered by <strong>LOMIE KENNY</strong> : +237 56 81 87 51</span>
 </footer>

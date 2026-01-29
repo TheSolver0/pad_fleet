@@ -10,7 +10,7 @@
         <div class="login-form-wrap">
             <div class="login-logo">
                 <img src="{{ asset('img/logo.png') }}" alt="PAD" class="login-logo-img">
-                <h1>Parking Admin</h1>
+                <h1>PAD Fleet</h1>
                 <p class="sub">Connexion à votre espace</p>
             </div>
 

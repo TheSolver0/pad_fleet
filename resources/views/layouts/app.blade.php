@@ -38,27 +38,53 @@
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
         body { margin: 0; background: var(--page-bg); color: var(--text-primary); }
         .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: var(--sidebar-width);
-            min-height: 100vh;
+            height: 100vh;
             background: var(--sidebar-bg);
             color: var(--sidebar-text);
             display: flex;
             flex-direction: column;
-            flex-shrink: 0;
             transition: width .25s ease;
             overflow: hidden;
             border-right: 1px solid var(--border);
+            z-index: 200;
         }
         .sidebar.collapsed { width: var(--sidebar-collapsed); }
         .sidebar.collapsed .sidebar-brand-text,
         .sidebar.collapsed .nav-link span,
         .sidebar.collapsed .nav-group-trigger span,
-        .sidebar.collapsed .sidebar-footer span { opacity: 0; width: 0; overflow: hidden; white-space: nowrap; }
+        .sidebar.collapsed .sidebar-footer span,
+        .sidebar.collapsed .sidebar-logout-btn span { opacity: 0; width: 0; overflow: hidden; white-space: nowrap; }
         .sidebar.collapsed .sidebar-footer-logo { flex-shrink: 0; }
         .sidebar.collapsed .sidebar-brand,
         .sidebar.collapsed .nav-link,
         .sidebar.collapsed .nav-group-trigger,
-        .sidebar.collapsed .sidebar-footer { justify-content: center; padding-left: 0; padding-right: 0; }
+        .sidebar.collapsed .sidebar-footer,
+        .sidebar.collapsed .sidebar-logout-wrap { justify-content: center; padding-left: 0; padding-right: 0; }
+        .sidebar-logout-wrap { padding: 1rem 0.75rem; border-top: 1px solid var(--border); flex-shrink: 0; }
+        .sidebar-logout-btn {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border-radius: 10px;
+            border: none;
+            background: rgba(201, 107, 107, 0.12);
+            color: #b55555;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            font-family: inherit;
+        }
+        .sidebar-logout-btn:hover { background: rgba(201, 107, 107, 0.2); color: #9e4545; }
+        .sidebar-logout-btn i { font-size: 1.15rem; min-width: 22px; text-align: center; flex-shrink: 0; }
         .sidebar.collapsed .nav-group-chevron { display: none; }
         .sidebar.collapsed .nav-group-collapse { display: none !important; }
         .sidebar.collapsed .nav-group { margin-bottom: 2px; }
@@ -147,7 +173,12 @@
         .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
         .sidebar-footer span { transition: opacity .2s; }
         .sidebar-footer-logo { height: 20px; width: auto; object-fit: contain; flex-shrink: 0; }
-        .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .main-content {
+            flex: 1; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; position: relative;
+            margin-left: var(--sidebar-width);
+            transition: margin-left .25s ease;
+        }
+        .sidebar.collapsed + .main-content { margin-left: var(--sidebar-collapsed); }
         .topbar {
             background: var(--card-bg);
             border-bottom: 1px solid var(--border);
@@ -225,7 +256,7 @@
         .lang-option.active { background: rgba(0,184,212,0.12); color: var(--pad-cyan); font-weight: 600; }
         .lang-option i { opacity: 0; }
         .lang-option.active i { opacity: 1; }
-        .content-inner { padding: 1.5rem; flex: 1; }
+        .content-inner { padding: 1.5rem; padding-bottom: 4rem; flex: 1; min-height: 0; overflow-y: auto; }
         .section-label { font-size: 0.8rem; font-weight: 600; color: var(--pad-blue); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
         @media (max-width: 992px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -272,7 +303,22 @@
         .modal-header { border-bottom: 1px solid var(--border); padding: 1rem 1.25rem; border-top-left-radius: 14px; border-top-right-radius: 14px; }
         .modal-footer { border-top: 1px solid var(--border); padding: 1rem 1.25rem; }
         .toast-pad { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-soft-hover); }
-        .footer-logo { height: 28px; width: auto; object-fit: contain; }
+        .app-footer {
+            position: fixed;
+            bottom: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--card-bg);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            z-index: 50;
+            transition: left 0.25s ease;
+        }
+        .sidebar.collapsed ~ main .app-footer { left: var(--sidebar-collapsed); }
+        .app-footer-text { display: inline-block; }
     </style>
     @livewireStyles
 </head>
@@ -284,9 +330,7 @@
         <div class="content-inner">
             @isset($slot){{ $slot }}@else @yield('content') @endisset
         </div>
-        @hasSection('footer')
-            @yield('footer')
-        @endif
+        @include('layouts.components.navigation.footer')
     </main>
 </div>
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;" id="toast-container"></div>
