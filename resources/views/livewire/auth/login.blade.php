@@ -1,9 +1,7 @@
 <div class="login-block">
-    <div class="login-left">
+    <div class="login-left" style="background-image: url('{{ asset('img/banner.png') }}');">
+        <div class="login-left-overlay"></div>
         <div class="login-left-content">
-            <div class="icon-wrap">
-                <img src="{{ asset('img/logo.png') }}" alt="Port Autonome de Douala" class="login-left-logo">
-            </div>
             <h2>Gestion de flotte</h2>
             <p>Port Autonome de Douala</p>
         </div>
