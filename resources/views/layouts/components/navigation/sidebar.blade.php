@@ -26,27 +26,27 @@
                 ['route' => 'organisation.services.index', 'label' => 'Services', 'icon' => 'bi bi-briefcase'],
             ],
         ],
-        // [
-        //     'id' => 'personnel',
-        //     'label' => 'Personnel',
-        //     'icon' => 'bi bi-people-fill',
-        //     'routes' => ['drivers.index', 'demandeurs.index'],
-        //     'items' => [
-        //         ['route' => 'drivers.index', 'label' => 'Chauffeurs', 'icon' => 'bi bi-person-badge-fill'],
-        //         ['route' => 'demandeurs.index', 'label' => 'Demandeurs', 'icon' => 'bi bi-person-lines-fill'],
-        //     ],
-        // ],
-        // [
-        //     'id' => 'risques',
-        //     'label' => 'Risques & maintenance',
-        //     'icon' => 'bi bi-wrench-adjustable',
-        //     'routes' => ['sinistres.index', 'garages.index', 'repairs.index'],
-        //     'items' => [
-        //         ['route' => 'sinistres.index', 'label' => 'Sinistres', 'icon' => 'bi bi-exclamation-triangle-fill'],
-        //         ['route' => 'garages.index', 'label' => 'Garages', 'icon' => 'bi bi-gear-wide-connected'],
-        //         ['route' => 'repairs.index', 'label' => 'Réparations', 'icon' => 'bi bi-wrench-adjustable'],
-        //     ],
-        // ],
+        [
+            'id' => 'personnel',
+            'label' => 'Personnel',
+            'icon' => 'bi bi-people-fill',
+            'routes' => ['drivers.index', 'demandeurs.index'],
+            'items' => [
+                ['route' => 'drivers.index', 'label' => 'Chauffeurs', 'icon' => 'bi bi-person-badge-fill'],
+                ['route' => 'demandeurs.index', 'label' => 'Demandeurs', 'icon' => 'bi bi-person-lines-fill'],
+            ],
+        ],
+        [
+            'id' => 'risques',
+            'label' => 'Risques & maintenance',
+            'icon' => 'bi bi-wrench-adjustable',
+            'routes' => ['sinistres.index', 'garages.index', 'repairs.index'],
+            'items' => [
+                ['route' => 'sinistres.index', 'label' => 'Sinistres', 'icon' => 'bi bi-exclamation-triangle-fill'],
+                ['route' => 'garages.index', 'label' => 'Garages', 'icon' => 'bi bi-gear-wide-connected'],
+                ['route' => 'repairs.index', 'label' => 'Réparations', 'icon' => 'bi bi-wrench-adjustable'],
+            ],
+        ],
         [
             'id' => 'admin',
             'label' => 'Administration',
@@ -59,11 +59,11 @@
         ],
     ];
 
-    // $singles = [
-    //     ['route' => 'missions.index', 'label' => 'Planning', 'icon' => 'bi bi-calendar3-week'],
-    //     ['route' => 'assurances.index', 'label' => 'Assurances', 'icon' => 'bi bi-shield-check'],
-    //     ['route' => 'reports.index', 'label' => 'Rapports', 'icon' => 'bi bi-graph-up-arrow'],
-    // ];
+    $singles = [
+        ['route' => 'missions.index', 'label' => 'Planning', 'icon' => 'bi bi-calendar3-week'],
+        ['route' => 'assurances.index', 'label' => 'Assurances', 'icon' => 'bi bi-shield-check'],
+        ['route' => 'reports.index', 'label' => 'Rapports', 'icon' => 'bi bi-graph-up-arrow'],
+    ];
 @endphp
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
