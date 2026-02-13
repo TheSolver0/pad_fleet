@@ -102,6 +102,9 @@ class Vehicle extends Model
 
     /** Années pour amortissement linéaire valeur vénale */
     private const VENAL_DEPRECIATION_YEARS = 8;
+    
+    /** Années avant mise à la réforme (généralement 10-15 ans) */
+    private const REFORM_YEARS = 12;
 
     protected $fillable = [
         'registration', 'vehicle_model_id', 'category', 'purchase_date', 'purchase_price',
@@ -172,6 +175,11 @@ class Vehicle extends Model
         return $this->hasMany(Repair::class);
     }
 
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(VehicleSchedule::class);
+    }
+
     /** Calcule la valeur vénale par amortissement linéaire (sur 8 ans par défaut). */
     public function computeVenalValue(): ?float
     {
@@ -193,6 +201,36 @@ class Vehicle extends Model
         if ($value !== null) {
             $this->update(['venal_value' => $value]);
         }
+    }
+
+    /** Calcule l'année de mise à la réforme recommandée. */
+    public function getReformYearAttribute(): ?int
+    {
+        if (!$this->purchase_date) {
+            return null;
+        }
+        return (int) $this->purchase_date->format('Y') + self::REFORM_YEARS;
+    }
+
+    /** Vérifie si le véhicule est proche de la réforme (dans 2 ans). */
+    public function isNearReform(): bool
+    {
+        if (!$this->purchase_date) {
+            return false;
+        }
+        $reformDate = $this->purchase_date->copy()->addYears(self::REFORM_YEARS);
+        $warningDate = $reformDate->copy()->subYears(2);
+        return now()->greaterThanOrEqualTo($warningDate);
+    }
+
+    /** Vérifie si le véhicule devrait être en réforme. */
+    public function shouldBeReformed(): bool
+    {
+        if (!$this->purchase_date) {
+            return false;
+        }
+        $reformDate = $this->purchase_date->copy()->addYears(self::REFORM_YEARS);
+        return now()->greaterThanOrEqualTo($reformDate);
     }
 
     public function getStatusLabelAttribute(): string

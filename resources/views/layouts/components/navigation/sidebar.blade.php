@@ -40,11 +40,27 @@
             'id' => 'risques',
             'label' => 'Risques & maintenance',
             'icon' => 'bi bi-wrench-adjustable',
-            'routes' => ['sinistres.index', 'garages.index', 'repairs.index'],
+            'routes' => ['sinistres.index', 'garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index'],
             'items' => [
                 ['route' => 'sinistres.index', 'label' => 'Sinistres', 'icon' => 'bi bi-exclamation-triangle-fill'],
                 ['route' => 'garages.index', 'label' => 'Garages', 'icon' => 'bi bi-gear-wide-connected'],
                 ['route' => 'repairs.index', 'label' => 'Réparations', 'icon' => 'bi bi-wrench-adjustable'],
+                ['route' => 'repairs.stock-usage', 'label' => 'Utilisation stock', 'icon' => 'bi bi-box-arrow-down'],
+                ['route' => 'repairs.documents', 'label' => 'Documents', 'icon' => 'bi bi-file-earmark-text'],
+                ['route' => 'mechanics.index', 'label' => 'Mécaniciens', 'icon' => 'bi bi-people-fill'],
+            ],
+        ],
+        [
+            'id' => 'stocks',
+            'label' => 'Gestion des stocks',
+            'icon' => 'bi bi-box-seam',
+            'routes' => ['stock.index', 'stock.articles', 'stock.categories', 'stock.entries', 'suppliers.index'],
+            'items' => [
+                ['route' => 'stock.index', 'label' => 'Stocks', 'icon' => 'bi bi-layers-fill'],
+                ['route' => 'stock.articles', 'label' => 'Articles', 'icon' => 'bi bi-box'],
+                ['route' => 'stock.categories', 'label' => 'Catégories', 'icon' => 'bi bi-tags-fill'],
+                ['route' => 'stock.entries', 'label' => 'Entrées', 'icon' => 'bi bi-box-arrow-in-down'],
+                ['route' => 'suppliers.index', 'label' => 'Fournisseurs', 'icon' => 'bi bi-building'],
             ],
         ],
         [
@@ -61,8 +77,10 @@
 
     $singles = [
         ['route' => 'missions.index', 'label' => 'Planning', 'icon' => 'bi bi-calendar3-week'],
+        ['route' => 'schedules.index', 'label' => 'Déplacements', 'icon' => 'bi bi-route'],
         ['route' => 'assurances.index', 'label' => 'Assurances', 'icon' => 'bi bi-shield-check'],
         ['route' => 'reports.index', 'label' => 'Rapports', 'icon' => 'bi bi-graph-up-arrow'],
+        ['route' => 'reports.vehicle-consumption', 'label' => 'Consommation', 'icon' => 'bi bi-fuel-pump'],
     ];
 @endphp
 <aside class="sidebar" id="sidebar">
@@ -106,11 +124,11 @@
             </div>
         @endforeach
 
-        {{-- @foreach ($singles as $item)
+        @foreach ($singles as $item)
             <a class="nav-link {{ $current === $item['route'] ? 'active' : '' }}" href="{{ route($item['route']) }}">
                 <i class="bi {{ $item['icon'] }}"></i><span>{{ $item['label'] }}</span>
             </a>
-        @endforeach --}}
+        @endforeach
     </nav>
     <div class="sidebar-logout-wrap">
         <form method="post" action="{{ route('logout') }}" class="d-inline">

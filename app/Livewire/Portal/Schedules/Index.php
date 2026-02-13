@@ -1,0 +1,208 @@
+<?php
+
+namespace App\Livewire\Portal\Schedules;
+
+use App\Models\Driver;
+use App\Models\Vehicle;
+use App\Models\VehicleSchedule;
+use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+class Index extends Component
+{
+    use WithPagination;
+
+    public string $search = '';
+    public string $status_filter = '';
+    public string $date_filter = '';
+    public bool $showFormModal = false;
+    public bool $showDeleteModal = false;
+    public ?int $editingId = null;
+
+    public ?int $vehicle_id = null;
+    public ?int $driver_id = null;
+    public string $title = '';
+    public string $description = '';
+    public string $destination = '';
+    public string $departure_location = '';
+    public string $start_datetime = '';
+    public string $end_datetime = '';
+    public string $estimated_distance = '';
+    public string $purpose = '';
+    public string $status = VehicleSchedule::STATUS_PLANNED;
+    public string $mileage_start = '';
+    public string $mileage_end = '';
+    public string $fuel_consumed = '';
+    public string $notes = '';
+
+    protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'date_filter' => ['except' => '']];
+
+    protected function rules(): array
+    {
+        return [
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'title' => 'required|string|max:200',
+            'description' => 'nullable|string',
+            'destination' => 'required|string|max:200',
+            'departure_location' => 'nullable|string|max:200',
+            'start_datetime' => 'required|date',
+            'end_datetime' => 'required|date|after:start_datetime',
+            'estimated_distance' => 'nullable|numeric|min:0',
+            'purpose' => 'nullable|string|max:100',
+            'status' => 'required|in:planned,in_progress,completed,cancelled',
+            'mileage_start' => 'nullable|integer|min:0',
+            'mileage_end' => 'nullable|integer|min:0',
+            'fuel_consumed' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ];
+    }
+
+    public function openCreate(): void
+    {
+        $this->resetForm();
+        $this->editingId = null;
+        $this->showFormModal = true;
+    }
+
+    public function openEdit(int $id): void
+    {
+        $schedule = VehicleSchedule::findOrFail($id);
+        $this->editingId = $schedule->id;
+        $this->vehicle_id = $schedule->vehicle_id;
+        $this->driver_id = $schedule->driver_id;
+        $this->title = $schedule->title;
+        $this->description = $schedule->description ?? '';
+        $this->destination = $schedule->destination;
+        $this->departure_location = $schedule->departure_location ?? '';
+        $this->start_datetime = $schedule->start_datetime->format('Y-m-d\TH:i');
+        $this->end_datetime = $schedule->end_datetime->format('Y-m-d\TH:i');
+        $this->estimated_distance = $schedule->estimated_distance ? number_format($schedule->estimated_distance, 2, ',', ' ') : '';
+        $this->purpose = $schedule->purpose ?? '';
+        $this->status = $schedule->status;
+        $this->mileage_start = $schedule->mileage_start ? (string) $schedule->mileage_start : '';
+        $this->mileage_end = $schedule->mileage_end ? (string) $schedule->mileage_end : '';
+        $this->fuel_consumed = $schedule->fuel_consumed ? number_format($schedule->fuel_consumed, 2, ',', ' ') : '';
+        $this->notes = $schedule->notes ?? '';
+        $this->showFormModal = true;
+    }
+
+    public function saveSchedule(): void
+    {
+        $this->estimated_distance = str_replace([' ', ','], ['', '.'], $this->estimated_distance);
+        $this->fuel_consumed = str_replace([' ', ','], ['', '.'], $this->fuel_consumed);
+        
+        $this->validate();
+        
+        $data = [
+            'vehicle_id' => $this->vehicle_id,
+            'driver_id' => $this->driver_id ?: null,
+            'title' => $this->title,
+            'description' => $this->description ?: null,
+            'destination' => $this->destination,
+            'departure_location' => $this->departure_location ?: null,
+            'start_datetime' => $this->start_datetime,
+            'end_datetime' => $this->end_datetime,
+            'estimated_distance' => $this->estimated_distance ?: null,
+            'purpose' => $this->purpose ?: null,
+            'status' => $this->status,
+            'mileage_start' => $this->mileage_start ?: null,
+            'mileage_end' => $this->mileage_end ?: null,
+            'fuel_consumed' => $this->fuel_consumed ?: null,
+            'notes' => $this->notes ?: null,
+        ];
+
+        if ($this->editingId) {
+            VehicleSchedule::findOrFail($this->editingId)->update($data);
+            $this->dispatch('notify', type: 'success', message: 'Planning mis à jour.');
+        } else {
+            VehicleSchedule::create($data);
+            $this->dispatch('notify', type: 'success', message: 'Planning créé.');
+        }
+
+        $this->showFormModal = false;
+        $this->resetForm();
+    }
+
+    public function confirmDelete(int $id): void
+    {
+        $this->editingId = $id;
+        $this->showDeleteModal = true;
+    }
+
+    public function deleteSchedule(): void
+    {
+        if ($this->editingId) {
+            VehicleSchedule::findOrFail($this->editingId)->delete();
+            $this->dispatch('notify', type: 'success', message: 'Planning supprimé.');
+        }
+        $this->showDeleteModal = false;
+        $this->editingId = null;
+    }
+
+    public function closeFormModal(): void
+    {
+        $this->showFormModal = false;
+        $this->resetForm();
+    }
+
+    private function resetForm(): void
+    {
+        $this->vehicle_id = null;
+        $this->driver_id = null;
+        $this->title = '';
+        $this->description = '';
+        $this->destination = '';
+        $this->departure_location = '';
+        $this->start_datetime = '';
+        $this->end_datetime = '';
+        $this->estimated_distance = '';
+        $this->purpose = '';
+        $this->status = VehicleSchedule::STATUS_PLANNED;
+        $this->mileage_start = '';
+        $this->mileage_end = '';
+        $this->fuel_consumed = '';
+        $this->notes = '';
+        $this->resetValidation();
+    }
+
+    public function render(): View
+    {
+        $query = VehicleSchedule::with(['vehicle', 'driver']);
+
+        if ($this->search !== '') {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->search . '%')
+                    ->orWhere('destination', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('vehicle', function ($q2) {
+                        $q2->where('registration', 'like', '%' . $this->search . '%');
+                    })
+                    ->orWhereHas('driver', function ($q3) {
+                        $q3->where('first_name', 'like', '%' . $this->search . '%')
+                            ->orWhere('last_name', 'like', '%' . $this->search . '%');
+                    });
+            });
+        }
+
+        if ($this->status_filter !== '') {
+            $query->where('status', $this->status_filter);
+        }
+
+        if ($this->date_filter !== '') {
+            $date = Carbon::parse($this->date_filter);
+            $query->whereDate('start_datetime', $date);
+        }
+
+        $schedules = $query->orderBy('start_datetime', 'desc')->paginate(20);
+        $vehicles = Vehicle::where('status', '!=', 'out_of_service')->orderBy('registration')->get(['id', 'registration']);
+        $drivers = Driver::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+
+        return view('livewire.portal.schedules.index', [
+            'schedules' => $schedules,
+            'vehicles' => $vehicles,
+            'drivers' => $drivers,
+        ]);
+    }
+}
