@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Auth\Login;
+use App\Livewire\Portal\Drivers\Index as DriversIndex;
+use App\Livewire\Portal\Drivers\DrivingLicenses;
 use App\Livewire\Portal\Dashboard\Index as DashboardIndex;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -34,7 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/organisation/directions', \App\Livewire\Portal\Organisation\Directions\Index::class)->name('organisation.directions.index');
     Route::get('/organisation/departments', \App\Livewire\Portal\Organisation\Departments\Index::class)->name('organisation.departments.index');
     Route::get('/organisation/services', \App\Livewire\Portal\Organisation\OrgServices\Index::class)->name('organisation.services.index');
-    Route::get('/drivers', \App\Livewire\Portal\Drivers\Index::class)->name('drivers.index');
+    // Personnel
+    Route::get('/drivers', DriversIndex::class)->name('drivers.index');
+    Route::get('/drivers/driving-licenses', DrivingLicenses::class)->name('drivers.driving-licenses');
+    Route::get('/assureurs', \App\Livewire\Portal\Assureurs\Index::class)->name('assureurs.index');
     Route::get('/planning', \App\Livewire\Portal\Missions\Index::class)->name('missions.index');
     Route::get('/schedules', \App\Livewire\Portal\Schedules\Index::class)->name('schedules.index');
     Route::get('/demandeurs', \App\Livewire\Portal\Demandeurs\Index::class)->name('demandeurs.index');

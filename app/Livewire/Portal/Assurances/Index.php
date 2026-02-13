@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Portal\Assurances;
 
+use App\Models\Assureur;
 use App\Models\InsuranceContractGlobal;
 use App\Models\InsuranceContractGlobalDocument;
 use Illuminate\Contracts\View\View;
@@ -22,6 +23,7 @@ class Index extends Component
     public ?int $docContractId = null;
 
     public string $name = '';
+    public ?int $assureur_id = null;
     public string $insurer = '';
     public string $lot_description = '';
     public string $start_date = '';
@@ -38,7 +40,8 @@ class Index extends Component
     {
         return [
             'name' => 'required|string|max:255',
-            'insurer' => 'required|string|max:255',
+            'assureur_id' => 'required|exists:assureurs,id',
+            'insurer' => 'nullable|string|max:255',
             'lot_description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -59,6 +62,7 @@ class Index extends Component
         $c = InsuranceContractGlobal::findOrFail($id);
         $this->editingId = $c->id;
         $this->name = $c->name;
+        $this->assureur_id = $c->assureur_id;
         $this->insurer = $c->insurer;
         $this->lot_description = $c->lot_description ?? '';
         $this->start_date = $c->start_date->format('Y-m-d');
@@ -74,6 +78,7 @@ class Index extends Component
         $this->validate();
         $data = [
             'name' => $this->name,
+            'assureur_id' => $this->assureur_id,
             'insurer' => $this->insurer,
             'lot_description' => $this->lot_description ?: null,
             'start_date' => $this->start_date,
@@ -130,9 +135,47 @@ class Index extends Component
         $this->editingId = null;
     }
 
+    public function closeFormModal(): void
+    {
+        $this->showFormModal = false;
+        $this->showDeleteModal = false;
+        $this->resetForm();
+    }
+
+    public function closeDocModal(): void
+    {
+        $this->showDocModal = false;
+        $this->docContractId = null;
+        $this->contract_file = null;
+        $this->contract_original_name = '';
+    }
+
+    public function uploadDocument(): void
+    {
+        $this->validate([
+            'contract_file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        if ($this->docContractId && $this->contract_file) {
+            $path = $this->contract_file->store('insurance-documents', 'public');
+            
+            InsuranceContractGlobalDocument::create([
+                'insurance_contract_global_id' => $this->docContractId,
+                'file_path' => $path,
+                'original_name' => $this->contract_file->getClientOriginalName(),
+                'file_size' => $this->contract_file->getSize(),
+                'mime_type' => $this->contract_file->getMimeType(),
+            ]);
+
+            $this->dispatch('notify', type: 'success', message: 'Document uploadé.');
+            $this->contract_file = null;
+        }
+    }
+
     private function resetForm(): void
     {
         $this->name = '';
+        $this->assureur_id = null;
         $this->insurer = '';
         $this->lot_description = '';
         $this->start_date = '';
@@ -151,12 +194,14 @@ class Index extends Component
                     ->orWhere('insurer', 'like', '%' . $this->search . '%');
             });
         }
-        $contracts = $query->orderBy('end_date', 'desc')->paginate(12);
+        $contracts = $query->with('assureur')->orderBy('end_date', 'desc')->paginate(12);
         $docContract = $this->docContractId ? InsuranceContractGlobal::with('documents')->find($this->docContractId) : null;
+        $assureurs = Assureur::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return view('livewire.portal.assurances.index', [
             'contracts' => $contracts,
             'docContract' => $docContract,
-        ])->layout('layouts.app', ['title' => 'Assurances globales']);
+            'assureurs' => $assureurs,
+        ]);
     }
 }

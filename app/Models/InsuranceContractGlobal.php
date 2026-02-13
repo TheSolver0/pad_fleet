@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InsuranceContractGlobal extends Model
@@ -13,7 +14,7 @@ class InsuranceContractGlobal extends Model
     protected $table = 'insurance_contract_globals';
 
     protected $fillable = [
-        'name', 'insurer', 'lot_description', 'start_date', 'end_date',
+        'name', 'assureur_id', 'insurer', 'lot_description', 'start_date', 'end_date',
         'optional_prime', 'notes',
     ];
 
@@ -34,6 +35,11 @@ class InsuranceContractGlobal extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(InsuranceContractGlobalDocument::class, 'insurance_contract_global_id');
+    }
+
+    public function assureur(): BelongsTo
+    {
+        return $this->belongsTo(Assureur::class);
     }
 
     public function isExpiringSoon(int $days = 30): bool

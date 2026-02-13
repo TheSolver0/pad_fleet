@@ -30,19 +30,30 @@
             'id' => 'personnel',
             'label' => 'Personnel',
             'icon' => 'bi bi-people-fill',
-            'routes' => ['drivers.index', 'demandeurs.index'],
+            'routes' => ['drivers.index', 'drivers.driving-licenses', 'demandeurs.index'],
             'items' => [
                 ['route' => 'drivers.index', 'label' => 'Chauffeurs', 'icon' => 'bi bi-person-badge-fill'],
+                ['route' => 'drivers.driving-licenses', 'label' => 'Permis de conduire', 'icon' => 'bi bi-card-text'],
                 ['route' => 'demandeurs.index', 'label' => 'Demandeurs', 'icon' => 'bi bi-person-lines-fill'],
             ],
         ],
         [
-            'id' => 'risques',
-            'label' => 'Risques & maintenance',
-            'icon' => 'bi bi-wrench-adjustable',
-            'routes' => ['sinistres.index', 'garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index'],
+            'id' => 'assurances',
+            'label' => 'Assurances & Risques',
+            'icon' => 'bi bi-shield-check',
+            'routes' => ['assureurs.index', 'assurances.index', 'sinistres.index'],
             'items' => [
+                ['route' => 'assureurs.index', 'label' => 'Assureurs', 'icon' => 'bi bi-building'],
+                ['route' => 'assurances.index', 'label' => 'Assurances', 'icon' => 'bi bi-shield-check'],
                 ['route' => 'sinistres.index', 'label' => 'Sinistres', 'icon' => 'bi bi-exclamation-triangle-fill'],
+            ],
+        ],
+        [
+            'id' => 'maintenance',
+            'label' => 'Maintenance & Réparations',
+            'icon' => 'bi bi-wrench-adjustable',
+            'routes' => ['garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index'],
+            'items' => [
                 ['route' => 'garages.index', 'label' => 'Garages', 'icon' => 'bi bi-gear-wide-connected'],
                 ['route' => 'repairs.index', 'label' => 'Réparations', 'icon' => 'bi bi-wrench-adjustable'],
                 ['route' => 'repairs.stock-usage', 'label' => 'Utilisation stock', 'icon' => 'bi bi-box-arrow-down'],
@@ -78,7 +89,6 @@
     $singles = [
         ['route' => 'missions.index', 'label' => 'Planning', 'icon' => 'bi bi-calendar3-week'],
         ['route' => 'schedules.index', 'label' => 'Déplacements', 'icon' => 'bi bi-route'],
-        ['route' => 'assurances.index', 'label' => 'Assurances', 'icon' => 'bi bi-shield-check'],
         ['route' => 'reports.index', 'label' => 'Rapports', 'icon' => 'bi bi-graph-up-arrow'],
         ['route' => 'reports.vehicle-consumption', 'label' => 'Consommation', 'icon' => 'bi bi-fuel-pump'],
     ];

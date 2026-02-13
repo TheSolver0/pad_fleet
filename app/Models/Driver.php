@@ -11,16 +11,12 @@ class Driver extends Model
 {
     use Auditable;
 
-    protected $fillable = [
-        'user_id', 'matricule', 'first_name', 'last_name', 'phone', 'email',
-        'license_number', 'license_category', 'license_expiry', 'service_id',
-        'is_available', 'notes',
+    protected $guarded = [
     ];
 
     protected function casts(): array
     {
         return [
-            'license_expiry' => 'date',
             'is_available' => 'boolean',
         ];
     }
@@ -35,9 +31,29 @@ class Driver extends Model
         return $this->belongsTo(Service::class);
     }
 
+    public function direction(): BelongsTo
+    {
+        return $this->belongsTo(Direction::class);
+    }
+
+    public function resourcePerson(): BelongsTo
+    {
+        return $this->belongsTo(Person::class, 'resource_person_id');
+    }
+
     public function missions(): HasMany
     {
         return $this->hasMany(Mission::class);
+    }
+
+    public function drivingLicenses(): HasMany
+    {
+        return $this->hasMany(DrivingLicense::class);
+    }
+
+    public function activeDrivingLicense(): HasMany
+    {
+        return $this->drivingLicenses()->where('is_active', true);
     }
 
     public function getFullNameAttribute(): string
@@ -50,9 +66,14 @@ class Driver extends Model
         return $this->missions()->count();
     }
 
-    public function isLicenseExpired(): bool
+    public function getActiveLicensesCountAttribute(): int
     {
-        return $this->license_expiry && $this->license_expiry->isPast();
+        return $this->activeDrivingLicense()->count();
+    }
+
+    public function getExpiredLicensesCountAttribute(): int
+    {
+        return $this->drivingLicenses()->where('expiry_date', '<', now())->count();
     }
 
     protected static function booted(): void

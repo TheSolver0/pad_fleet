@@ -19,11 +19,16 @@ class DatabaseSeeder extends Seeder
         $this->call(DirectionsDepartmentsServicesSeeder::class);
         $this->call(ServicesSeeder::class);
         $this->call(BrandsAndVehicleModelsSeeder::class);
+        $this->call(AssureursSeeder::class);
+        
+        $this->call(DriverSeeder::class);
+        $this->call(DrivingLicenseSeeder::class);
+        $this->call(PersonSeeder::class);
 
         $user = User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
-                'name' => 'Abdou Diouf',
+                'name' => 'Kenny LOMIE',
                 'matricule' => '12345',
                 'gender' => 'M',
                 'phone' => '+237 6XX XXX XXX',

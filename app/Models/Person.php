@@ -10,8 +10,8 @@ class Person extends Model
 {
     protected $table = 'persons';
 
-    protected $fillable = ['name', 'email', 'phone', 'direction_id', 'department_id', 'org_service_id', 'notes'];
-
+    protected $guarded = []; 
+    
     public function direction(): BelongsTo
     {
         return $this->belongsTo(Direction::class);
@@ -29,7 +29,15 @@ class Person extends Model
 
     public function assignedVehicles(): HasMany
     {
-        return $this->hasMany(Vehicle::class, 'assigned_person_id');
+        return $this->hasMany(Vehicle::class);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        if ($this->first_name && $this->last_name) {
+            return trim($this->first_name . ' ' . $this->last_name);
+        }
+        return $this->name ?? '';
     }
 
     /** Libellé Direction / Département / Service pour affichage */
