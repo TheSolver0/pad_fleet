@@ -31,7 +31,7 @@
                         <th>Catégorie</th>
                         <th>Marque/Modèle</th>
                         <th>Stock total</th>
-                        <th>Prix achat</th>
+                        <th>Prix unitaire</th>
                         <th>Stock min</th>
                         <th>Statut</th>
                         <th class="text-end">Actions</th>
@@ -69,7 +69,7 @@
                             <td class="fw-semibold">{{ $article->total_stock }}</td>
                             <td class="text-end">
                                 @if($article->purchase_price)
-                                    {{ number_format($article->purchase_price, 2, ',', ' ') }} €
+                                    {{ number_format($article->purchase_price, 2, ',', ' ') }} FCFA
                                 @endif
                             </td>
                             <td>{{ $article->min_stock_level }}</td>
@@ -186,22 +186,15 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="mb-3">
-                                    <label class="form-label">Prix d'achat</label>
+                                    <label class="form-label">Prix unitaire (FCFA)</label>
                                     <input type="text" class="form-control" wire:model="purchase_price" placeholder="0,00">
                                     @error('purchase_price') <span class="text-danger small">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="mb-3">
-                                    <label class="form-label">Prix de vente</label>
-                                    <input type="text" class="form-control" wire:model="selling_price" placeholder="0,00">
-                                    @error('selling_price') <span class="text-danger small">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">Stock minimum *</label>
-                                    <input type="number" class="form-control" wire:model="min_stock_level" min="0" required>
+                                    <label class="form-label">Stock minimum</label>
+                                    <input type="number" class="form-control" wire:model="min_stock_level" placeholder="1">
                                     @error('min_stock_level') <span class="text-danger small">{{ $message }}</span> @enderror
                                 </div>
                             </div>

@@ -29,18 +29,62 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Demandeur <span class="text-danger">*</span></label>
-                            <select class="form-select @error('demandeur_id') is-invalid @enderror" wire:model="demandeur_id">
-                                <option value="">—</option>
-                                @foreach($demandeurs as $d)
-                                    <option value="{{ $d->id }}">{{ $d->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('demandeur_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label">Demandeur <span class="text-danger">*</span></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" wire:model.live="create_demandeur" id="create_demandeur">
+                                    <label class="form-check-label" for="create_demandeur">
+                                        Nouveau demandeur
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            @if(!$create_demandeur)
+                                <select class="form-select @error('demandeur_id') is-invalid @enderror" wire:model="demandeur_id">
+                                    <option value="">—</option>
+                                    @foreach($demandeurs as $d)
+                                        <option value="{{ $d->id }}">{{ $d->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('demandeur_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            @else
+                                <div class="border rounded p-2 bg-light">
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <label class="form-label small">Nom complet <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-sm" wire:model="new_demandeur_name" placeholder="ex: Jean Dupont">
+                                            @error('new_demandeur_name') <span class="invalid-feedback small">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Téléphone</label>
+                                            <input type="tel" class="form-control form-control-sm" wire:model="new_demandeur_phone" placeholder="ex: 6XX XXX XXX">
+                                            @error('new_demandeur_phone') <span class="invalid-feedback small">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Email</label>
+                                            <input type="email" class="form-control form-control-sm" wire:model="new_demandeur_email" placeholder="ex: email@exemple.com">
+                                            @error('new_demandeur_email') <span class="invalid-feedback small">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Service/Direction</label>
+                                            <input type="text" class="form-control form-control-sm" wire:model="new_demandeur_service" placeholder="ex: Direction Générale">
+                                            @error('new_demandeur_service') <span class="invalid-feedback small">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Destination</label>
-                            <input type="text" class="form-control" wire:model="destination">
+                            <div class="input-group">
+                                <input type="text" class="form-control" wire:model="destination" placeholder="ex: Bureau principal">
+                                <select class="form-select" style="max-width: 200px;" wire:model="city_id">
+                                    <option value="">Ville...</option>
+                                    @foreach($cities as $city)
+                                        <option value="{{ $city->id }}">{{ $city->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Début <span class="text-danger">*</span></label>

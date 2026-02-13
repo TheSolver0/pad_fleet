@@ -338,7 +338,7 @@ class ArticleSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ],
             [
-                'reference' => 'HAINS 3/4''DR',
+                'reference' => 'HAINS 3/4 DR',
                 'name' => "Compresseur ou pistolet à boullons pneumatique",
                 'description' => "Compresseur ou pistolet à boullons pneumatique",
                 'article_category_id' => 4,
@@ -1231,7 +1231,7 @@ class ArticleSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ],
             [
-                'reference' => 'BENCH VICE 8''',
+                'reference' => 'BENCH VICE 8',
                 'name' => "Etau TOTAL",
                 'description' => "Etau TOTAL",
                 'article_category_id' => 15,

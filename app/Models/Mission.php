@@ -18,7 +18,7 @@ class Mission extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        'vehicle_id', 'driver_id', 'demandeur_id', 'date_start', 'date_end',
+        'vehicle_id', 'driver_id', 'demandeur_id', 'city_id', 'date_start', 'date_end',
         'km_departure', 'km_return', 'distance_km', 'destination', 'status',
         'approved_by', 'approved_at', 'notes',
     ];
@@ -48,6 +48,11 @@ class Mission extends Model
     public function demandeur(): BelongsTo
     {
         return $this->belongsTo(Demandeur::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function approvedByUser(): BelongsTo

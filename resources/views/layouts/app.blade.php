@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     @stack('styles')
+    <script src="{{ asset('js/pdf-generator.js') }}" defer></script>
     <style>
         :root {
             --pad-blue: #1a5490;

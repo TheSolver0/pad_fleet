@@ -30,6 +30,12 @@ class Index extends Component
     public string $started_at = '';
     public string $completed_at = '';
     public string $notes = '';
+    
+    // Nouvelle rubrique pour les réparations
+    public string $repair_type = '';
+    public string $priority = 'medium';
+    public string $estimated_duration = '';
+    public ?int $mechanic_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'type_filter' => ['except' => '']];
 
@@ -44,6 +50,10 @@ class Index extends Component
             'started_at' => 'nullable|date',
             'completed_at' => 'nullable|date',
             'notes' => 'nullable|string',
+            'repair_type' => 'required|string|max:100',
+            'priority' => 'required|in:low,medium,high,urgent',
+            'estimated_duration' => 'nullable|string|max:50',
+            'mechanic_id' => 'nullable|exists:mechanics,id',
         ];
         return $rules;
     }
@@ -83,6 +93,10 @@ class Index extends Component
             'started_at' => $this->started_at ?: null,
             'completed_at' => $this->completed_at ?: null,
             'notes' => $this->notes ?: null,
+            'repair_type' => $this->repair_type,
+            'priority' => $this->priority,
+            'estimated_duration' => $this->estimated_duration ?: null,
+            'mechanic_id' => $this->mechanic_id ?: null,
         ];
         if ($this->type === Repair::TYPE_EXTERNAL && $this->transfer_sheet) {
             $vehicle = Vehicle::findOrFail($this->vehicle_id);
@@ -127,6 +141,10 @@ class Index extends Component
         $this->started_at = '';
         $this->completed_at = '';
         $this->notes = '';
+        $this->repair_type = '';
+        $this->priority = 'medium';
+        $this->estimated_duration = '';
+        $this->mechanic_id = null;
         $this->resetValidation();
     }
 
@@ -142,11 +160,13 @@ class Index extends Component
         $repairs = $query->orderByDesc('created_at')->paginate(12);
         $vehicles = Vehicle::orderBy('registration')->get(['id', 'registration']);
         $garages = Garage::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $mechanics = \App\Models\Mechanic::where('is_active', true)->orderBy('last_name')->get(['id', 'first_name', 'last_name', 'specialization']);
 
         return view('livewire.portal.repairs.index', [
             'repairs' => $repairs,
             'vehicles' => $vehicles,
             'garages' => $garages,
+            'mechanics' => $mechanics,
         ])->layout('layouts.app', ['title' => 'Réparations']);
     }
 }

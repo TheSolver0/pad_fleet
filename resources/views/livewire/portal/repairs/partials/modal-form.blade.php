@@ -47,6 +47,38 @@
                             <textarea class="form-control @error('description') is-invalid @enderror" rows="3" wire:model="description"></textarea>
                             @error('description') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
+                        
+                        <!-- Nouvelle rubrique pour les réparations -->
+                        <div class="col-md-4">
+                            <label class="form-label">Type de réparation <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control @error('repair_type') is-invalid @enderror" wire:model="repair_type" placeholder="ex: Freinage, Moteur, Carrosserie">
+                            @error('repair_type') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Priorité</label>
+                            <select class="form-select @error('priority') is-invalid @enderror" wire:model="priority">
+                                <option value="low">Basse</option>
+                                <option value="medium">Moyenne</option>
+                                <option value="high">Haute</option>
+                                <option value="urgent">Urgente</option>
+                            </select>
+                            @error('priority') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Durée estimée</label>
+                            <input type="text" class="form-control @error('estimated_duration') is-invalid @enderror" wire:model="estimated_duration" placeholder="ex: 2 jours, 4 heures">
+                            @error('estimated_duration') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mécanicien assigné</label>
+                            <select class="form-select @error('mechanic_id') is-invalid @enderror" wire:model="mechanic_id">
+                                <option value="">Non assigné</option>
+                                @foreach($mechanics as $m)
+                                    <option value="{{ $m->id }}">{{ $m->last_name }} {{ $m->first_name }} ({{ $m->specialization }})</option>
+                                @endforeach
+                            </select>
+                            @error('mechanic_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
                         <div class="col-md-4">
                             <label class="form-label">Coût (F)</label>
                             <input type="text" class="form-control" wire:model="cost" placeholder="ex. 1 234 567,89" inputmode="decimal">

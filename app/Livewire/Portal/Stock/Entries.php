@@ -32,6 +32,14 @@ class Entries extends Component
     public string $supplier_phone = '';
     public string $supplier_email = '';
     public bool $create_supplier = false;
+    
+    // Champs pour créer un nouvel article
+    public bool $create_article = false;
+    public string $new_article_name = '';
+    public string $new_article_reference = '';
+    public ?int $new_article_category_id = null;
+    public string $new_article_brand = '';
+    public string $new_article_unit = 'unité';
 
     // Champs pour bon de commande
     public ?int $purchase_order_id = null;
@@ -46,7 +54,7 @@ class Entries extends Component
         ];
 
         if ($this->entry_type === 'direct') {
-            $rules['article_id'] = 'required|exists:articles,id';
+            $rules['article_id'] = 'required_without:create_article|exists:articles,id';
             $rules['quantity'] = 'required|integer|min:1';
             $rules['reference'] = 'required|string|max:100';
             $rules['supplier_id'] = 'nullable|exists:suppliers,id';
@@ -55,6 +63,14 @@ class Entries extends Component
                 $rules['supplier_name'] = 'required|string|max:200';
                 $rules['supplier_phone'] = 'nullable|string|max:30';
                 $rules['supplier_email'] = 'nullable|email|max:150';
+            }
+            
+            if ($this->create_article) {
+                $rules['new_article_name'] = 'required|string|max:200';
+                $rules['new_article_reference'] = 'nullable|string|max:100';
+                $rules['new_article_category_id'] = 'required|exists:article_categories,id';
+                $rules['new_article_brand'] = 'nullable|string|max:100';
+                $rules['new_article_unit'] = 'required|string|max:50';
             }
         } else {
             $rules['purchase_order_id'] = 'required|exists:purchase_orders,id';
@@ -94,6 +110,19 @@ class Entries extends Component
                 'is_active' => true,
             ]);
             $this->supplier_id = $supplier->id;
+        }
+
+        // Créer l'article si nécessaire
+        if ($this->create_article && $this->new_article_name) {
+            $article = Article::create([
+                'reference' => $this->new_article_reference ?: 'AUTO-' . time(),
+                'name' => $this->new_article_name,
+                'article_category_id' => $this->new_article_category_id,
+                'brand' => $this->new_article_brand,
+                'unit' => $this->new_article_unit,
+                'is_active' => true,
+            ]);
+            $this->article_id = $article->id;
         }
 
         // Créer le mouvement de stock
@@ -168,6 +197,16 @@ class Entries extends Component
         }
     }
 
+    public function updatedCreateArticle(): void
+    {
+        if (!$this->create_article) {
+            $this->reset(['new_article_name', 'new_article_reference', 'new_article_category_id', 'new_article_brand', 'new_article_unit']);
+            $this->article_id = null;
+        } else {
+            $this->article_id = null; // Désélectionner l'article existant
+        }
+    }
+
     private function resetForm(): void
     {
         $this->article_id = null;
@@ -179,6 +218,12 @@ class Entries extends Component
         $this->supplier_phone = '';
         $this->supplier_email = '';
         $this->create_supplier = false;
+        $this->create_article = false;
+        $this->new_article_name = '';
+        $this->new_article_reference = '';
+        $this->new_article_category_id = null;
+        $this->new_article_brand = '';
+        $this->new_article_unit = 'unité';
         $this->purchase_order_id = null;
         $this->resetValidation();
     }
@@ -216,10 +261,14 @@ class Entries extends Component
             ->orderBy('created_at', 'desc')
             ->get(['id', 'reference', 'supplier_id']);
 
+        $categories = \App\Models\ArticleCategory::orderBy('name')
+            ->get(['id', 'name']);
+
         return view('livewire.portal.stock.entries', [
             'entries' => $entries,
             'articles' => $articles,
             'suppliers' => $suppliers,
+            'categories' => $categories,
             'purchaseOrders' => $purchaseOrders,
         ]);
     }

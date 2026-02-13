@@ -114,14 +114,14 @@ class ArticleCategorySeeder extends Seeder
             ],
             [
                 'name' => 'Équipement de garage',
-                'code' => 'EG',
+                'code' => 'EGa',
                 'description' => 'Étaux, chariots, équipements divers',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'name' => 'Peinture et finition',
-                'code' => 'PF',
+                'code' => 'PFi',
                 'description' => 'Pistolets à peinture, mastics, aérosols',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),

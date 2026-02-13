@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('articles', function (Blueprint $table) {
             $table->id();
-            $table->string('reference')->unique();
+            $table->string('reference')->nullable();
             $table->string('name');
             $table->text('description')->nullable();
             $table->foreignId('article_category_id')->constrained()->onDelete('restrict');

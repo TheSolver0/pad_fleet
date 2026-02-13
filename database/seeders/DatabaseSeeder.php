@@ -24,6 +24,12 @@ class DatabaseSeeder extends Seeder
         $this->call(DriverSeeder::class);
         $this->call(DrivingLicenseSeeder::class);
         $this->call(PersonSeeder::class);
+        
+        // Stock and mechanics
+        $this->call(ArticleCategorySeeder::class);
+        $this->call(ArticleSeeder::class);
+        $this->call(MechanicSeeder::class);
+        $this->call(CitySeeder::class);
 
         $user = User::updateOrCreate(
             ['email' => 'test@example.com'],

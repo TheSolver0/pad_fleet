@@ -1,6 +1,13 @@
 @php
     $current = request()->route()?->getName() ?? 'dashboard';
 
+    $singles = [
+        ['route' => 'missions.index', 'label' => 'Planning', 'icon' => 'bi bi-calendar3-week'],
+        ['route' => 'schedules.index', 'label' => 'Déplacements', 'icon' => 'bi bi-route'],
+        ['route' => 'reports.index', 'label' => 'Rapports', 'icon' => 'bi bi-graph-up-arrow'],
+        ['route' => 'reports.vehicle-consumption', 'label' => 'Consommation', 'icon' => 'bi bi-fuel-pump'],
+    ];
+
     $groups = [
         [
             'id' => 'flotte',
@@ -52,8 +59,10 @@
             'id' => 'maintenance',
             'label' => 'Maintenance & Réparations',
             'icon' => 'bi bi-wrench-adjustable',
-            'routes' => ['garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index'],
+            'routes' => ['garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index', 'diagnostics.index', 'work-orders.index'],
             'items' => [
+                ['route' => 'diagnostics.index', 'label' => 'Diagnostics', 'icon' => 'bi bi-clipboard-check'],
+                ['route' => 'work-orders.index', 'label' => 'Bons de travail', 'icon' => 'bi bi-hammer'],
                 ['route' => 'garages.index', 'label' => 'Garages', 'icon' => 'bi bi-gear-wide-connected'],
                 ['route' => 'repairs.index', 'label' => 'Réparations', 'icon' => 'bi bi-wrench-adjustable'],
                 ['route' => 'repairs.stock-usage', 'label' => 'Utilisation stock', 'icon' => 'bi bi-box-arrow-down'],
@@ -84,13 +93,6 @@
             ],
             'can' => 'audits',
         ],
-    ];
-
-    $singles = [
-        ['route' => 'missions.index', 'label' => 'Planning', 'icon' => 'bi bi-calendar3-week'],
-        ['route' => 'schedules.index', 'label' => 'Déplacements', 'icon' => 'bi bi-route'],
-        ['route' => 'reports.index', 'label' => 'Rapports', 'icon' => 'bi bi-graph-up-arrow'],
-        ['route' => 'reports.vehicle-consumption', 'label' => 'Consommation', 'icon' => 'bi bi-fuel-pump'],
     ];
 @endphp
 <aside class="sidebar" id="sidebar">

@@ -35,6 +35,14 @@ class Index extends Component
     public string $notes = '';
     public bool $apply_approve = false;
     public bool $approve_reject = true; // true = approve, false = reject
+    
+    // Champs pour créer un nouveau demandeur
+    public bool $create_demandeur = false;
+    public string $new_demandeur_name = '';
+    public string $new_demandeur_phone = '';
+    public string $new_demandeur_email = '';
+    public string $new_demandeur_service = '';
+    public ?int $city_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'view_mode' => ['except' => 'list']];
 
@@ -50,13 +58,18 @@ class Index extends Component
         return [
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'nullable|exists:drivers,id',
-            'demandeur_id' => 'required|exists:demandeurs,id',
+            'demandeur_id' => 'required_without:create_demandeur|exists:demandeurs,id',
             'date_start' => 'required|date',
             'date_end' => 'required|date|after_or_equal:date_start',
             'km_departure' => 'nullable|integer|min:0',
             'km_return' => 'nullable|integer|min:0',
             'destination' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
+            'new_demandeur_name' => 'required_if:create_demandeur,true|string|max:200',
+            'new_demandeur_phone' => 'nullable|string|max:30',
+            'new_demandeur_email' => 'nullable|email|max:150',
+            'new_demandeur_service' => 'nullable|string|max:200',
+            'city_id' => 'nullable|exists:cities,id',
         ];
     }
 
@@ -86,6 +99,19 @@ class Index extends Component
     public function saveMission(): void
     {
         $this->validate();
+        
+        // Créer le demandeur si nécessaire
+        if ($this->create_demandeur && $this->new_demandeur_name) {
+            $demandeur = Demandeur::create([
+                'name' => $this->new_demandeur_name,
+                'phone' => $this->new_demandeur_phone ?: null,
+                'email' => $this->new_demandeur_email ?: null,
+                'service' => $this->new_demandeur_service ?: null,
+                'is_active' => true,
+            ]);
+            $this->demandeur_id = $demandeur->id;
+        }
+        
         $data = [
             'vehicle_id' => $this->vehicle_id,
             'driver_id' => $this->driver_id,
@@ -95,6 +121,7 @@ class Index extends Component
             'km_departure' => $this->km_departure ? (int) $this->km_departure : null,
             'km_return' => $this->km_return ? (int) $this->km_return : null,
             'destination' => $this->destination ?: null,
+            'city_id' => $this->city_id ?: null,
             'notes' => $this->notes ?: null,
         ];
         if ($this->editingId) {
@@ -172,7 +199,23 @@ class Index extends Component
         $this->km_return = '';
         $this->destination = '';
         $this->notes = '';
+        $this->create_demandeur = false;
+        $this->new_demandeur_name = '';
+        $this->new_demandeur_phone = '';
+        $this->new_demandeur_email = '';
+        $this->new_demandeur_service = '';
+        $this->city_id = null;
         $this->resetValidation();
+    }
+
+    public function updatedCreateDemandeur(): void
+    {
+        if (!$this->create_demandeur) {
+            $this->reset(['new_demandeur_name', 'new_demandeur_phone', 'new_demandeur_email', 'new_demandeur_service']);
+            $this->demandeur_id = null;
+        } else {
+            $this->demandeur_id = null; // Désélectionner le demandeur existant
+        }
     }
 
     public function getCalendarMissionsProperty(): \Illuminate\Support\Collection
@@ -211,12 +254,14 @@ class Index extends Component
             ->orderBy('last_name')
             ->get(['id', 'first_name', 'last_name']);
         $demandeurs = Demandeur::orderBy('name')->get(['id', 'name']);
+        $cities = \App\Models\City::active()->orderBy('name')->get(['id', 'name', 'region']);
 
         return view('livewire.portal.missions.index', [
             'missions' => $missions,
             'vehicles' => $vehicles,
             'drivers' => $drivers,
             'demandeurs' => $demandeurs,
+            'cities' => $cities,
         ])->layout('layouts.app', ['title' => 'Planning missions']);
     }
 }

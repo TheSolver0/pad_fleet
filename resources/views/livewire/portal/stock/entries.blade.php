@@ -114,14 +114,72 @@
                             <div class="row">
                                 <div class="col-md-8">
                                     <div class="mb-3">
-                                        <label class="form-label">Article *</label>
-                                        <select class="form-select" wire:model="article_id">
-                                            <option value="">Sélectionner...</option>
-                                            @foreach($articles as $article)
-                                                <option value="{{ $article->id }}">{{ $article->name }} ({{ $article->reference }})</option>
-                                            @endforeach
-                                        </select>
-                                        @error('article_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label">Article *</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" wire:model.live="create_article" id="create_article">
+                                                <label class="form-check-label" for="create_article">
+                                                    Créer un nouvel article
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        @if(!$create_article)
+                                            <select class="form-select" wire:model="article_id">
+                                                <option value="">Sélectionner...</option>
+                                                @foreach($articles as $article)
+                                                    <option value="{{ $article->id }}">{{ $article->name }} ({{ $article->reference }})</option>
+                                                @endforeach
+                                            </select>
+                                            @error('article_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                                        @else
+                                            <div class="border rounded p-3 bg-light">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Nom de l'article *</label>
+                                                            <input type="text" class="form-control form-control-sm" wire:model="new_article_name" placeholder="ex: Plaquette frein AV">
+                                                            @error('new_article_name') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Référence</label>
+                                                            <input type="text" class="form-control form-control-sm" wire:model="new_article_reference" placeholder="ex: PF-001">
+                                                            @error('new_article_reference') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Catégorie *</label>
+                                                            <select class="form-select form-select-sm" wire:model="new_article_category_id">
+                                                                <option value="">Sélectionner...</option>
+                                                                @foreach($categories as $category)
+                                                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            @error('new_article_category_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Marque</label>
+                                                            <input type="text" class="form-control form-control-sm" wire:model="new_article_brand" placeholder="ex: BOSCH">
+                                                            @error('new_article_brand') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Unité</label>
+                                                            <input type="text" class="form-control form-control-sm" wire:model="new_article_unit" placeholder="ex: unité">
+                                                            @error('new_article_unit') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="col-md-4">

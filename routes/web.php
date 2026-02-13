@@ -50,6 +50,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/repairs/stock-usage', \App\Livewire\Portal\Repairs\StockUsage::class)->name('repairs.stock-usage');
     Route::get('/repairs/documents', \App\Livewire\Portal\Repairs\Documents::class)->name('repairs.documents');
     Route::get('/mechanics', \App\Livewire\Portal\Mechanics\Index::class)->name('mechanics.index');
+    Route::get('/diagnostics', \App\Livewire\Portal\Diagnostics\Index::class)->name('diagnostics.index');
+    Route::get('/work-orders/create', [App\Http\Controllers\WorkOrderController::class, 'create'])->name('work-orders.create');
+    Route::get('/work-orders', \App\Livewire\Portal\WorkOrders\Index::class)->name('work-orders.index');
+    Route::get('/api/diagnostics/{id}/pdf', [App\Http\Controllers\API\DiagnosticPDFController::class, 'generatePDF']);
+    Route::get('/api/work-orders/{id}/pdf', [App\Http\Controllers\API\WorkOrderPDFController::class, 'generatePDF']);
     Route::get('/stock', \App\Livewire\Portal\Stock\Index::class)->name('stock.index');
     Route::get('/stock/articles', \App\Livewire\Portal\Stock\Articles::class)->name('stock.articles');
     Route::get('/stock/categories', \App\Livewire\Portal\Stock\Categories::class)->name('stock.categories');
