@@ -3,6 +3,7 @@
 namespace App\Livewire\Portal\Dashboard;
 
 use App\Models\AuditLog;
+use App\Models\Driver;
 use App\Models\InsuranceContractGlobal;
 use App\Models\Mission;
 use App\Models\Repair;
@@ -309,15 +310,61 @@ class Index extends Component
             ->whereYear('date_end', now()->year)
             ->sum('distance_km');
 
-        $repairCostThisMonth = Repair::whereMonth('completed_at', now()->month)
+        $baseRepairs = Repair::whereMonth('completed_at', now()->month)
             ->whereYear('completed_at', now()->year)
-            ->whereNotNull('completed_at')
-            ->sum('cost');
+            ->whereNotNull('completed_at');
+
+        $repairCostInternal = (clone $baseRepairs)->where('type', Repair::TYPE_INTERNAL)->sum('cost');
+        $repairCostExternal = (clone $baseRepairs)->where('type', Repair::TYPE_EXTERNAL)->sum('cost');
 
         return [
             'km_this_month' => (int) $totalMissionsKm,
-            'repair_cost_this_month' => round((float) $repairCostThisMonth, 0),
+            'repair_cost_this_month' => round((float) $repairCostInternal + (float) $repairCostExternal, 0),
+            'repair_cost_internal_this_month' => round((float) $repairCostInternal, 0),
+            'repair_cost_external_this_month' => round((float) $repairCostExternal, 0),
         ];
+    }
+
+    /** Statistiques de voyage par chauffeur (missions + km) */
+    public function getDriverTripStats(): \Illuminate\Support\Collection
+    {
+        return Mission::query()
+            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
+            ->whereNotNull('driver_id')
+            ->selectRaw('driver_id, count(*) as missions_count, coalesce(sum(distance_km), 0) as total_km')
+            ->groupBy('driver_id')
+            ->orderByDesc('missions_count')
+            ->limit(10)
+            ->get()
+            ->map(function ($row) {
+                $driver = Driver::find($row->driver_id);
+                return [
+                    'driver_name' => $driver ? $driver->full_name : '—',
+                    'missions_count' => (int) $row->missions_count,
+                    'total_km' => (int) $row->total_km,
+                ];
+            });
+    }
+
+    /** Statistiques par véhicule (missions + km) */
+    public function getVehicleTripStats(): \Illuminate\Support\Collection
+    {
+        return Mission::query()
+            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
+            ->whereNotNull('vehicle_id')
+            ->selectRaw('vehicle_id, count(*) as missions_count, coalesce(sum(distance_km), 0) as total_km')
+            ->groupBy('vehicle_id')
+            ->orderByDesc('missions_count')
+            ->limit(10)
+            ->get()
+            ->map(function ($row) {
+                $vehicle = Vehicle::find($row->vehicle_id);
+                return [
+                    'vehicle_registration' => $vehicle ? $vehicle->registration : '—',
+                    'missions_count' => (int) $row->missions_count,
+                    'total_km' => (int) $row->total_km,
+                ];
+            });
     }
 
     public function render()
@@ -332,6 +379,8 @@ class Index extends Component
         $chartMissions = $this->getMissionsTrendChart();
         $chartSinistres = $this->getSinistresTrendChart();
         $chartRepairs = $this->getRepairsCostTrendChart();
+        $driverTripStats = $this->getDriverTripStats();
+        $vehicleTripStats = $this->getVehicleTripStats();
 
         return view('livewire.portal.dashboard.index', [
             'kpis' => $kpis,
@@ -343,6 +392,8 @@ class Index extends Component
             'chartMissions' => $chartMissions,
             'chartSinistres' => $chartSinistres,
             'chartRepairs' => $chartRepairs,
+            'driverTripStats' => $driverTripStats,
+            'vehicleTripStats' => $vehicleTripStats,
         ])->layout('layouts.app', ['title' => 'Tableau de bord']);
     }
 }

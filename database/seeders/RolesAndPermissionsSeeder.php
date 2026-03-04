@@ -38,8 +38,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'demande-pieces',
             'comptes-rendus',
             'photos-avant-apres',
-            // Magasinier
+            // Magasinier / Stock — entrées et sorties séparées (celui qui fait les entrées n'est pas nécessairement celui qui fait les sorties)
             'gestion-stock',
+            'entrees-stock',
+            'sorties-stock',
             'reception-commandes',
             'sorties-pieces',
             'inventaires',
@@ -122,9 +124,11 @@ class RolesAndPermissionsSeeder extends Seeder
             $permissions['photos-avant-apres'],
         ]);
 
-        // Magasinier
+        // Magasinier — peut avoir uniquement entrées, uniquement sorties, ou les deux selon affectation
         $roles['Magasinier']->syncPermissions([
             $permissions['gestion-stock'],
+            $permissions['entrees-stock'],
+            $permissions['sorties-stock'],
             $permissions['reception-commandes'],
             $permissions['sorties-pieces'],
             $permissions['inventaires'],

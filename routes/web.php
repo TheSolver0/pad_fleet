@@ -29,6 +29,7 @@ Route::post('/logout', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardIndex::class)->name('dashboard');
     Route::get('/vehicles', \App\Livewire\Portal\Vehicles\Index::class)->name('vehicles.index');
+    Route::get('/carte-grises', \App\Livewire\Portal\CarteGrises\Index::class)->name('carte-grises.index');
     Route::get('/brands', \App\Livewire\Portal\Brands\Index::class)->name('brands.index');
     Route::get('/vehicle-models', \App\Livewire\Portal\VehicleModels\Index::class)->name('vehicle-models.index');
     Route::get('/personnes', \App\Livewire\Portal\Personnes\Index::class)->name('personnes.index');
@@ -47,7 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/sinistres', \App\Livewire\Portal\Sinistres\Index::class)->name('sinistres.index');
     Route::get('/garages', \App\Livewire\Portal\Garages\Index::class)->name('garages.index');
     Route::get('/repairs', \App\Livewire\Portal\Repairs\Index::class)->name('repairs.index');
-    Route::get('/repairs/stock-usage', \App\Livewire\Portal\Repairs\StockUsage::class)->name('repairs.stock-usage');
+    Route::get('/repairs/stock-usage', \App\Livewire\Portal\Repairs\StockUsage::class)->name('repairs.stock-usage')->middleware('permission:sorties-stock');
     Route::get('/repairs/documents', \App\Livewire\Portal\Repairs\Documents::class)->name('repairs.documents');
     Route::get('/mechanics', \App\Livewire\Portal\Mechanics\Index::class)->name('mechanics.index');
     Route::get('/diagnostics', \App\Livewire\Portal\Diagnostics\Index::class)->name('diagnostics.index');
@@ -55,11 +56,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/work-orders', \App\Livewire\Portal\WorkOrders\Index::class)->name('work-orders.index');
     Route::get('/api/diagnostics/{id}/pdf', [App\Http\Controllers\API\DiagnosticPDFController::class, 'generatePDF']);
     Route::get('/api/work-orders/{id}/pdf', [App\Http\Controllers\API\WorkOrderPDFController::class, 'generatePDF']);
-    Route::get('/stock', \App\Livewire\Portal\Stock\Index::class)->name('stock.index');
-    Route::get('/stock/articles', \App\Livewire\Portal\Stock\Articles::class)->name('stock.articles');
-    Route::get('/stock/categories', \App\Livewire\Portal\Stock\Categories::class)->name('stock.categories');
-    Route::get('/stock/entries', \App\Livewire\Portal\Stock\Entries::class)->name('stock.entries');
+    Route::get('/stock', \App\Livewire\Portal\Stock\Index::class)->name('stock.index')->middleware('permission:gestion-stock');
+    Route::get('/stock/articles', \App\Livewire\Portal\Stock\Articles::class)->name('stock.articles')->middleware('permission:gestion-stock');
+    Route::get('/stock/categories', \App\Livewire\Portal\Stock\Categories::class)->name('stock.categories')->middleware('permission:gestion-stock');
+    Route::get('/stock/entries', \App\Livewire\Portal\Stock\Entries::class)->name('stock.entries')->middleware('permission:entrees-stock');
     Route::get('/suppliers', \App\Livewire\Portal\Suppliers\Index::class)->name('suppliers.index');
+    Route::get('/prestataire-evaluations', \App\Livewire\Portal\PrestataireEvaluations\Index::class)->name('prestataire-evaluations.index');
     Route::get('/reports', \App\Livewire\Portal\Reports\Index::class)->name('reports.index');
     Route::get('/reports/vehicle-consumption', \App\Livewire\Portal\Reports\VehicleConsumption::class)->name('reports.vehicle-consumption');
     Route::get('/audit', \App\Livewire\Portal\Audit\Index::class)->name('audit.index')->middleware('permission:audits');

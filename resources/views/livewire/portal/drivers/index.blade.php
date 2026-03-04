@@ -263,6 +263,23 @@
                             </div>
                         </div>
 
+                        <div class="row border-top pt-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Pièce d'identité — Recto</label>
+                                    <input type="file" class="form-control" wire:model="id_document_recto_file" accept="image/*,.pdf">
+                                    @error('id_document_recto_file') <span class="text-danger small">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Pièce d'identité — Verso</label>
+                                    <input type="file" class="form-control" wire:model="id_document_verso_file" accept="image/*,.pdf">
+                                    @error('id_document_verso_file') <span class="text-danger small">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Permis de conduire -->
                         <div class="border-top pt-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">

@@ -30,6 +30,11 @@ class Index extends Component
     public string $started_at = '';
     public string $completed_at = '';
     public string $notes = '';
+    // Prestation : délai donné au prestataire (date limite) + évaluation
+    public string $expected_completed_at = '';
+    public string $quality_rating = '';
+    public string $delay_rating = '';
+    public string $evaluation_comment = '';
     
     // Nouvelle rubrique pour les réparations
     public string $repair_type = '';
@@ -54,6 +59,10 @@ class Index extends Component
             'priority' => 'required|in:low,medium,high,urgent',
             'estimated_duration' => 'nullable|string|max:50',
             'mechanic_id' => 'nullable|exists:mechanics,id',
+            'expected_completed_at' => 'nullable|date',
+            'quality_rating' => 'nullable|numeric|min:1|max:5',
+            'delay_rating' => 'nullable|numeric|min:1|max:5',
+            'evaluation_comment' => 'nullable|string|max:2000',
         ];
         return $rules;
     }
@@ -76,7 +85,15 @@ class Index extends Component
         $this->cost = $r->cost ? format_money($r->cost, 2) : '';
         $this->started_at = $r->started_at?->format('Y-m-d') ?? '';
         $this->completed_at = $r->completed_at?->format('Y-m-d') ?? '';
+        $this->expected_completed_at = $r->expected_completed_at?->format('Y-m-d') ?? '';
+        $this->quality_rating = $r->quality_rating !== null ? (string) $r->quality_rating : '';
+        $this->delay_rating = $r->delay_rating !== null ? (string) $r->delay_rating : '';
+        $this->evaluation_comment = $r->evaluation_comment ?? '';
         $this->notes = $r->notes ?? '';
+        $this->repair_type = $r->repair_type ?? '';
+        $this->priority = $r->priority ?? 'medium';
+        $this->estimated_duration = $r->estimated_duration ?? '';
+        $this->mechanic_id = $r->mechanic_id;
         $this->showFormModal = true;
     }
 
@@ -92,12 +109,19 @@ class Index extends Component
             'cost' => $this->cost ?: null,
             'started_at' => $this->started_at ?: null,
             'completed_at' => $this->completed_at ?: null,
+            'expected_completed_at' => $this->expected_completed_at ?: null,
             'notes' => $this->notes ?: null,
             'repair_type' => $this->repair_type,
             'priority' => $this->priority,
             'estimated_duration' => $this->estimated_duration ?: null,
             'mechanic_id' => $this->mechanic_id ?: null,
         ];
+        if ($this->quality_rating !== '' || $this->delay_rating !== '' || $this->evaluation_comment !== '') {
+            $data['quality_rating'] = $this->quality_rating !== '' ? (float) $this->quality_rating : null;
+            $data['delay_rating'] = $this->delay_rating !== '' ? (float) $this->delay_rating : null;
+            $data['evaluation_comment'] = $this->evaluation_comment ?: null;
+            $data['evaluated_at'] = now();
+        }
         if ($this->type === Repair::TYPE_EXTERNAL && $this->transfer_sheet) {
             $vehicle = Vehicle::findOrFail($this->vehicle_id);
             $path = $this->transfer_sheet->store('repairs/transfer-sheets', 'public');
@@ -141,6 +165,10 @@ class Index extends Component
         $this->started_at = '';
         $this->completed_at = '';
         $this->notes = '';
+        $this->expected_completed_at = '';
+        $this->quality_rating = '';
+        $this->delay_rating = '';
+        $this->evaluation_comment = '';
         $this->repair_type = '';
         $this->priority = 'medium';
         $this->estimated_duration = '';

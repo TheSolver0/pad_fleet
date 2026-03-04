@@ -13,9 +13,10 @@
             'id' => 'flotte',
             'label' => 'Flotte',
             'icon' => 'bi bi-truck-front-fill',
-            'routes' => ['vehicles.index', 'brands.index', 'vehicle-models.index', 'personnes.index', 'affectations.index'],
+            'routes' => ['vehicles.index', 'carte-grises.index', 'brands.index', 'vehicle-models.index', 'personnes.index', 'affectations.index'],
             'items' => [
                 ['route' => 'vehicles.index', 'label' => 'Véhicules', 'icon' => 'bi bi-car-front-fill'],
+                ['route' => 'carte-grises.index', 'label' => 'Cartes grises', 'icon' => 'bi bi-card-checklist'],
                 ['route' => 'affectations.index', 'label' => 'Affectations', 'icon' => 'bi bi-link-45deg'],
                 ['route' => 'brands.index', 'label' => 'Marques', 'icon' => 'bi bi-tag-fill'],
                 ['route' => 'vehicle-models.index', 'label' => 'Modèles', 'icon' => 'bi bi-card-list'],
@@ -74,13 +75,14 @@
             'id' => 'stocks',
             'label' => 'Gestion des stocks',
             'icon' => 'bi bi-box-seam',
-            'routes' => ['stock.index', 'stock.articles', 'stock.categories', 'stock.entries', 'suppliers.index'],
+            'routes' => ['stock.index', 'stock.articles', 'stock.categories', 'stock.entries', 'suppliers.index', 'prestataire-evaluations.index'],
             'items' => [
                 ['route' => 'stock.index', 'label' => 'Stocks', 'icon' => 'bi bi-layers-fill'],
                 ['route' => 'stock.articles', 'label' => 'Articles', 'icon' => 'bi bi-box'],
                 ['route' => 'stock.categories', 'label' => 'Catégories', 'icon' => 'bi bi-tags-fill'],
                 ['route' => 'stock.entries', 'label' => 'Entrées', 'icon' => 'bi bi-box-arrow-in-down'],
                 ['route' => 'suppliers.index', 'label' => 'Fournisseurs', 'icon' => 'bi bi-building'],
+                ['route' => 'prestataire-evaluations.index', 'label' => 'Évaluations prestataires', 'icon' => 'bi bi-star'],
             ],
         ],
         [

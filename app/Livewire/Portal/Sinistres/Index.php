@@ -29,12 +29,15 @@ class Index extends Component
     public ?int $mission_id = null;
     public string $declared_at = '';
     public string $description = '';
+    public string $location = '';
     public string $estimated_cost = '';
     public string $responsibility = '';
     public ?int $garage_id = null;
+    public ?int $assureur_id = null;
     public string $status = Sinistre::STATUS_DECLARED;
     public string $notes = '';
     public $photo_file = null;
+    public $police_report_file = null;
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
 
@@ -52,11 +55,14 @@ class Index extends Component
             'mission_id' => 'nullable|exists:missions,id',
             'declared_at' => 'required|date',
             'description' => 'required|string',
+            'location' => 'nullable|string|max:255',
             'estimated_cost' => 'nullable|numeric|min:0',
             'responsibility' => 'nullable|string|max:100',
             'garage_id' => 'nullable|exists:garages,id',
+            'assureur_id' => 'nullable|exists:assureurs,id',
             'status' => 'required|in:declared,in_repair,closed',
             'notes' => 'nullable|string',
+            'police_report_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -76,9 +82,11 @@ class Index extends Component
         $this->mission_id = $s->mission_id;
         $this->declared_at = $s->declared_at->format('Y-m-d\TH:i');
         $this->description = $s->description;
+        $this->location = $s->location ?? '';
         $this->estimated_cost = $s->estimated_cost ? format_money($s->estimated_cost, 2) : '';
         $this->responsibility = $s->responsibility ?? '';
         $this->garage_id = $s->garage_id;
+        $this->assureur_id = $s->assureur_id;
         $this->status = $s->status;
         $this->notes = $s->notes ?? '';
         $this->showFormModal = true;
@@ -93,12 +101,17 @@ class Index extends Component
             'mission_id' => $this->mission_id,
             'declared_at' => $this->declared_at,
             'description' => $this->description,
+            'location' => $this->location ?: null,
             'estimated_cost' => $this->estimated_cost ?: null,
             'responsibility' => $this->responsibility ?: null,
             'garage_id' => $this->garage_id,
+            'assureur_id' => $this->assureur_id,
             'status' => $this->status,
             'notes' => $this->notes ?: null,
         ];
+        if ($this->police_report_file) {
+            $data['police_report_path'] = $this->police_report_file->store('sinistres/police-reports', 'public');
+        }
         if ($this->editingId) {
             Sinistre::findOrFail($this->editingId)->update($data);
             $this->dispatch('notify', type: 'success', message: 'Sinistre mis à jour.');
@@ -153,17 +166,20 @@ class Index extends Component
         $this->vehicle_id = null;
         $this->mission_id = null;
         $this->description = '';
+        $this->location = '';
         $this->estimated_cost = '';
         $this->responsibility = '';
         $this->garage_id = null;
+        $this->assureur_id = null;
         $this->status = Sinistre::STATUS_DECLARED;
         $this->notes = '';
+        $this->police_report_file = null;
         $this->resetValidation();
     }
 
     public function render(): View
     {
-        $query = Sinistre::query()->with(['vehicle:id,registration', 'mission:id', 'garage:id,name']);
+        $query = Sinistre::query()->with(['vehicle:id,registration', 'mission:id', 'garage:id,name', 'assureur:id,name']);
         if ($this->search !== '') {
             $query->where('description', 'like', '%' . $this->search . '%');
         }
@@ -174,6 +190,7 @@ class Index extends Component
         $vehicles = Vehicle::orderBy('registration')->get(['id', 'registration']);
         $missions = Mission::orderByDesc('date_start')->get(['id', 'date_start', 'vehicle_id']);
         $garages = Garage::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $assureurs = \App\Models\Assureur::orderBy('name')->get(['id', 'name']);
         $photoSinistre = $this->photoSinistreId ? Sinistre::with('photos')->find($this->photoSinistreId) : null;
 
         return view('livewire.portal.sinistres.index', [
@@ -181,6 +198,7 @@ class Index extends Component
             'vehicles' => $vehicles,
             'missions' => $missions,
             'garages' => $garages,
+            'assureurs' => $assureurs,
             'photoSinistre' => $photoSinistre,
         ])->layout('layouts.app', ['title' => 'Sinistres']);
     }

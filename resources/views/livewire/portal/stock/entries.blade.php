@@ -1,5 +1,6 @@
 <div>
-    <p class="section-label">Gestion des entrées de stock</p>
+    <p class="section-label">Entrées de stock — Réception et approvisionnement (usage interne)</p>
+    <p class="small text-muted mb-3">Réception des pièces et consommables (achat direct ou bon de commande). Le stock est destiné à la consommation interne (réparations, atelier), pas à la revente.</p>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">

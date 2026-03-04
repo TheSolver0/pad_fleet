@@ -1,5 +1,5 @@
 <div>
-    <p class="section-label">Réparations — Interne/Externe, fiche de transfert, suivi coûts</p>
+    <p class="section-label">Réparations — Prestations (véhicule confié), délais donnés / réalisés, qualité</p>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">
@@ -28,6 +28,8 @@
                         <th>Garage</th>
                         <th>Type</th>
                         <th>Description</th>
+                        <th>Délai donné / réalisé</th>
+                        <th>Qualité</th>
                         <th>Coût</th>
                         <th>Début / Fin</th>
                         <th class="text-end">Actions</th>
@@ -40,6 +42,23 @@
                             <td>{{ $r->garage?->name ?? '—' }}</td>
                             <td><span class="badge {{ $r->type === 'internal' ? 'bg-primary' : 'bg-secondary' }}">{{ $r->type_label }}</span></td>
                             <td>{{ Str::limit($r->description, 35) }}</td>
+                            <td class="small">
+                                @if($r->delai_resume)
+                                    {{ $r->delai_resume }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td>
+                                @if($r->quality_rating !== null)
+                                    <span class="badge bg-primary">{{ number_format($r->quality_rating, 1) }}/5</span>
+                                    @if($r->delay_rating !== null)
+                                        <span class="badge bg-success ms-1">{{ number_format($r->delay_rating, 1) }}/5 délai</span>
+                                    @endif
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td>{{ $r->cost ? format_money($r->cost, 0) . ' F' : '—' }}</td>
                             <td class="small">{{ $r->started_at?->format('d/m/Y') ?? '—' }} → {{ $r->completed_at?->format('d/m/Y') ?? '—' }}</td>
                             <td class="text-end">
@@ -49,7 +68,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Aucune réparation.</td>
+                            <td colspan="9" class="text-center text-muted py-4">Aucune réparation.</td>
                         </tr>
                     @endforelse
                 </tbody>

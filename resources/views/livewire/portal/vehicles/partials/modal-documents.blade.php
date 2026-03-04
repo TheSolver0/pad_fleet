@@ -51,14 +51,18 @@
                 <section class="mb-4">
                     <h6 class="fw-600 text-muted mb-2"><i class="bi bi-images me-1"></i> Photos du véhicule</h6>
                     <form wire:submit="uploadPhoto" class="row g-2 align-items-end mb-2">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small">Photo</label>
                             <input type="file" class="form-control form-control-sm" wire:model="photo_file" accept="image/*">
                             @error('photo_file') <span class="small text-danger">{{ $message }}</span> @enderror
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Légende (optionnel)</label>
+                        <div class="col-md-2">
+                            <label class="form-label small">Légende</label>
                             <input type="text" class="form-control form-control-sm" wire:model="photo_caption" placeholder="ex. Vue avant">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Période / Date prise</label>
+                            <input type="date" class="form-control form-control-sm" wire:model="photo_taken_at">
                         </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-sm btn-primary w-100">Ajouter photo</button>
@@ -69,8 +73,8 @@
                             <div class="col-6 col-md-4 col-lg-3">
                                 <div class="position-relative border rounded overflow-hidden bg-light" style="height: 120px;">
                                     <img src="{{ asset('storage/' . $photo->file_path) }}" alt="{{ $photo->caption }}" class="w-100 h-100 object-fit-cover">
-                                    @if($photo->caption)
-                                        <span class="position-absolute bottom-0 start-0 end-0 small bg-dark bg-opacity-75 text-white px-2 py-1 text-truncate">{{ $photo->caption }}</span>
+                                    @if($photo->caption || $photo->taken_at)
+                                        <span class="position-absolute bottom-0 start-0 end-0 small bg-dark bg-opacity-75 text-white px-2 py-1 text-truncate">{{ $photo->caption }}{{ $photo->caption && $photo->taken_at ? ' — ' : '' }}{{ $photo->taken_at?->format('d/m/Y') }}</span>
                                     @endif
                                     <button type="button" class="position-absolute top-0 end-0 btn btn-sm btn-danger m-1" wire:click="deletePhoto({{ $photo->id }})" title="Supprimer"><i class="bi bi-trash"></i></button>
                                 </div>

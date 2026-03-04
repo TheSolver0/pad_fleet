@@ -91,10 +91,18 @@
         </div>
         <div class="kpi-card kpi-card-sm">
             <div class="kpi-card-header">
-                <span class="kpi-card-label">Coût réparations</span>
-                <span class="kpi-card-icon cost"><i class="bi bi-currency-exchange"></i></span>
+                <span class="kpi-card-label">Réparations (interne)</span>
+                <span class="kpi-card-icon cost"><i class="bi bi-wrench"></i></span>
             </div>
-            <div class="kpi-card-value">{{ number_format($quickStats['repair_cost_this_month'], 0, ',', ' ') }}</div>
+            <div class="kpi-card-value">{{ number_format($quickStats['repair_cost_internal_this_month'], 0, ',', ' ') }}</div>
+            <div class="kpi-card-sub">FCFA ce mois</div>
+        </div>
+        <div class="kpi-card kpi-card-sm">
+            <div class="kpi-card-header">
+                <span class="kpi-card-label">Réparations (externe)</span>
+                <span class="kpi-card-icon cost"><i class="bi bi-gear"></i></span>
+            </div>
+            <div class="kpi-card-value">{{ number_format($quickStats['repair_cost_external_this_month'], 0, ',', ' ') }}</div>
             <div class="kpi-card-sub">FCFA ce mois</div>
         </div>
     </div>
@@ -151,6 +159,51 @@
                 <div class="chart-card-header">Coût réparations (FCFA)</div>
                 <div class="chart-wrap">
                     <canvas id="chartRepairs" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Statistiques voyages par chauffeur et par véhicule --}}
+    <div class="dashboard-section mt-4">
+        <h3 class="dashboard-section-title"><i class="bi bi-graph-up-arrow me-2"></i>Statistiques voyages</h3>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-card-header"><i class="bi bi-person-badge me-2"></i>Par chauffeur (top 10)</div>
+                <div class="chart-wrap">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr><th>Chauffeur</th><th class="text-end">Missions</th><th class="text-end">Km</th></tr></thead>
+                        <tbody>
+                            @forelse($driverTripStats as $row)
+                                <tr>
+                                    <td>{{ $row['driver_name'] }}</td>
+                                    <td class="text-end">{{ number_format($row['missions_count']) }}</td>
+                                    <td class="text-end">{{ number_format($row['total_km']) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-muted text-center py-3">Aucune mission</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-header"><i class="bi bi-car-front me-2"></i>Par véhicule (top 10)</div>
+                <div class="chart-wrap">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr><th>Véhicule</th><th class="text-end">Missions</th><th class="text-end">Km</th></tr></thead>
+                        <tbody>
+                            @forelse($vehicleTripStats as $row)
+                                <tr>
+                                    <td>{{ $row['vehicle_registration'] }}</td>
+                                    <td class="text-end">{{ number_format($row['missions_count']) }}</td>
+                                    <td class="text-end">{{ number_format($row['total_km']) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-muted text-center py-3">Aucune mission</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

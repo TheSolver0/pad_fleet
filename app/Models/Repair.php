@@ -21,8 +21,9 @@ class Repair extends Model
 
     protected $fillable = [
         'vehicle_id', 'garage_id', 'mechanic_id', 'type', 'transfer_sheet_path',
-        'description', 'cost', 'started_at', 'completed_at', 'notes',
-        'repair_type', 'priority', 'estimated_duration',
+        'description', 'cost', 'started_at', 'completed_at', 'expected_completed_at',
+        'quality_rating', 'delay_rating', 'evaluation_comment', 'evaluated_at',
+        'notes', 'repair_type', 'priority', 'estimated_duration',
     ];
 
     protected function casts(): array
@@ -31,6 +32,10 @@ class Repair extends Model
             'cost' => 'decimal:2',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'expected_completed_at' => 'datetime',
+            'quality_rating' => 'decimal:1',
+            'delay_rating' => 'decimal:1',
+            'evaluated_at' => 'datetime',
         ];
     }
 
@@ -99,6 +104,47 @@ class Repair extends Model
     public function getTotalCostAttribute(): float
     {
         return $this->cost + $this->parts_cost;
+    }
+
+    /** Délai donné au prestataire (jours) — entre début et date limite prévue */
+    public function getDelaiDonneJoursAttribute(): ?int
+    {
+        if (! $this->started_at || ! $this->expected_completed_at) {
+            return null;
+        }
+        return (int) $this->started_at->diffInDays($this->expected_completed_at, false);
+    }
+
+    /** Délai réalisé par le prestataire (jours) — entre début et fin réelle */
+    public function getDelaiRealiseJoursAttribute(): ?int
+    {
+        if (! $this->started_at || ! $this->completed_at) {
+            return null;
+        }
+        return (int) $this->started_at->diffInDays($this->completed_at, false);
+    }
+
+    /** Résumé délai pour affichage */
+    public function getDelaiResumeAttribute(): ?string
+    {
+        $donne = $this->delai_donne_jours;
+        $realise = $this->delai_realise_jours;
+        if ($donne === null && $realise === null) {
+            return null;
+        }
+        $parts = [];
+        if ($donne !== null) {
+            $parts[] = 'Donné: ' . $donne . ' j';
+        }
+        if ($realise !== null) {
+            $parts[] = 'Fait: ' . $realise . ' j';
+        }
+        return implode(' — ', $parts);
+    }
+
+    public function getIsEvaluatedAttribute(): bool
+    {
+        return $this->evaluated_at !== null;
     }
 
     protected static function booted(): void

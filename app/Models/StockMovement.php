@@ -54,8 +54,8 @@ class StockMovement extends Model
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
-            self::TYPE_ENTRY => 'Entrée',
-            self::TYPE_EXIT => 'Sortie',
+            self::TYPE_ENTRY => 'Réception / Entrée',
+            self::TYPE_EXIT => 'Consommation / Sortie',
             self::TYPE_TRANSFER => 'Transfert',
             default => $this->type,
         };

@@ -28,6 +28,8 @@ class Articles extends Component
     public string $model = '';
     public string $unit = 'unité';
     public string $purchase_price = '';
+    public string $min_stock_level = '0';
+    public string $max_stock_level = '';
     public string $tire_size = '';
     public array $compatible_vehicle_categories = [];
     public $photo_file = null;
@@ -50,6 +52,8 @@ class Articles extends Component
             'model' => 'nullable|string|max:100',
             'unit' => 'required|string|max:50',
             'purchase_price' => 'nullable|numeric|min:0',
+            'min_stock_level' => 'nullable|integer|min:0',
+            'max_stock_level' => 'nullable|integer|min:0',
             'tire_size' => 'nullable|string|max:50',
             'compatible_vehicle_categories' => 'nullable|array',
             'compatible_vehicle_categories.*' => 'in:leger,utilitaire,camionnette,4x4,lourd,bus,moto,autre',
@@ -77,6 +81,8 @@ class Articles extends Component
         $this->model = $article->model ?? '';
         $this->unit = $article->unit;
         $this->purchase_price = $article->purchase_price ? number_format($article->purchase_price, 2, ',', ' ') : '';
+        $this->min_stock_level = (string) ($article->min_stock_level ?? 0);
+        $this->max_stock_level = $article->max_stock_level !== null ? (string) $article->max_stock_level : '';
         $this->tire_size = $article->tire_size ?? '';
         $this->compatible_vehicle_categories = $article->compatible_vehicle_categories ?? [];
         $this->is_active = $article->is_active;
@@ -98,9 +104,8 @@ class Articles extends Component
             'model' => $this->model ?: null,
             'unit' => $this->unit,
             'purchase_price' => $this->purchase_price ?: null,
-            'selling_price' => $this->selling_price ?: null,
             'min_stock_level' => (int) $this->min_stock_level,
-            'max_stock_level' => $this->max_stock_level ? (int) $this->max_stock_level : null,
+            'max_stock_level' => $this->max_stock_level !== '' ? (int) $this->max_stock_level : null,
             'tire_size' => $this->tire_size ?: null,
             'compatible_vehicle_categories' => $this->compatible_vehicle_categories,
             'is_active' => $this->is_active,
@@ -111,10 +116,28 @@ class Articles extends Component
         }
 
         if ($this->editingId) {
-            Article::findOrFail($this->editingId)->update($data);
+            $article = Article::findOrFail($this->editingId);
+            $oldPrice = $article->purchase_price;
+            $article->update($data);
+            if (isset($data['purchase_price']) && (string) $data['purchase_price'] !== '' && (float) $data['purchase_price'] != (float) $oldPrice) {
+                $article->priceHistories()->create([
+                    'price_type' => 'purchase',
+                    'price' => $data['purchase_price'],
+                    'recorded_at' => now(),
+                    'user_id' => auth()->id(),
+                ]);
+            }
             $this->dispatch('notify', type: 'success', message: 'Article mis à jour.');
         } else {
-            Article::create($data);
+            $article = Article::create($data);
+            if (! empty($data['purchase_price'])) {
+                $article->priceHistories()->create([
+                    'price_type' => 'purchase',
+                    'price' => $data['purchase_price'],
+                    'recorded_at' => now(),
+                    'user_id' => auth()->id(),
+                ]);
+            }
             $this->dispatch('notify', type: 'success', message: 'Article créé.');
         }
 
@@ -154,6 +177,8 @@ class Articles extends Component
         $this->model = '';
         $this->unit = 'unité';
         $this->purchase_price = '';
+        $this->min_stock_level = '0';
+        $this->max_stock_level = '';
         $this->tire_size = '';
         $this->compatible_vehicle_categories = [];
         $this->photo_file = null;

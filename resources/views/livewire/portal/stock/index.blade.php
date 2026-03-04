@@ -1,5 +1,9 @@
 <div>
-    <p class="section-label">Gestion des stocks</p>
+    <p class="section-label">Gestion des stocks — Usage interne atelier / réparations</p>
+    <div class="alert alert-light border mb-3 py-2 small">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Stock à consommation interne.</strong> Les pièces et consommables sont utilisés en interne pour les réparations, l'entretien et l'atelier. Aucune vente de matériel : entrées (réception fournisseur, inventaire) et sorties (consommation pour réparation, atelier, ajustement).
+    </div>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">

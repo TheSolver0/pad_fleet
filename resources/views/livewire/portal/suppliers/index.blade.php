@@ -22,6 +22,7 @@
                     <tr>
                         <th>Nom</th>
                         <th>Code</th>
+                        <th>Qualité / Délais / Réputation</th>
                         <th>Contact principal</th>
                         <th>Contact personne</th>
                         <th>Téléphone contact</th>
@@ -39,6 +40,20 @@
                                 @endif
                             </td>
                             <td><span class="badge bg-light text-dark">{{ $supplier->code ?? '-' }}</span></td>
+                            <td>
+                                @if($supplier->evaluations_count > 0)
+                                    <span class="badge bg-primary me-1" title="Qualité">{{ number_format((float)$supplier->evaluations_avg_quality_score, 1) }}/5</span>
+                                    @if($supplier->evaluations_avg_delivery_score !== null)
+                                        <span class="badge bg-success me-1" title="Délais">{{ number_format((float)$supplier->evaluations_avg_delivery_score, 1) }}/5</span>
+                                    @endif
+                                    @if($supplier->evaluations_avg_reputation_score !== null)
+                                        <span class="badge bg-warning text-dark" title="Réputation">{{ number_format((float)$supplier->evaluations_avg_reputation_score, 1) }}/5</span>
+                                    @endif
+                                    <br><a href="{{ route('prestataire-evaluations.index', ['type_filter' => 'supplier', 'search' => $supplier->name]) }}" class="small">Voir évals</a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($supplier->phone)
                                     <div><i class="bi bi-telephone me-1"></i>{{ $supplier->phone }}</div>
@@ -58,6 +73,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
+                                    <a href="{{ route('prestataire-evaluations.index', ['evaluable_type' => 'Supplier', 'evaluable_id' => $supplier->id]) }}" class="btn btn-outline-success" title="Évaluer"><i class="bi bi-star"></i></a>
                                     <button type="button" class="btn btn-outline-primary" wire:click="openEdit({{ $supplier->id }})" title="Modifier">
                                         <i class="bi bi-pencil"></i>
                                     </button>
@@ -69,7 +85,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-building fs-1 d-block mb-2"></i>
                                 Aucun fournisseur trouvé
                             </td>

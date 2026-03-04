@@ -26,6 +26,7 @@
                     <tr>
                         <th>Nom</th>
                         <th>Type</th>
+                        <th>Qualité / Délais / Réputation</th>
                         <th>Coordonnées</th>
                         <th>Actif</th>
                         <th class="text-end">Actions</th>
@@ -36,16 +37,31 @@
                         <tr>
                             <td><span class="fw-medium">{{ $g->name }}</span></td>
                             <td><span class="badge {{ $g->type === 'internal' ? 'bg-primary' : 'bg-secondary' }}">{{ $g->type_label }}</span></td>
+                            <td>
+                                @if($g->evaluations_count > 0)
+                                    <span class="badge bg-primary me-1" title="Qualité">{{ number_format((float)$g->evaluations_avg_quality_score, 1) }}/5</span>
+                                    @if($g->evaluations_avg_delivery_score !== null)
+                                        <span class="badge bg-success me-1" title="Délais">{{ number_format((float)$g->evaluations_avg_delivery_score, 1) }}/5</span>
+                                    @endif
+                                    @if($g->evaluations_avg_reputation_score !== null)
+                                        <span class="badge bg-warning text-dark" title="Réputation">{{ number_format((float)$g->evaluations_avg_reputation_score, 1) }}/5</span>
+                                    @endif
+                                    <br><a href="{{ route('prestataire-evaluations.index', ['type_filter' => 'garage', 'search' => $g->name]) }}" class="small">Voir évals</a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
                             <td class="small">{{ $g->phone ?? '—' }} @if($g->email) / {{ $g->email }} @endif</td>
                             <td>@if($g->is_active) <span class="badge bg-success">Oui</span> @else <span class="badge bg-secondary">Non</span> @endif</td>
                             <td class="text-end">
+                                <a href="{{ route('prestataire-evaluations.index', ['evaluable_type' => 'Garage', 'evaluable_id' => $g->id]) }}" class="btn btn-sm btn-outline-success" title="Évaluer"><i class="bi bi-star"></i></a>
                                 <button type="button" class="btn btn-sm btn-outline-primary" wire:click="openEdit({{ $g->id }})"><i class="bi bi-pencil"></i></button>
                                 <button type="button" class="btn btn-sm btn-outline-danger" wire:click="confirmDelete({{ $g->id }})"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">Aucun garage.</td>
+                            <td colspan="6" class="text-center text-muted py-4">Aucun garage.</td>
                         </tr>
                     @endforelse
                 </tbody>

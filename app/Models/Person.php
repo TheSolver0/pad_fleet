@@ -29,14 +29,11 @@ class Person extends Model
 
     public function assignedVehicles(): HasMany
     {
-        return $this->hasMany(Vehicle::class);
+        return $this->hasMany(Vehicle::class, 'assigned_person_id');
     }
 
     public function getFullNameAttribute(): string
     {
-        if ($this->first_name && $this->last_name) {
-            return trim($this->first_name . ' ' . $this->last_name);
-        }
         return $this->name ?? '';
     }
 

@@ -22,6 +22,8 @@ class Article extends Model
         'model',
         'unit',
         'purchase_price',
+        'min_stock_level',
+        'max_stock_level',
         'tire_size',
         'compatible_vehicle_categories',
         'photo_path',
@@ -64,6 +66,11 @@ class Article extends Model
     public function purchaseOrderItems(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function priceHistories(): HasMany
+    {
+        return $this->hasMany(ArticlePriceHistory::class);
     }
 
     // Accessors pour la gestion de stock

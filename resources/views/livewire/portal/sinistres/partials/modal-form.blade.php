@@ -42,9 +42,23 @@
                             <textarea class="form-control @error('description') is-invalid @enderror" rows="3" wire:model="description"></textarea>
                             @error('description') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Lieu</label>
+                            <input type="text" class="form-control" wire:model="location" placeholder="Lieu du sinistre">
+                            @error('location') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Responsabilité</label>
                             <input type="text" class="form-control" wire:model="responsibility" placeholder="tiers, nous, partagé...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Assureur</label>
+                            <select class="form-select" wire:model="assureur_id">
+                                <option value="">—</option>
+                                @foreach($assureurs as $a)
+                                    <option value="{{ $a->id }}">{{ $a->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Garage (affectation a posteriori)</label>
@@ -54,6 +68,11 @@
                                     <option value="{{ $g->id }}">{{ $g->name }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Rapport de police (PDF / image)</label>
+                            <input type="file" class="form-control" wire:model="police_report_file" accept=".pdf,image/*">
+                            @error('police_report_file') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Statut</label>

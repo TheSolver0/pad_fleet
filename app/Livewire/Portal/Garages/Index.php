@@ -114,7 +114,11 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Garage::query();
+        $query = Garage::query()
+            ->withAvg('evaluations', 'quality_score')
+            ->withAvg('evaluations', 'delivery_score')
+            ->withAvg('evaluations', 'reputation_score')
+            ->withCount('evaluations');
         if ($this->search !== '') {
             $query->where('name', 'like', '%' . $this->search . '%');
         }

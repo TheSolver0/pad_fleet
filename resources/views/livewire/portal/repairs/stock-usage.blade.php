@@ -1,10 +1,11 @@
 <div>
-    <p class="section-label">Utilisation du stock dans les réparations</p>
+    <p class="section-label">Consommation de stock — Réparations et atelier (usage interne)</p>
+    <p class="small text-muted mb-3">Sorties de pièces et consommables pour les réparations véhicules. Le matériel n'est pas vendu mais consommé en interne.</p>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">
             <div class="module-toolbar">
-                <span class="module-toolbar-title">Historique d'utilisation</span>
+                <span class="module-toolbar-title">Historique de consommation</span>
                 <div class="module-toolbar-filters">
                     <input type="text" class="form-control form-control-sm" style="width: 220px;" placeholder="N° réparation, immatriculation..." wire:model.live.debounce.300ms="search">
                 </div>

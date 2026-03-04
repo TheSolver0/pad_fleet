@@ -16,8 +16,8 @@ class Sinistre extends Model
     public const STATUS_CLOSED = 'closed';
 
     protected $fillable = [
-        'vehicle_id', 'mission_id', 'declared_at', 'description', 'estimated_cost',
-        'responsibility', 'garage_id', 'status', 'notes',
+        'vehicle_id', 'mission_id', 'declared_at', 'description', 'location',
+        'estimated_cost', 'responsibility', 'garage_id', 'assureur_id', 'status', 'notes', 'police_report_path',
     ];
 
     protected function casts(): array
@@ -41,6 +41,11 @@ class Sinistre extends Model
     public function garage(): BelongsTo
     {
         return $this->belongsTo(Garage::class);
+    }
+
+    public function assureur(): BelongsTo
+    {
+        return $this->belongsTo(Assureur::class);
     }
 
     public function photos(): HasMany

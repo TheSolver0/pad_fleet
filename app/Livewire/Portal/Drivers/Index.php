@@ -9,11 +9,13 @@ use App\Models\Person;
 use App\Models\Service;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class Index extends Component
 {
     use WithPagination;
+    use WithFileUploads;
 
     public string $search = '';
     public string $availability_filter = '';
@@ -33,6 +35,8 @@ class Index extends Component
     public ?int $resource_person_id = null;
     public bool $is_available = true;
     public string $notes = '';
+    public $id_document_recto_file = null;
+    public $id_document_verso_file = null;
 
     // Permis de conduire
     public array $driving_licenses = [];
@@ -52,6 +56,8 @@ class Index extends Component
             'resource_person_id' => 'nullable|exists:persons,id',
             'is_available' => 'boolean',
             'notes' => 'nullable|string',
+            'id_document_recto_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'id_document_verso_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'driving_licenses.*.license_number' => 'required|string|max:50',
             'driving_licenses.*.license_type' => 'required|in:A,B,C,D,E,F,G,H,I',
             'driving_licenses.*.category' => 'required|string|max:10',
@@ -80,7 +86,9 @@ class Index extends Component
         $this->resource_person_id = $d->resource_person_id;
         $this->is_available = $d->is_available;
         $this->notes = $d->notes ?? '';
-        
+        $this->id_document_recto_file = null;
+        $this->id_document_verso_file = null;
+
         // Charger les permis existants
         $this->driving_licenses = $d->drivingLicenses->map(function($license) {
             return [
@@ -109,6 +117,12 @@ class Index extends Component
             'is_available' => $this->is_available,
             'notes' => $this->notes ?: null,
         ];
+        if ($this->id_document_recto_file) {
+            $data['id_document_recto_path'] = $this->id_document_recto_file->store('drivers/id-documents', 'public');
+        }
+        if ($this->id_document_verso_file) {
+            $data['id_document_verso_path'] = $this->id_document_verso_file->store('drivers/id-documents', 'public');
+        }
         if ($this->editingId) {
             $driver = Driver::findOrFail($this->editingId);
             $driver->update($data);
@@ -180,6 +194,8 @@ class Index extends Component
         $this->resource_person_id = null;
         $this->is_available = true;
         $this->notes = '';
+        $this->id_document_recto_file = null;
+        $this->id_document_verso_file = null;
         $this->driving_licenses = [];
         $this->resetValidation();
     }
@@ -210,7 +226,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Driver::query()->with(['direction:id,name', 'resourcePerson:id,first_name,last_name', 'drivingLicenses']);
+        $query = Driver::query()->with(['direction:id,name', 'resourcePerson:id,name', 'drivingLicenses']);
         
         // Filtre recherche
         if ($this->search !== '') {

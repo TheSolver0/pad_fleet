@@ -55,6 +55,7 @@ class Index extends Component
 
     public $photo_file = null;
     public string $photo_caption = '';
+    public string $photo_taken_at = '';
 
     public string $cg_reference_number = '';
     public string $cg_issued_at = '';
@@ -172,6 +173,7 @@ class Index extends Component
         $this->doc_expires_at = '';
         $this->photo_file = null;
         $this->photo_caption = '';
+        $this->photo_taken_at = '';
         $this->cg_reference_number = '';
         $this->cg_issued_at = '';
         $this->cg_expires_at = '';
@@ -205,12 +207,14 @@ class Index extends Component
         $this->validate([
             'photo_file' => 'required|image|max:5120',
             'photo_caption' => 'nullable|string|max:255',
+            'photo_taken_at' => 'nullable|date',
         ]);
         $vehicle = Vehicle::findOrFail($this->docVehicleId);
-        VehiclePhoto::storeUpload($vehicle, $this->photo_file, $this->photo_caption ?: null);
+        VehiclePhoto::storeUpload($vehicle, $this->photo_file, $this->photo_caption ?: null, $this->photo_taken_at ?: null);
         $this->dispatch('notify', type: 'success', message: 'Photo ajoutée.');
         $this->photo_file = null;
         $this->photo_caption = '';
+        $this->photo_taken_at = '';
     }
 
     public function deletePhoto(int $id): void

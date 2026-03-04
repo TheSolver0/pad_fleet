@@ -88,8 +88,40 @@
                             <input type="date" class="form-control" wire:model="started_at">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Fin</label>
+                            <label class="form-label">Fin (réelle)</label>
                             <input type="date" class="form-control" wire:model="completed_at">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date limite donnée au prestataire</label>
+                            <input type="date" class="form-control" wire:model="expected_completed_at" placeholder="Délai qu'on lui a donné">
+                            <small class="text-muted">Délai qu'on lui a donné pour rendre le véhicule</small>
+                        </div>
+                        {{-- Évaluation prestation : qualité, délai réalisé --}}
+                        <div class="col-12 border-top pt-3">
+                            <h6 class="text-muted mb-2"><i class="bi bi-star me-1"></i> Évaluation de la prestation</h6>
+                            <p class="small text-muted">Qualité du travail et respect du délai (véhicule confié au prestataire).</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Qualité du travail (1 à 5)</label>
+                            <select class="form-select" wire:model="quality_rating">
+                                <option value="">— Non évalué</option>
+                                @for($i = 1; $i <= 5; $i++)
+                                    <option value="{{ $i }}">{{ $i }} — {{ $i <= 2 ? 'Insuffisant' : ($i == 3 ? 'Correct' : ($i == 4 ? 'Bien' : 'Très bien')) }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Respect du délai (1 à 5)</label>
+                            <select class="form-select" wire:model="delay_rating">
+                                <option value="">— Non évalué</option>
+                                @for($i = 1; $i <= 5; $i++)
+                                    <option value="{{ $i }}">{{ $i }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Commentaire évaluation</label>
+                            <textarea class="form-control" rows="2" wire:model="evaluation_comment" placeholder="Remarques sur la prestation..."></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Notes</label>
