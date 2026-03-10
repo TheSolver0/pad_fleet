@@ -59,6 +59,7 @@ class Index extends Component
         return view('livewire.portal.stock.index', [
             'stocks' => $stocks,
             'categories' => $categories,
+            'getStockStatusLabel' => fn(Stock $s) => $this->getStockStatusLabel($s),
         ]);
     }
 

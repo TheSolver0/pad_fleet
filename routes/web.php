@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/stock/articles', \App\Livewire\Portal\Stock\Articles::class)->name('stock.articles')->middleware('permission:gestion-stock');
     Route::get('/stock/categories', \App\Livewire\Portal\Stock\Categories::class)->name('stock.categories')->middleware('permission:gestion-stock');
     Route::get('/stock/entries', \App\Livewire\Portal\Stock\Entries::class)->name('stock.entries')->middleware('permission:entrees-stock');
+    Route::get('/stock/purchase-orders', \App\Livewire\Portal\Stock\PurchaseOrders::class)->name('stock.purchase-orders')->middleware('permission:entrees-stock');
     Route::get('/suppliers', \App\Livewire\Portal\Suppliers\Index::class)->name('suppliers.index');
     Route::get('/prestataire-evaluations', \App\Livewire\Portal\PrestataireEvaluations\Index::class)->name('prestataire-evaluations.index');
     Route::get('/reports', \App\Livewire\Portal\Reports\Index::class)->name('reports.index');

@@ -72,7 +72,7 @@
                                 </div>
                             </td>
                             <td>{{ $stock->article->category->name }}</td>
-                            <td>{{ $getLocationLabel($stock->location) }}</td>
+                            <td>{{ $stock->location_label }}</td>
                             <td>{{ $stock->quantity }}</td>
                             <td>{{ $stock->reserved_quantity }}</td>
                             <td class="fw-semibold">{{ $stock->available_quantity }}</td>

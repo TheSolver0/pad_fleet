@@ -22,9 +22,8 @@ class Entries extends Component
     public bool $showFormModal = false;
     public bool $showSupplierModal = false;
 
-    // Champs pour entrée directe
-    public ?int $article_id = null;
-    public string $quantity = '';
+    // Champs pour entrée directe (plusieurs lignes possibles)
+    public array $entry_lines = []; // [ ['article_id' => x, 'quantity' => '1'], ... ]
     public string $reference = '';
     public string $notes = '';
     public ?int $supplier_id = null;
@@ -54,23 +53,17 @@ class Entries extends Component
         ];
 
         if ($this->entry_type === 'direct') {
-            $rules['article_id'] = 'required_without:create_article|exists:articles,id';
-            $rules['quantity'] = 'required|integer|min:1';
             $rules['reference'] = 'required|string|max:100';
             $rules['supplier_id'] = 'nullable|exists:suppliers,id';
-            
+            $rules['entry_lines'] = 'required|array|min:1';
+            foreach ($this->entry_lines as $i => $line) {
+                $rules["entry_lines.{$i}.article_id"] = 'required|exists:articles,id';
+                $rules["entry_lines.{$i}.quantity"] = 'required|integer|min:1';
+            }
             if ($this->create_supplier) {
                 $rules['supplier_name'] = 'required|string|max:200';
                 $rules['supplier_phone'] = 'nullable|string|max:30';
                 $rules['supplier_email'] = 'nullable|email|max:150';
-            }
-            
-            if ($this->create_article) {
-                $rules['new_article_name'] = 'required|string|max:200';
-                $rules['new_article_reference'] = 'nullable|string|max:100';
-                $rules['new_article_category_id'] = 'required|exists:article_categories,id';
-                $rules['new_article_brand'] = 'nullable|string|max:100';
-                $rules['new_article_unit'] = 'required|string|max:50';
             }
         } else {
             $rules['purchase_order_id'] = 'required|exists:purchase_orders,id';
@@ -82,6 +75,7 @@ class Entries extends Component
     public function openCreate(): void
     {
         $this->resetForm();
+        $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
         $this->showFormModal = true;
     }
 
@@ -112,39 +106,31 @@ class Entries extends Component
             $this->supplier_id = $supplier->id;
         }
 
-        // Créer l'article si nécessaire
-        if ($this->create_article && $this->new_article_name) {
-            $article = Article::create([
-                'reference' => $this->new_article_reference ?: 'AUTO-' . time(),
-                'name' => $this->new_article_name,
-                'article_category_id' => $this->new_article_category_id,
-                'brand' => $this->new_article_brand,
-                'unit' => $this->new_article_unit,
-                'is_active' => true,
+        foreach ($this->entry_lines as $line) {
+            $articleId = (int) $line['article_id'];
+            $qty = (int) $line['quantity'];
+            if ($articleId <= 0 || $qty <= 0) {
+                continue;
+            }
+            StockMovement::create([
+                'article_id' => $articleId,
+                'location' => $this->location,
+                'type' => StockMovement::TYPE_ENTRY,
+                'quantity' => $qty,
+                'reference' => $this->reference,
+                'reason' => $this->notes ?: 'Réception / Achat direct',
+                'supplier_id' => $this->supplier_id,
+                'user_id' => Auth::id(),
             ]);
-            $this->article_id = $article->id;
+            $stock = Stock::firstOrCreate(
+                ['article_id' => $articleId, 'location' => $this->location],
+                ['quantity' => 0, 'reserved_quantity' => 0]
+            );
+            $stock->increment('quantity', $qty);
         }
 
-        // Créer le mouvement de stock
-        StockMovement::create([
-            'article_id' => $this->article_id,
-            'location' => $this->location,
-            'type' => StockMovement::TYPE_ENTRY,
-            'quantity' => (int) $this->quantity,
-            'reference' => $this->reference,
-            'reason' => $this->notes ?: 'Achat direct',
-            'supplier_id' => $this->supplier_id,
-            'user_id' => Auth::id(),
-        ]);
-
-        // Mettre à jour le stock
-        $stock = Stock::firstOrCreate(
-            ['article_id' => $this->article_id, 'location' => $this->location],
-            ['quantity' => 0, 'reserved_quantity' => 0]
-        );
-        $stock->increment('quantity', (int) $this->quantity);
-
-        $this->dispatch('notify', type: 'success', message: 'Entrée de stock enregistrée.');
+        $count = count(array_filter($this->entry_lines, fn($l) => (int)($l['article_id'] ?? 0) > 0 && (int)($l['quantity'] ?? 0) > 0));
+        $this->dispatch('notify', type: 'success', message: $count > 1 ? "{$count} entrées de stock enregistrées." : 'Entrée de stock enregistrée.');
     }
 
     private function savePurchaseOrderEntry(): void
@@ -185,9 +171,28 @@ class Entries extends Component
         $this->dispatch('notify', type: 'success', message: 'Réception du bon de commande enregistrée.');
     }
 
+    public function addEntryLine(): void
+    {
+        $this->entry_lines[] = ['article_id' => null, 'quantity' => '1'];
+    }
+
+    public function removeEntryLine(int $index): void
+    {
+        array_splice($this->entry_lines, $index, 1);
+    }
+
+    public function closeFormModal(): void
+    {
+        $this->showFormModal = false;
+        $this->resetForm();
+    }
+
     public function updatedEntryType(): void
     {
-        $this->reset(['purchase_order_id', 'article_id', 'quantity', 'reference']);
+        $this->reset(['purchase_order_id', 'entry_lines', 'reference']);
+        if ($this->entry_type === 'direct') {
+            $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
+        }
     }
 
     public function updatedCreateSupplier(): void
@@ -201,16 +206,12 @@ class Entries extends Component
     {
         if (!$this->create_article) {
             $this->reset(['new_article_name', 'new_article_reference', 'new_article_category_id', 'new_article_brand', 'new_article_unit']);
-            $this->article_id = null;
-        } else {
-            $this->article_id = null; // Désélectionner l'article existant
         }
     }
 
     private function resetForm(): void
     {
-        $this->article_id = null;
-        $this->quantity = '';
+        $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
         $this->reference = '';
         $this->notes = '';
         $this->supplier_id = null;
@@ -225,6 +226,9 @@ class Entries extends Component
         $this->new_article_brand = '';
         $this->new_article_unit = 'unité';
         $this->purchase_order_id = null;
+        if ($this->entry_type === 'direct' && empty($this->entry_lines)) {
+            $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
+        }
         $this->resetValidation();
     }
 
