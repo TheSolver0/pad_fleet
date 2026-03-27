@@ -12,6 +12,15 @@
 @endphp
 <header class="topbar">
     <div class="topbar-left">
+        <button
+    id="sidebar-hamburger"
+    class="topbar-hamburger"
+    aria-label="Ouvrir le menu"
+    aria-expanded="false"
+    aria-controls="sidebar"
+>
+    <i class="bi bi-list"></i>
+</button>
         <button type="button" class="topbar-sidebar-toggle" id="sidebarToggle" title="Réduire / Ouvrir le menu">
             <i class="bi bi-layout-sidebar-inset-reverse"></i>
         </button>

@@ -11,6 +11,8 @@ use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use App\Models\DriverAssignment;
+
 
 class Index extends Component
 {
@@ -37,6 +39,7 @@ class Index extends Component
     public string $notes = '';
     public $id_document_recto_file = null;
     public $id_document_verso_file = null;
+    
 
     // Permis de conduire
     public array $driving_licenses = [];
@@ -224,9 +227,122 @@ class Index extends Component
         $this->resetForm();
     }
 
+    // ── Affectations ──────────────────────────────────────────────────────
+public bool   $showAssignmentModal  = false;
+public bool   $showAssignmentForm   = false;
+public ?int   $assignmentDriverId   = null;
+public ?int   $editingAssignmentId  = null;
+
+// Formulaire affectation
+public string  $assign_type       = 'vehicle';
+public string  $assign_status     = 'active';
+public ?int    $assign_vehicle_id = null;
+public ?int    $assign_mission_id = null;
+public string  $assign_started_at = '';
+public string  $assign_ended_at   = '';
+public string  $assign_end_reason = '';
+public string  $assign_notes      = '';
+
+public function openAssignments(int $driverId): void
+{
+    $this->assignmentDriverId  = $driverId;
+    $this->showAssignmentModal = true;
+    $this->showAssignmentForm  = false;
+    $this->resetAssignmentForm();
+}
+
+public function openAssignmentCreate(): void
+{
+    $this->editingAssignmentId = null;
+    $this->resetAssignmentForm();
+    $this->showAssignmentForm  = true;
+}
+
+public function openAssignmentEdit(int $id): void
+{
+    $a = DriverAssignment::findOrFail($id);
+    $this->editingAssignmentId = $id;
+    $this->assign_type         = $a->type;
+    $this->assign_status       = $a->status;
+    $this->assign_vehicle_id   = $a->vehicle_id;
+    $this->assign_mission_id   = $a->mission_id;
+    $this->assign_started_at   = $a->started_at?->format('Y-m-d') ?? '';
+    $this->assign_ended_at     = $a->ended_at?->format('Y-m-d') ?? '';
+    $this->assign_end_reason   = $a->end_reason ?? '';
+    $this->assign_notes        = $a->notes ?? '';
+    $this->showAssignmentForm  = true;
+}
+
+public function saveAssignment(): void
+{
+    $this->validate([
+        'assign_type'       => 'required|in:vehicle,mission',
+        'assign_status'     => 'required|in:active,suspended,ended',
+        'assign_vehicle_id' => 'nullable|exists:vehicles,id',
+        'assign_mission_id' => 'nullable|exists:missions,id',
+        'assign_started_at' => 'required|date',
+        'assign_ended_at'   => 'nullable|date|after_or_equal:assign_started_at',
+        'assign_end_reason' => 'nullable|string|max:500',
+        'assign_notes'      => 'nullable|string|max:1000',
+    ]);
+
+    $data = [
+        'driver_id'  => $this->assignmentDriverId,
+        'type'       => $this->assign_type,
+        'status'     => $this->assign_status,
+        'vehicle_id' => $this->assign_type === 'vehicle' ? $this->assign_vehicle_id : null,
+        'mission_id' => $this->assign_type === 'mission' ? $this->assign_mission_id : null,
+        'started_at' => $this->assign_started_at,
+        'ended_at'   => $this->assign_ended_at ?: null,
+        'end_reason' => $this->assign_end_reason ?: null,
+        'notes'      => $this->assign_notes ?: null,
+        'updated_by' => auth()->id(),
+    ];
+
+    if ($this->editingAssignmentId) {
+        DriverAssignment::findOrFail($this->editingAssignmentId)->update($data);
+    } else {
+        $data['created_by'] = auth()->id();
+        DriverAssignment::create($data);
+    }
+
+    $this->showAssignmentForm = false;
+    $this->resetAssignmentForm();
+    $this->dispatch('notify', ['type' => 'success', 'message' => 'Affectation enregistrée.']);
+}
+
+public function deleteAssignment(int $id): void
+{
+    DriverAssignment::findOrFail($id)->delete();
+    $this->dispatch('notify', ['type' => 'success', 'message' => 'Affectation supprimée.']);
+}
+
+public function closeAssignmentModal(): void
+{
+    $this->showAssignmentModal = false;
+    $this->showAssignmentForm  = false;
+    $this->assignmentDriverId  = null;
+    $this->resetAssignmentForm();
+}
+
+private function resetAssignmentForm(): void
+{
+    $this->editingAssignmentId = null;
+    $this->assign_type         = 'vehicle';
+    $this->assign_status       = 'active';
+    $this->assign_vehicle_id   = null;
+    $this->assign_mission_id   = null;
+    $this->assign_started_at   = now()->format('Y-m-d');
+    $this->assign_ended_at     = '';
+    $this->assign_end_reason   = '';
+    $this->assign_notes        = '';
+}
+
     public function render(): View
     {
         $query = Driver::query()->with(['direction:id,name', 'resourcePerson:id,name', 'drivingLicenses']);
+        $vehicles = \App\Models\Vehicle::orderBy('registration')->get();
+        $missions = \App\Models\Mission::orderByDesc('date_start')->limit(100)->get();
         
         // Filtre recherche
         if ($this->search !== '') {
@@ -290,6 +406,12 @@ class Index extends Component
             'directions' => $directions,
             'persons' => $persons,
             'stats' => $stats,
+            'vehicles'           => $vehicles,
+'missions'           => $missions,
+'assignmentDriver'   => $this->assignmentDriverId
+    ? \App\Models\Driver::with(['assignments.vehicle', 'assignments.mission', 'assignments.createdBy', 'assignments.updatedBy'])
+        ->find($this->assignmentDriverId)
+    : null,
         ]);
     }
 }

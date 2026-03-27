@@ -13,6 +13,8 @@ use Livewire\Component;
 
 class Index extends Component
 {
+    public string $tripPeriod = 'month';
+
     public function getKpis(): array
     {
         $total = Vehicle::count();
@@ -185,24 +187,29 @@ class Index extends Component
     }
 
     public function getRepairsCostTrendChart(): array
-    {
-        $months = [];
-        $values = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $months[] = $date->translatedFormat('M Y');
-            $sum = Repair::whereYear('completed_at', $date->year)
-                ->whereMonth('completed_at', $date->month)
-                ->whereNotNull('completed_at')
-                ->sum('cost');
-            $values[] = round((float) $sum, 0);
-        }
+{
+    $months = [];
+    $internal = [];
+    $external = [];
 
-        return [
-            'labels' => $months,
-            'values' => $values,
-        ];
+    for ($i = 5; $i >= 0; $i--) {
+        $date = now()->subMonths($i);
+        $months[] = $date->translatedFormat('M Y');
+
+        $base = Repair::whereYear('completed_at', $date->year)
+            ->whereMonth('completed_at', $date->month)
+            ->whereNotNull('completed_at');
+
+        $internal[] = round((float) (clone $base)->where('type', Repair::TYPE_INTERNAL)->sum('cost'), 0);
+        $external[] = round((float) (clone $base)->where('type', Repair::TYPE_EXTERNAL)->sum('cost'), 0);
     }
+
+    return [
+        'labels'   => $months,
+        'internal' => $internal,
+        'external' => $external,
+    ];
+}
 
     public function getRecentActivity(): \Illuminate\Support\Collection
     {
@@ -214,11 +221,12 @@ class Index extends Component
                 $desc = $log->description ?? $log->action_label;
                 if ($log->auditable_type) {
                     $type = class_basename($log->auditable_type);
-                    if ($type === 'Vehicle' && $log->new_values['registration'] ?? null) {
-                        $desc = 'Véhicule ' . $log->new_values['registration'] . ' — ' . $log->action_label;
-                    } elseif ($type === 'Sinistre') {
+                    if ($type === 'Vehicle' && isset($log->new_values['registration'])) {
+    $desc = 'Véhicule ' . $log->new_values['registration'] . ' — ' . $log->action_label;}
+                     elseif ($type === 'Sinistre') {
                         $desc = 'Sinistre — ' . $log->action_label;
-                    } elseif ($type === 'Mission') {
+                    } 
+                    elseif ($type === 'Mission') {
                         $desc = 'Mission — ' . $log->action_label;
                     }
                 }
@@ -325,47 +333,90 @@ class Index extends Component
         ];
     }
 
-    /** Statistiques de voyage par chauffeur (missions + km) */
-    public function getDriverTripStats(): \Illuminate\Support\Collection
-    {
-        return Mission::query()
-            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
-            ->whereNotNull('driver_id')
-            ->selectRaw('driver_id, count(*) as missions_count, coalesce(sum(distance_km), 0) as total_km')
-            ->groupBy('driver_id')
-            ->orderByDesc('missions_count')
-            ->limit(10)
-            ->get()
-            ->map(function ($row) {
-                $driver = Driver::find($row->driver_id);
-                return [
-                    'driver_name' => $driver ? $driver->full_name : '—',
-                    'missions_count' => (int) $row->missions_count,
-                    'total_km' => (int) $row->total_km,
-                ];
-            });
-    }
 
     /** Statistiques par véhicule (missions + km) */
-    public function getVehicleTripStats(): \Illuminate\Support\Collection
-    {
-        return Mission::query()
-            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
-            ->whereNotNull('vehicle_id')
-            ->selectRaw('vehicle_id, count(*) as missions_count, coalesce(sum(distance_km), 0) as total_km')
-            ->groupBy('vehicle_id')
-            ->orderByDesc('missions_count')
-            ->limit(10)
-            ->get()
-            ->map(function ($row) {
-                $vehicle = Vehicle::find($row->vehicle_id);
-                return [
-                    'vehicle_registration' => $vehicle ? $vehicle->registration : '—',
-                    'missions_count' => (int) $row->missions_count,
-                    'total_km' => (int) $row->total_km,
-                ];
-            });
-    }
+    public function getDriverTripStats(string $period = 'month'): \Illuminate\Support\Collection
+{
+    return Mission::query()
+        ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
+        ->whereNotNull('driver_id')
+        ->when($period === 'month', fn($q) =>
+            $q->whereMonth('date_start', now()->month)->whereYear('date_start', now()->year)
+        )
+        ->when($period === 'quarter', fn($q) =>
+            $q->whereBetween('date_start', [now()->firstOfQuarter(), now()->lastOfQuarter()])
+        )
+        ->when($period === 'year', fn($q) =>
+            $q->whereYear('date_start', now()->year)
+        )
+        ->selectRaw('
+            driver_id,
+            count(*) as missions_count,
+            coalesce(sum(distance_km), 0) as total_km,
+            coalesce(avg(distance_km), 0) as avg_km,
+            avg(TIMESTAMPDIFF(MINUTE, date_start, date_end)) as avg_duration_minutes,
+            max(date_start) as last_mission
+        ')
+        ->groupBy('driver_id')
+        ->orderByDesc('missions_count')
+        ->limit(10)
+        ->get()
+        ->map(function ($row) {
+            $driver = Driver::find($row->driver_id);
+            return [
+                'name'               => $driver ? $driver->full_name : '—',
+                'missions_count'     => (int) $row->missions_count,
+                'total_km'           => (int) $row->total_km,
+                'avg_km'             => round((float) $row->avg_km, 1),
+                'avg_duration_min'   => $row->avg_duration_minutes ? (int) $row->avg_duration_minutes : null,
+                'last_mission'       => $row->last_mission
+                    ? \Carbon\Carbon::parse($row->last_mission)->translatedFormat('d M Y')
+                    : '—',
+            ];
+        });
+}
+
+public function getVehicleTripStats(string $period = 'month'): \Illuminate\Support\Collection
+{
+    return Mission::query()
+        ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
+        ->whereNotNull('vehicle_id')
+        ->when($period === 'month', fn($q) =>
+            $q->whereMonth('date_start', now()->month)->whereYear('date_start', now()->year)
+        )
+        ->when($period === 'quarter', fn($q) =>
+            $q->whereBetween('date_start', [now()->firstOfQuarter(), now()->lastOfQuarter()])
+        )
+        ->when($period === 'year', fn($q) =>
+            $q->whereYear('date_start', now()->year)
+        )
+        ->selectRaw('
+            vehicle_id,
+            count(*) as missions_count,
+            coalesce(sum(distance_km), 0) as total_km,
+            coalesce(avg(distance_km), 0) as avg_km,
+            avg(TIMESTAMPDIFF(MINUTE, date_start, date_end)) as avg_duration_minutes,
+            max(date_start) as last_mission
+        ')
+        ->groupBy('vehicle_id')
+        ->orderByDesc('missions_count')
+        ->limit(10)
+        ->get()
+        ->map(function ($row) {
+            $vehicle = Vehicle::find($row->vehicle_id);
+            return [
+                'name'               => $vehicle ? $vehicle->registration : '—',
+                'missions_count'     => (int) $row->missions_count,
+                'total_km'           => (int) $row->total_km,
+                'avg_km'             => round((float) $row->avg_km, 1),
+                'avg_duration_min'   => $row->avg_duration_minutes ? (int) $row->avg_duration_minutes : null,
+                'last_mission'       => $row->last_mission
+                    ? \Carbon\Carbon::parse($row->last_mission)->translatedFormat('d M Y')
+                    : '—',
+            ];
+        });
+}
+
 
     public function render()
     {
@@ -381,6 +432,8 @@ class Index extends Component
         $chartRepairs = $this->getRepairsCostTrendChart();
         $driverTripStats = $this->getDriverTripStats();
         $vehicleTripStats = $this->getVehicleTripStats();
+        $driverTripStats  = $this->getDriverTripStats($this->tripPeriod);
+        $vehicleTripStats = $this->getVehicleTripStats($this->tripPeriod);
 
         return view('livewire.portal.dashboard.index', [
             'kpis' => $kpis,
@@ -394,6 +447,7 @@ class Index extends Component
             'chartRepairs' => $chartRepairs,
             'driverTripStats' => $driverTripStats,
             'vehicleTripStats' => $vehicleTripStats,
+            
         ])->layout('layouts.app', ['title' => 'Tableau de bord']);
     }
 }

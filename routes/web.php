@@ -66,4 +66,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', \App\Livewire\Portal\Reports\Index::class)->name('reports.index');
     Route::get('/reports/vehicle-consumption', \App\Livewire\Portal\Reports\VehicleConsumption::class)->name('reports.vehicle-consumption');
     Route::get('/audit', \App\Livewire\Portal\Audit\Index::class)->name('audit.index')->middleware('permission:audits');
+    Route::get('/dashboard/trip-stats', [App\Http\Controllers\DashboardController::class, 'tripStats'])
+    ->middleware(['auth'])
+    ->name('dashboard.trip-stats');
+Route::get('/visites-techniques', \App\Livewire\Portal\VehicleInspections\Index::class)
+    ->middleware(['auth'])
+    ->name('vehicle-inspections.index');
 });

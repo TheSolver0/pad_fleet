@@ -1,0 +1,373 @@
+/* ============================================================
+   RESPONSIVE — Mobile (< 576px) + Tablette (576–992px)
+   À inclure dans app.css ou dans un @push('styles') global
+   ============================================================ */
+
+/* ── 1. SIDEBAR DRAWER ──────────────────────────────────────── */
+
+/* Overlay sombre derrière le drawer */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+@media (max-width: 992px) {
+
+    /* Sidebar hors écran par défaut */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100dvh;
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+        overflow-y: auto;
+        width: 272px !important;
+    }
+
+    .sidebar.drawer-open {
+        transform: translateX(0);
+    }
+
+    /* Le contenu principal prend toute la largeur */
+    .app-layout,
+    .main-content,
+    .content-wrapper {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Topbar mobile — affiche le hamburger */
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .topbar-hamburger {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        color: var(--text-primary);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.15s;
+    }
+    .topbar-hamburger:hover {
+        background: var(--hover-bg, rgba(0,0,0,0.06));
+    }
+    .topbar-hamburger i { font-size: 1.3rem; }
+}
+
+/* Sur desktop, cacher le hamburger */
+@media (min-width: 993px) {
+    .topbar-hamburger { display: none !important; }
+    .sidebar-overlay  { display: none !important; }
+}
+
+
+/* ── 2. LAYOUT GÉNÉRAL ──────────────────────────────────────── */
+
+@media (max-width: 992px) {
+    .container,
+    .dashboard-page.container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container,
+    .dashboard-page.container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+
+/* ── 3. KPI GRILLES ─────────────────────────────────────────── */
+
+@media (max-width: 992px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .kpi-grid-sm {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .kpi-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.6rem !important;
+    }
+    .kpi-grid-sm {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.6rem !important;
+    }
+    .kpi-card {
+        padding: 0.75rem !important;
+    }
+    .kpi-card-value {
+        font-size: 1.4rem !important;
+    }
+    .kpi-card-sm .kpi-card-value {
+        font-size: 1.1rem !important;
+    }
+}
+
+
+/* ── 4. CHARTS GRILLES ──────────────────────────────────────── */
+
+@media (max-width: 992px) {
+    .charts-grid,
+    .charts-grid-3 {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ── 5. TABLEAUX ────────────────────────────────────────────── */
+
+@media (max-width: 992px) {
+    /* Scroll horizontal natif */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+    }
+
+    /* Réduction de la densité */
+    .table th,
+    .table td {
+        white-space: nowrap;
+        font-size: 0.82rem;
+        padding: 0.5rem 0.6rem;
+    }
+
+    /* Cacher colonnes secondaires sur tablette */
+    .table .col-hide-md {
+        display: none !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .table th,
+    .table td {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.5rem;
+    }
+
+    /* Cacher colonnes secondaires sur mobile */
+    .table .col-hide-sm {
+        display: none !important;
+    }
+
+    /* Boutons d'action plus compacts */
+    .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.78rem;
+    }
+}
+
+
+/* ── 6. MODALES ─────────────────────────────────────────────── */
+
+@media (max-width: 992px) {
+    .modal-xl,
+    .modal-lg {
+        max-width: calc(100vw - 1.5rem) !important;
+        margin: 0.75rem auto !important;
+    }
+    .modal-dialog {
+        margin: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Modale plein écran sur mobile */
+    .modal-dialog {
+        margin: 0 !important;
+        max-width: 100vw !important;
+        min-height: 100dvh;
+        display: flex;
+        align-items: flex-end;
+    }
+    .modal-content {
+        border-radius: 16px 16px 0 0 !important;
+        max-height: 92dvh;
+        overflow-y: auto;
+    }
+    .modal-xl,
+    .modal-lg {
+        max-width: 100vw !important;
+    }
+    .modal-header {
+        padding: 1rem 1rem 0.75rem !important;
+        position: sticky;
+        top: 0;
+        background: var(--card-bg);
+        z-index: 1;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-footer {
+        position: sticky;
+        bottom: 0;
+        background: var(--card-bg);
+        z-index: 1;
+        border-top: 1px solid var(--border);
+    }
+    .modal-body {
+        padding: 1rem !important;
+    }
+}
+
+
+/* ── 7. FORMULAIRES ─────────────────────────────────────────── */
+
+@media (max-width: 576px) {
+    /* Toutes les colonnes passent en pleine largeur */
+    .modal-body .col-md-2,
+    .modal-body .col-md-3,
+    .modal-body .col-md-4,
+    .modal-body .col-md-5,
+    .modal-body .col-md-6,
+    .modal-body .col-md-8 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 0.9rem !important;
+    }
+
+    /* Toolbar des modules : passe en colonne */
+    .module-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5rem !important;
+    }
+    .module-toolbar-filters {
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+    }
+    .module-toolbar-filters .form-control,
+    .module-toolbar-filters .form-select {
+        width: 100% !important;
+        flex: 1 1 140px !important;
+    }
+    .module-toolbar-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+    }
+    .module-toolbar-actions .btn {
+        flex: 1 1 auto !important;
+        text-align: center !important;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 992px) {
+    /* Tablette : 2 colonnes max dans les formulaires */
+    .modal-body .col-md-3,
+    .modal-body .col-md-4 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    .module-toolbar {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+    .module-toolbar-filters {
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+    }
+    .module-toolbar-filters .form-control,
+    .module-toolbar-filters .form-select {
+        width: auto !important;
+        min-width: 130px !important;
+    }
+}
+
+
+/* ── 8. SECTION LABEL + TITRES ──────────────────────────────── */
+
+@media (max-width: 576px) {
+    .section-label {
+        font-size: 0.78rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .dashboard-section-title {
+        font-size: 0.9rem !important;
+    }
+    .activity-card-header {
+        font-size: 0.88rem !important;
+        padding: 0.75rem 1rem !important;
+    }
+}
+
+
+/* ── 9. INSIGHTS GRID ───────────────────────────────────────── */
+
+@media (max-width: 576px) {
+    .insights-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ── 10. ACTIVITY LIST ──────────────────────────────────────── */
+
+@media (max-width: 576px) {
+    .activity-list li {
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+    }
+    .activity-time {
+        width: 100% !important;
+        font-size: 0.72rem !important;
+        padding-left: 1.25rem !important;
+    }
+}
+
+
+/* ── 11. STATISTIQUES VOYAGES ───────────────────────────────── */
+
+@media (max-width: 992px) {
+    #trip-section .charts-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #trip-section .d-flex.align-items-center {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    #trip-section .btn-group {
+        display: flex !important;
+        width: 100% !important;
+    }
+    #trip-section .btn-group .btn {
+        flex: 1 !important;
+    }
+}

@@ -150,6 +150,12 @@ class RolesAndPermissionsSeeder extends Seeder
             $permissions['saisie-km'],
             $permissions['signalement-anomalies'],
             $permissions['carnets-bord'],
+            $permissions['suivi-assurances'],
+            $permissions['ecarts'],
+            $permissions['comptes-rendus'],
+
+
+
         ]);
 
         // Directeur / Chef Service

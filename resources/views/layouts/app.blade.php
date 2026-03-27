@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', $title ?? 'Tableau de bord') — {{ config('app.name') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     @stack('styles')
     <script src="{{ asset('js/pdf-generator.js') }}" defer></script>
     <style>
@@ -322,8 +323,10 @@
         .app-footer-text { display: inline-block; }
     </style>
     @livewireStyles
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
 <body>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
 <div class="d-flex">
     @include('layouts.components.navigation.sidebar')
     <main class="main-content">
@@ -335,6 +338,7 @@
     </main>
 </div>
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;" id="toast-container"></div>
+<script src="{{ asset('js/sidebar-drawer.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -401,5 +405,6 @@ document.addEventListener('livewire:init', function() {
 </script>
 @livewireScripts
 @stack('scripts')
+
 </body>
 </html>

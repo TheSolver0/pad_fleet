@@ -12,17 +12,27 @@ class Vehicle extends Model
     use Auditable;
 
     public const STATUS_AVAILABLE = 'available';
+
     public const STATUS_IN_USE = 'in_use';
+
     public const STATUS_REPAIR = 'repair';
+
     public const STATUS_OUT_OF_SERVICE = 'out_of_service';
 
     public const CATEGORY_LEGER = 'leger';
+
     public const CATEGORY_UTILITAIRE = 'utilitaire';
+
     public const CATEGORY_LOURD = 'lourd';
+
     public const CATEGORY_MOTO = 'moto';
+
     public const CATEGORY_BUS = 'bus';
+
     public const CATEGORY_4X4 = '4x4';
+
     public const CATEGORY_CAMIONNETTE = 'camionnette';
+
     public const CATEGORY_OTHER = 'autre';
 
     /** Libellés des catégories pour les selects */
@@ -47,12 +57,19 @@ class Vehicle extends Model
 
     /** Types d'affectation véhicule → personne */
     public const ASSIGNMENT_DOTATION = 'dotation';
+
     public const ASSIGNMENT_AFFECTATION = 'affectation';
+
     public const ASSIGNMENT_LIAISON = 'liaison';
+
     public const ASSIGNMENT_LUCATELLI = 'lucatelli';
+
     public const ASSIGNMENT_SEC_SURETE = 'sec_surete';
+
     public const ASSIGNMENT_TRAVAUX = 'travaux';
+
     public const ASSIGNMENT_MISSIONS = 'missions';
+
     public const ASSIGNMENT_TRANSPORT_VIP = 'transport_vip';
 
     public static function assignmentTypeOptions(): array
@@ -88,21 +105,22 @@ class Vehicle extends Model
     /** Libellé période d'affectation pour affichage */
     public function getAssignmentPeriodLabelAttribute(): ?string
     {
-        if (!$this->assigned_person_id) {
+        if (! $this->assigned_person_id) {
             return null;
         }
         if ($this->assignment_end_at === null) {
             return $this->assignment_start_at
-                ? 'À partir du ' . $this->assignment_start_at->format('d/m/Y') . ' (indéfini)'
+                ? 'À partir du '.$this->assignment_start_at->format('d/m/Y').' (indéfini)'
                 : 'Indéfini';
         }
         $from = $this->assignment_start_at ? $this->assignment_start_at->format('d/m/Y') : '?';
-        return $from . ' — ' . $this->assignment_end_at->format('d/m/Y');
+
+        return $from.' — '.$this->assignment_end_at->format('d/m/Y');
     }
 
     /** Années pour amortissement linéaire valeur vénale */
     private const VENAL_DEPRECIATION_YEARS = 8;
-    
+
     /** Années avant mise à la réforme (généralement 10-15 ans) */
     private const REFORM_YEARS = 12;
 
@@ -183,7 +201,7 @@ class Vehicle extends Model
     /** Calcule la valeur vénale par amortissement linéaire (sur 8 ans par défaut). */
     public function computeVenalValue(): ?float
     {
-        if (!$this->purchase_price || !$this->purchase_date) {
+        if (! $this->purchase_price || ! $this->purchase_date) {
             return null;
         }
         $years = $this->purchase_date->diffInYears(now());
@@ -191,6 +209,7 @@ class Vehicle extends Model
             return 0.0;
         }
         $remaining = 1 - ($years / self::VENAL_DEPRECIATION_YEARS);
+
         return round((float) $this->purchase_price * $remaining, 2);
     }
 
@@ -206,30 +225,33 @@ class Vehicle extends Model
     /** Calcule l'année de mise à la réforme recommandée. */
     public function getReformYearAttribute(): ?int
     {
-        if (!$this->purchase_date) {
+        if (! $this->purchase_date) {
             return null;
         }
+
         return (int) $this->purchase_date->format('Y') + self::REFORM_YEARS;
     }
 
     /** Vérifie si le véhicule est proche de la réforme (dans 2 ans). */
     public function isNearReform(): bool
     {
-        if (!$this->purchase_date) {
+        if (! $this->purchase_date) {
             return false;
         }
         $reformDate = $this->purchase_date->copy()->addYears(self::REFORM_YEARS);
         $warningDate = $reformDate->copy()->subYears(2);
+
         return now()->greaterThanOrEqualTo($warningDate);
     }
 
     /** Vérifie si le véhicule devrait être en réforme. */
     public function shouldBeReformed(): bool
     {
-        if (!$this->purchase_date) {
+        if (! $this->purchase_date) {
             return false;
         }
         $reformDate = $this->purchase_date->copy()->addYears(self::REFORM_YEARS);
+
         return now()->greaterThanOrEqualTo($reformDate);
     }
 
@@ -252,5 +274,15 @@ class Vehicle extends Model
                 $vehicle->venal_value = $vehicle->computeVenalValue();
             }
         });
+    }
+
+    public function inspections(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(VehicleInspection::class)->orderByDesc('inspected_at');
+    }
+
+    public function latestInspection(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(VehicleInspection::class)->latestOfMany('inspected_at');
     }
 }

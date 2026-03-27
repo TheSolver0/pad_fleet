@@ -35,7 +35,9 @@
                 </tbody>
             </table>
         </div>
-        @if($directions->hasPages()) <div class="p-3 border-top">{{ $directions->links() }}</div> @endif
+        @if($directions->hasPages())
+            <div class="p-3 border-top">{{ $directions->links('pagination::bootstrap-5') }}</div>
+        @endif
     </div>
     @include('livewire.portal.organisation.directions.partials.modal-form')
     @include('livewire.portal.organisation.directions.partials.modal-delete')

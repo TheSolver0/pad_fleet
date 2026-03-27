@@ -6,10 +6,13 @@ use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\DriverAssignment;
+
 
 class Driver extends Model
 {
     use Auditable;
+    
 
     protected $guarded = [
     ];
@@ -80,4 +83,17 @@ class Driver extends Model
     {
         static::bootAuditable();
     }
+
+public function assignments(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(DriverAssignment::class)->orderByDesc('started_at');
+}
+
+public function activeAssignment(): \Illuminate\Database\Eloquent\Relations\HasOne
+{
+    return $this->hasOne(DriverAssignment::class)
+        ->where('status', DriverAssignment::STATUS_ACTIVE)
+        ->where('type', DriverAssignment::TYPE_VEHICLE)
+        ->latest('started_at');
+}
 }

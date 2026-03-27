@@ -17,7 +17,7 @@ class Sinistre extends Model
 
     protected $fillable = [
         'vehicle_id', 'mission_id', 'declared_at', 'description', 'location',
-        'estimated_cost', 'responsibility', 'garage_id', 'assureur_id', 'status', 'notes', 'police_report_path',
+        'estimated_cost', 'responsibility', 'garage_id', 'assureur_id', 'status', 'notes', 'police_report_path','driver_id',
     ];
 
     protected function casts(): array
@@ -67,4 +67,8 @@ class Sinistre extends Model
     {
         static::bootAuditable();
     }
+    public function driver(): BelongsTo
+{
+    return $this->belongsTo(Driver::class);
+}
 }

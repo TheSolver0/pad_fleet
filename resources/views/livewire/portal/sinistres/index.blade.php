@@ -6,7 +6,8 @@
             <div class="module-toolbar">
                 <span class="module-toolbar-title">Sinistres</span>
                 <div class="module-toolbar-filters">
-                    <input type="text" class="form-control form-control-sm" style="width: 200px;" placeholder="Description..." wire:model.live.debounce.300ms="search">
+                    <input type="text" class="form-control form-control-sm" style="width: 200px;"
+                        placeholder="Description..." wire:model.live.debounce.300ms="search">
                     <select class="form-select form-select-sm" style="width: 130px;" wire:model.live="status_filter">
                         <option value="">Tous</option>
                         <option value="declared">Déclaré</option>
@@ -27,11 +28,13 @@
                     <tr>
                         <th>Date</th>
                         <th>Véhicule</th>
+                        <th>Chauffeur</th>
                         <th>Description</th>
                         <th>Coût estimé</th>
                         <th>Responsabilité</th>
                         <th>Garage</th>
                         <th>Statut</th>
+
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -40,15 +43,32 @@
                         <tr>
                             <td class="small">{{ $s->declared_at->format('d/m/Y H:i') }}</td>
                             <td>{{ $s->vehicle?->registration ?? '—' }}</td>
+                            <td>
+                                @if ($s->driver)
+                                    <span class="fw-medium">{{ $s->driver->full_name }}</span>
+                                    @if ($s->driver->matricule)
+                                        <br><small class="text-muted">{{ $s->driver->matricule }}</small>
+                                    @endif
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
                             <td>{{ Str::limit($s->description, 40) }}</td>
                             <td>{{ $s->estimated_cost ? format_money($s->estimated_cost, 0) . ' F' : '—' }}</td>
                             <td>{{ $s->responsibility ?? '—' }}</td>
                             <td>{{ $s->garage?->name ?? '—' }}</td>
-                            <td><span class="badge {{ $s->status === 'closed' ? 'bg-success' : ($s->status === 'in_repair' ? 'bg-warning text-dark' : 'bg-info') }}">{{ $s->status_label }}</span></td>
+                            <td><span
+                                    class="badge {{ $s->status === 'closed' ? 'bg-success' : ($s->status === 'in_repair' ? 'bg-warning text-dark' : 'bg-info') }}">{{ $s->status_label }}</span>
+                            </td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="openEdit({{ $s->id }})"><i class="bi bi-pencil"></i></button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openPhotoModal({{ $s->id }})"><i class="bi bi-image"></i></button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" wire:click="confirmDelete({{ $s->id }})"><i class="bi bi-trash"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    wire:click="openEdit({{ $s->id }})"><i class="bi bi-pencil"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    wire:click="openPhotoModal({{ $s->id }})"><i
+                                        class="bi bi-image"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    wire:click="confirmDelete({{ $s->id }})"><i
+                                        class="bi bi-trash"></i></button>
                             </td>
                         </tr>
                     @empty
@@ -59,7 +79,7 @@
                 </tbody>
             </table>
         </div>
-        @if($sinistres->hasPages())
+        @if ($sinistres->hasPages())
             <div class="p-3 border-top">{{ $sinistres->links() }}</div>
         @endif
     </div>
