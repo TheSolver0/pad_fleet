@@ -3,9 +3,14 @@
 namespace App\Livewire\Portal\Diagnostics;
 
 use App\Models\Diagnostic;
+use App\Models\Driver;
+use App\Models\Garage;
+use App\Models\Person;
 use App\Models\Vehicle;
 use App\Models\Mechanic;
+use App\Models\WorkOrder;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -22,11 +27,19 @@ class Index extends Component
     public ?int $editingId = null;
 
     public ?int $vehicle_id = null;
+    public ?int $garage_id = null;
     public ?int $mechanic_id = null;
     public string $diagnostic_date = '';
+    public string $requester_kind = 'driver';
+    public ?int $requester_id = null;
     public string $user_name = '';
     public string $user_role = '';
     public string $km_arrival = '';
+    public bool $has_admin_file = false;
+    public bool $has_jack = false;
+    public bool $has_wheel_key = false;
+    public bool $has_spare_wheel = false;
+    public bool $has_first_aid = false;
     public string $observations = '';
     public string $engine_issues = '';
     public string $suspension_transmission = '';
@@ -45,11 +58,19 @@ class Index extends Component
     {
         return [
             'vehicle_id' => 'required|exists:vehicles,id',
+            'garage_id' => 'nullable|exists:garages,id',
             'mechanic_id' => 'nullable|exists:mechanics,id',
             'diagnostic_date' => 'required|date',
-            'user_name' => 'required|string|max:200',
-            'user_role' => 'required|string|max:100',
+            'requester_kind' => 'required|in:driver,person',
+            'requester_id' => 'nullable|integer',
+            'user_name' => 'nullable|string|max:200',
+            'user_role' => 'nullable|string|max:100',
             'km_arrival' => 'required|integer|min:0',
+            'has_admin_file' => 'boolean',
+            'has_jack' => 'boolean',
+            'has_wheel_key' => 'boolean',
+            'has_spare_wheel' => 'boolean',
+            'has_first_aid' => 'boolean',
             'observations' => 'nullable|string',
             'engine_issues' => 'nullable|string',
             'suspension_transmission' => 'nullable|string',
@@ -76,11 +97,19 @@ class Index extends Component
         $diagnostic = Diagnostic::findOrFail($id);
         $this->editingId = $diagnostic->id;
         $this->vehicle_id = $diagnostic->vehicle_id;
+        $this->garage_id = $diagnostic->garage_id;
         $this->mechanic_id = $diagnostic->mechanic_id;
         $this->diagnostic_date = $diagnostic->diagnostic_date->format('Y-m-d');
+        $this->requester_kind = $diagnostic->requester_type === Person::class ? 'person' : 'driver';
+        $this->requester_id = $diagnostic->requester_id;
         $this->user_name = $diagnostic->user_name;
         $this->user_role = $diagnostic->user_role;
         $this->km_arrival = (string) $diagnostic->km_arrival;
+        $this->has_admin_file = (bool) $diagnostic->has_admin_file;
+        $this->has_jack = (bool) $diagnostic->has_jack;
+        $this->has_wheel_key = (bool) $diagnostic->has_wheel_key;
+        $this->has_spare_wheel = (bool) $diagnostic->has_spare_wheel;
+        $this->has_first_aid = (bool) $diagnostic->has_first_aid;
         $this->observations = $diagnostic->observations ?? '';
         $this->engine_issues = $diagnostic->engine_issues ?? '';
         $this->suspension_transmission = $diagnostic->suspension_transmission ?? '';
@@ -98,14 +127,27 @@ class Index extends Component
     public function saveDiagnostic(): void
     {
         $this->validate();
+        $mechanic = Mechanic::where('user_id', Auth::id())->first();
+        $requesterClass = $this->requester_kind === 'person' ? Person::class : Driver::class;
+        $requester = $this->requester_id ? $requesterClass::find($this->requester_id) : null;
+        $resolvedName = $requester?->full_name ?? $requester?->name ?? $this->user_name;
+        $resolvedRole = $this->requester_kind === 'person' ? 'Personne' : 'Chauffeur';
         
         $data = [
             'vehicle_id' => $this->vehicle_id,
-            'mechanic_id' => $this->mechanic_id,
+            'garage_id' => $this->garage_id,
+            'mechanic_id' => $mechanic?->id ?: $this->mechanic_id,
             'diagnostic_date' => $this->diagnostic_date,
-            'user_name' => $this->user_name,
-            'user_role' => $this->user_role,
+            'requester_type' => $requesterClass,
+            'requester_id' => $this->requester_id,
+            'user_name' => $resolvedName,
+            'user_role' => $resolvedRole,
             'km_arrival' => (int) $this->km_arrival,
+            'has_admin_file' => $this->has_admin_file,
+            'has_jack' => $this->has_jack,
+            'has_wheel_key' => $this->has_wheel_key,
+            'has_spare_wheel' => $this->has_spare_wheel,
+            'has_first_aid' => $this->has_first_aid,
             'observations' => $this->observations ?: null,
             'engine_issues' => $this->engine_issues ?: null,
             'suspension_transmission' => $this->suspension_transmission ?: null,
@@ -125,7 +167,24 @@ class Index extends Component
             $this->dispatch('notify', type: 'success', message: 'Diagnostic mis à jour.');
         } else {
             $data['reference'] = Diagnostic::generateReference();
-            Diagnostic::create($data);
+            $diagnostic = Diagnostic::create($data);
+            $targetMechanicId = $diagnostic->mechanic_id ?: Mechanic::where('is_active', true)->value('id');
+            if ($targetMechanicId) {
+                WorkOrder::firstOrCreate(
+                    ['diagnostic_id' => $diagnostic->id],
+                    [
+                        'vehicle_id' => $diagnostic->vehicle_id,
+                        'mechanic_id' => $targetMechanicId,
+                        'reference' => WorkOrder::generateReference(),
+                        'transfer_reference' => 'TR-' . $diagnostic->reference,
+                        'transfer_date' => $diagnostic->diagnostic_date,
+                        'work_date' => $diagnostic->diagnostic_date,
+                        'work_description' => trim((string) ($diagnostic->internal_works ?: $diagnostic->external_works ?: 'Travaux à compléter à partir du pré-diagnostic.')),
+                        'status' => WorkOrder::STATUS_PENDING,
+                        'completion_percent' => 0,
+                    ]
+                );
+            }
             $this->dispatch('notify', type: 'success', message: 'Diagnostic créé.');
         }
 
@@ -193,11 +252,19 @@ class Index extends Component
     private function resetForm(): void
     {
         $this->vehicle_id = null;
+        $this->garage_id = null;
         $this->mechanic_id = null;
         $this->diagnostic_date = '';
+        $this->requester_kind = 'driver';
+        $this->requester_id = null;
         $this->user_name = '';
         $this->user_role = '';
         $this->km_arrival = '';
+        $this->has_admin_file = false;
+        $this->has_jack = false;
+        $this->has_wheel_key = false;
+        $this->has_spare_wheel = false;
+        $this->has_first_aid = false;
         $this->observations = '';
         $this->engine_issues = '';
         $this->suspension_transmission = '';
@@ -214,7 +281,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Diagnostic::query()->with(['vehicle:id,registration', 'mechanic:id,first_name,last_name']);
+        $query = Diagnostic::query()->with(['vehicle:id,registration', 'garage:id,name', 'mechanic:id,first_name,last_name']);
         
         if ($this->search !== '') {
             $query->where(function ($q) {
@@ -241,12 +308,18 @@ class Index extends Component
 
         $diagnostics = $query->orderByDesc('diagnostic_date')->paginate(12);
         $vehicles = Vehicle::orderBy('registration')->get(['id', 'registration']);
+        $garages = Garage::where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $mechanics = Mechanic::where('is_active', true)->orderBy('last_name')->get(['id', 'first_name', 'last_name']);
+        $drivers = Driver::orderBy('last_name')->get(['id', 'first_name', 'last_name']);
+        $persons = Person::orderBy('name')->get(['id', 'name', 'first_name', 'last_name']);
 
         return view('livewire.portal.diagnostics.index', [
             'diagnostics' => $diagnostics,
             'vehicles' => $vehicles,
+            'garages' => $garages,
             'mechanics' => $mechanics,
+            'drivers' => $drivers,
+            'persons' => $persons,
         ])->layout('layouts.app', ['title' => 'Diagnostics']);
     }
 }

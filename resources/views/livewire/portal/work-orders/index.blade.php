@@ -1,5 +1,12 @@
 <div>
     <p class="section-label">Bons de travail - Sortie des pièces de rechange et travaux sur véhicule</p>
+    <div class="row g-2 mb-3">
+        <div class="col-md-2"><div class="alert alert-light border mb-0 py-2">En attente: <strong>{{ $statusStats['pending'] }}</strong></div></div>
+        <div class="col-md-2"><div class="alert alert-light border mb-0 py-2">En cours: <strong>{{ $statusStats['in_progress'] }}</strong></div></div>
+        <div class="col-md-2"><div class="alert alert-light border mb-0 py-2">Terminés: <strong>{{ $statusStats['completed'] }}</strong></div></div>
+        <div class="col-md-2"><div class="alert alert-light border mb-0 py-2">Validés: <strong>{{ $statusStats['validated'] }}</strong></div></div>
+        <div class="col-md-4"><div class="alert alert-info mb-0 py-2">Progression moyenne: <strong>{{ $statusStats['avg_progress'] }}%</strong></div></div>
+    </div>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">
@@ -33,6 +40,7 @@
                         <th>Date</th>
                         <th>Mécanicien</th>
                         <th>Description</th>
+                        <th>Progression</th>
                         <th>Coût total</th>
                         <th>Statut</th>
                         <th class="text-end">Actions</th>
@@ -60,6 +68,12 @@
                                 @if(strlen($workOrder->work_description) > 50)
                                     <small class="text-muted">...</small>
                                 @endif
+                            </td>
+                            <td>
+                                <div class="small fw-semibold">{{ $workOrder->completion_percent }}%</div>
+                                <div class="progress" style="height:4px">
+                                    <div class="progress-bar" style="width: {{ $workOrder->completion_percent }}%"></div>
+                                </div>
                             </td>
                             <td class="fw-semibold text-end">
                                 @if($workOrder->total_cost)
@@ -95,7 +109,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="bi bi-hammer fs-1 d-block mb-2"></i>
                                 Aucun bon de travail trouvé
                             </td>
@@ -124,7 +138,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Véhicule <span class="text-danger">*</span></label>
-                                <select class="form-select @error('vehicle_id') is-invalid @enderror" wire:model="vehicle_id">
+                                <select class="form-select @error('vehicle_id') is-invalid @enderror" wire:model="vehicle_id" @if($diagnostic_id) disabled @endif>
                                     <option value="">—</option>
                                     @foreach($vehicles as $v)
                                         <option value="{{ $v->id }}">{{ $v->registration }}</option>
@@ -134,12 +148,20 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Diagnostic associé</label>
-                                <select class="form-select" wire:model="diagnostic_id">
+                                <select class="form-select" wire:model.live="diagnostic_id">
                                     <option value="">Aucun</option>
                                     @foreach($diagnostics as $d)
-                                        <option value="{{ $d->id }}" {{ $d->reference }} - {{ $d->vehicle->registration }}</option>
+                                        <option value="{{ $d->id }}">{{ $d->reference }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Réf. fiche transfert</label>
+                                <input type="text" class="form-control" wire:model="transfer_reference" placeholder="TR-...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date transfert</label>
+                                <input type="date" class="form-control" wire:model="transfer_date">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Mécanicien <span class="text-danger">*</span></label>
@@ -166,7 +188,7 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Description des travaux <span class="text-danger">*</span></label>
-                                <textarea class="form-control @error('work_description') is-invalid @enderror" rows="3" wire:model="work_description" placeholder="Description détaillée des travaux à effectuer..."></textarea>
+                                <textarea class="form-control js-rich-text @error('work_description') is-invalid @enderror" rows="3" wire:model="work_description" placeholder="Description détaillée des travaux à effectuer..."></textarea>
                                 @error('work_description') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -175,13 +197,71 @@
                             <div class="col-12">
                                 <h6 class="text-primary mb-3">Pièces et matériel</h6>
                             </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold">Sorties stock (consommation interne)</span>
+                                    <div class="d-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-success" href="{{ route('stock.purchase-orders', ['work_order_id' => $editingId]) }}" target="_blank">
+                                            <i class="bi bi-cart-check me-1"></i> Bon de commande lié
+                                        </a>
+                                        @if($editingId)
+                                            <button type="button" class="btn btn-sm {{ $stock_applied ? 'btn-outline-secondary' : 'btn-outline-primary' }}"
+                                                    wire:click="applyStockExit" @disabled($stock_applied)>
+                                                <i class="bi bi-box-arrow-down me-1"></i> Appliquer sorties stock
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-2">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Article</th>
+                                                <th style="width:110px">Qté</th>
+                                                <th style="width:160px">Magasin</th>
+                                                <th style="width:60px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($parts_lines as $i => $line)
+                                                <tr>
+                                                    <td>
+                                                        <select class="form-select form-select-sm" wire:model="parts_lines.{{ $i }}.article_id">
+                                                            <option value="">—</option>
+                                                            @foreach($articles as $a)
+                                                                <option value="{{ $a->id }}">{{ $a->name }} ({{ $a->reference }})</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td><input type="number" class="form-control form-control-sm" wire:model="parts_lines.{{ $i }}.quantity" min="1"></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm" wire:model="parts_lines.{{ $i }}.stock_location">
+                                                            <option value="main">Magasin principal</option>
+                                                            <option value="garage">Magasin garage</option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        @if(count($parts_lines) > 1)
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removePartLine({{ $i }})"><i class="bi bi-trash"></i></button>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="addPartLine"><i class="bi bi-plus-lg me-1"></i>Ajouter une pièce</button>
+                                @if($stock_applied)
+                                    <div class="small text-muted mt-1">Sorties stock déjà appliquées pour ce bon.</div>
+                                @endif
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Pièces utilisées</label>
-                                <textarea class="form-control" rows="3" wire:model="parts_used" placeholder="Liste des pièces utilisées avec quantités..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="3" wire:model="parts_used" placeholder="Liste des pièces utilisées avec quantités..."></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Pièces retirées</label>
-                                <textarea class="form-control" rows="3" wire:model="parts_removed" placeholder="Pièces retirées du véhicule..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="3" wire:model="parts_removed" placeholder="Pièces retirées du véhicule..."></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Matériel utilisé</label>
@@ -199,11 +279,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Problèmes identifiés</label>
-                                <textarea class="form-control" rows="3" wire:model="problems_found" placeholder="Problèmes supplémentaires découverts..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="3" wire:model="problems_found" placeholder="Problèmes supplémentaires découverts..."></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Solutions appliquées</label>
-                                <textarea class="form-control" rows="3" wire:model="solutions_applied" placeholder="Solutions mises en œuvre..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="3" wire:model="solutions_applied" placeholder="Solutions mises en œuvre..."></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Notes techniques</label>
@@ -241,10 +321,90 @@
                                     <option value="validated">Validé</option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Progression (%)</label>
+                                <input type="number" class="form-control" wire:model="completion_percent" min="0" max="100">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Notes de fin de travaux</label>
                                 <textarea class="form-control" rows="2" wire:model="completion_notes" placeholder="Notes sur l'achèvement des travaux..."></textarea>
                             </div>
+                        </div>
+                        <div class="row g-3 mt-4">
+                            <div class="col-12 d-flex justify-content-between align-items-center">
+                                <h6 class="text-primary mb-0">Programme de tâches</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="addTaskLine"><i class="bi bi-plus-lg me-1"></i>Ajouter</button>
+                            </div>
+                            <div class="col-12">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Tâche</th>
+                                                <th style="width:130px">Durée (min)</th>
+                                                <th style="width:220px">Ressource</th>
+                                                <th style="width:90px">Fait</th>
+                                                <th style="width:60px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($tasks as $i => $task)
+                                                <tr>
+                                                    <td><input type="text" class="form-control form-control-sm" wire:model="tasks.{{ $i }}.title"></td>
+                                                    <td><input type="number" class="form-control form-control-sm" wire:model="tasks.{{ $i }}.estimated_minutes" min="0"></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm" wire:model="tasks.{{ $i }}.mechanic_id">
+                                                            <option value="">—</option>
+                                                            @foreach($mechanics as $m)
+                                                                <option value="{{ $m->id }}">{{ $m->last_name }} {{ $m->first_name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td class="text-center"><input type="checkbox" wire:model="tasks.{{ $i }}.is_done"></td>
+                                                    <td>
+                                                        @if(count($tasks) > 1)
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeTaskLine({{ $i }})"><i class="bi bi-trash"></i></button>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-2">Photos avant / après</h6>
+                                @if(!$editingId)
+                                    <div class="alert alert-light border small mb-0">Enregistrez d’abord le bon, puis ajoutez les photos.</div>
+                                @endif
+                            </div>
+                            @if($editingId)
+                                <div class="col-md-3">
+                                    <label class="form-label">Date prise</label>
+                                    <input type="date" class="form-control form-control-sm" wire:model="photo_taken_at">
+                                </div>
+                                <div class="col-md-9">
+                                    <label class="form-label">Légende</label>
+                                    <input type="text" class="form-control form-control-sm" wire:model="photo_caption">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ajouter photo AVANT</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="file" class="form-control form-control-sm" wire:model="before_photo_file" accept="image/*">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="uploadBeforePhoto">Ajouter</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ajouter photo APRÈS</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="file" class="form-control form-control-sm" wire:model="after_photo_file" accept="image/*">
+                                        <button type="button" class="btn btn-sm btn-outline-success" wire:click="uploadAfterPhoto">Ajouter</button>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -467,3 +627,31 @@
     </div>
     @endif
 </div>
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    (function () {
+        function initEditors() {
+            if (!window.tinymce) return;
+            document.querySelectorAll('textarea.js-rich-text').forEach((el) => {
+                if (el.dataset.richInited === '1') return;
+                el.dataset.richInited = '1';
+                tinymce.init({
+                    target: el,
+                    menubar: false,
+                    height: 180,
+                    plugins: 'lists link table',
+                    toolbar: 'undo redo | bold italic underline | bullist numlist | alignleft aligncenter alignright | table | removeformat',
+                    setup: function (editor) {
+                        editor.on('change keyup', function () {
+                            editor.save();
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                        });
+                    }
+                });
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEditors);
+        else initEditors();
+        document.addEventListener('livewire:navigated', initEditors);
+    })();
+</script>

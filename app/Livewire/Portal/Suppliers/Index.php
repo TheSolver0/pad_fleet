@@ -140,7 +140,9 @@ class Index extends Component
             ->withAvg('evaluations', 'quality_score')
             ->withAvg('evaluations', 'delivery_score')
             ->withAvg('evaluations', 'reputation_score')
-            ->withCount('evaluations');
+            ->withCount('evaluations')
+            ->withCount('purchaseOrders')
+            ->withSum('purchaseOrders', 'total_amount');
 
         if ($this->search !== '') {
             $query->where(function ($q) {
@@ -152,9 +154,16 @@ class Index extends Component
         }
 
         $suppliers = $query->orderBy('name')->paginate(20);
+        $topSuppliers = Supplier::query()
+            ->withCount('purchaseOrders')
+            ->withSum('purchaseOrders', 'total_amount')
+            ->orderByDesc('purchase_orders_count')
+            ->limit(5)
+            ->get(['id', 'name']);
 
         return view('livewire.portal.suppliers.index', [
             'suppliers' => $suppliers,
+            'topSuppliers' => $topSuppliers,
         ]);
     }
 }

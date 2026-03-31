@@ -21,6 +21,8 @@
                     <tr>
                         <th>Matricule</th>
                         <th>Nom</th>
+                        <th>Type</th>
+                        <th>Lié à</th>
                         <th>Service</th>
                         <th>Contact</th>
                         <th class="text-end">Actions</th>
@@ -31,6 +33,14 @@
                         <tr>
                             <td>{{ $d->matricule ?? '—' }}</td>
                             <td><span class="fw-medium">{{ $d->name }}</span></td>
+                            <td><span class="badge bg-light text-dark">{{ $d->type_label }}</span></td>
+                            <td>
+                                @if($d->demandeur_type === 'person')
+                                    {{ $d->person?->name ?? '—' }}
+                                @else
+                                    {{ $d->direction?->name ?? '—' }}
+                                @endif
+                            </td>
                             <td>{{ $d->service?->name ?? '—' }}</td>
                             <td>
                                 @if($d->contact_phone || $d->contact_email)
@@ -46,7 +56,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">Aucun demandeur.</td>
+                            <td colspan="7" class="text-center text-muted py-4">Aucun demandeur.</td>
                         </tr>
                     @endforelse
                 </tbody>

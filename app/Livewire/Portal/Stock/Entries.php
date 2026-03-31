@@ -23,7 +23,7 @@ class Entries extends Component
     public bool $showSupplierModal = false;
 
     // Champs pour entrée directe (plusieurs lignes possibles)
-    public array $entry_lines = []; // [ ['article_id' => x, 'quantity' => '1'], ... ]
+    public array $entry_lines = []; // [ ['article_id' => x, 'quantity' => '1', 'unit_price' => ''], ... ]
     public string $reference = '';
     public string $notes = '';
     public ?int $supplier_id = null;
@@ -59,6 +59,7 @@ class Entries extends Component
             foreach ($this->entry_lines as $i => $line) {
                 $rules["entry_lines.{$i}.article_id"] = 'required|exists:articles,id';
                 $rules["entry_lines.{$i}.quantity"] = 'required|integer|min:1';
+                $rules["entry_lines.{$i}.unit_price"] = 'nullable|numeric|min:0';
             }
             if ($this->create_supplier) {
                 $rules['supplier_name'] = 'required|string|max:200';
@@ -75,7 +76,7 @@ class Entries extends Component
     public function openCreate(): void
     {
         $this->resetForm();
-        $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
+        $this->entry_lines = [['article_id' => null, 'quantity' => '1', 'unit_price' => '']];
         $this->showFormModal = true;
     }
 
@@ -109,6 +110,7 @@ class Entries extends Component
         foreach ($this->entry_lines as $line) {
             $articleId = (int) $line['article_id'];
             $qty = (int) $line['quantity'];
+            $unitPrice = ($line['unit_price'] ?? '') !== '' ? (float) $line['unit_price'] : null;
             if ($articleId <= 0 || $qty <= 0) {
                 continue;
             }
@@ -117,6 +119,8 @@ class Entries extends Component
                 'location' => $this->location,
                 'type' => StockMovement::TYPE_ENTRY,
                 'quantity' => $qty,
+                'unit_price' => $unitPrice,
+                'total_cost' => $unitPrice !== null ? $unitPrice * $qty : null,
                 'reference' => $this->reference,
                 'reason' => $this->notes ?: 'Réception / Achat direct',
                 'supplier_id' => $this->supplier_id,
@@ -146,6 +150,8 @@ class Entries extends Component
                     'location' => $this->location,
                     'type' => StockMovement::TYPE_ENTRY,
                     'quantity' => $item->remaining_quantity,
+                    'unit_price' => $item->unit_price,
+                    'total_cost' => (float) $item->unit_price * (int) $item->remaining_quantity,
                     'reference' => $purchaseOrder->reference,
                     'reason' => 'Réception bon de commande',
                     'supplier_id' => $purchaseOrder->supplier_id,
@@ -173,7 +179,7 @@ class Entries extends Component
 
     public function addEntryLine(): void
     {
-        $this->entry_lines[] = ['article_id' => null, 'quantity' => '1'];
+        $this->entry_lines[] = ['article_id' => null, 'quantity' => '1', 'unit_price' => ''];
     }
 
     public function removeEntryLine(int $index): void
@@ -191,7 +197,7 @@ class Entries extends Component
     {
         $this->reset(['purchase_order_id', 'entry_lines', 'reference']);
         if ($this->entry_type === 'direct') {
-            $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
+            $this->entry_lines = [['article_id' => null, 'quantity' => '1', 'unit_price' => '']];
         }
     }
 
@@ -211,7 +217,7 @@ class Entries extends Component
 
     private function resetForm(): void
     {
-        $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
+        $this->entry_lines = [['article_id' => null, 'quantity' => '1', 'unit_price' => '']];
         $this->reference = '';
         $this->notes = '';
         $this->supplier_id = null;
@@ -227,7 +233,7 @@ class Entries extends Component
         $this->new_article_unit = 'unité';
         $this->purchase_order_id = null;
         if ($this->entry_type === 'direct' && empty($this->entry_lines)) {
-            $this->entry_lines = [['article_id' => null, 'quantity' => '1']];
+            $this->entry_lines = [['article_id' => null, 'quantity' => '1', 'unit_price' => '']];
         }
         $this->resetValidation();
     }

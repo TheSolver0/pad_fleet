@@ -3,6 +3,7 @@
 namespace App\Livewire\Portal\Mechanics;
 
 use App\Models\Mechanic;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -18,6 +19,7 @@ class Index extends Component
 
     public string $first_name = '';
     public string $last_name = '';
+    public ?int $user_id = null;
     public string $phone = '';
     public string $email = '';
     public string $address = '';
@@ -35,6 +37,7 @@ class Index extends Component
         return [
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
+            'user_id' => 'nullable|exists:users,id',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:150',
             'address' => 'nullable|string',
@@ -60,6 +63,7 @@ class Index extends Component
         $this->editingId = $mechanic->id;
         $this->first_name = $mechanic->first_name;
         $this->last_name = $mechanic->last_name;
+        $this->user_id = $mechanic->user_id;
         $this->phone = $mechanic->phone ?? '';
         $this->email = $mechanic->email ?? '';
         $this->address = $mechanic->address ?? '';
@@ -81,6 +85,7 @@ class Index extends Component
         $data = [
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
+            'user_id' => $this->user_id,
             'phone' => $this->phone ?: null,
             'email' => $this->email ?: null,
             'address' => $this->address ?: null,
@@ -130,6 +135,7 @@ class Index extends Component
     {
         $this->first_name = '';
         $this->last_name = '';
+        $this->user_id = null;
         $this->phone = '';
         $this->email = '';
         $this->address = '';
@@ -156,9 +162,11 @@ class Index extends Component
         }
 
         $mechanics = $query->orderBy('last_name')->orderBy('first_name')->paginate(20);
+        $users = User::orderBy('name')->get(['id', 'name', 'email']);
 
         return view('livewire.portal.mechanics.index', [
             'mechanics' => $mechanics,
+            'users' => $users,
         ]);
     }
 }

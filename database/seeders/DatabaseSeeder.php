@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ArticleSeeder::class);
         $this->call(MechanicSeeder::class);
         $this->call(CitySeeder::class);
+        $this->call(OperationsAndReportsSeeder::class);
 
         $user = User::updateOrCreate(
             ['email' => 'test@example.com'],

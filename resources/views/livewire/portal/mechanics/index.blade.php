@@ -119,6 +119,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Compte utilisateur lié (accès plateforme)</label>
+                            <select class="form-select" wire:model="user_id">
+                                <option value="">—</option>
+                                @foreach($users as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
+                                @endforeach
+                            </select>
+                            @error('user_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                        </div>
 
                         <div class="row">
                             <div class="col-md-6">

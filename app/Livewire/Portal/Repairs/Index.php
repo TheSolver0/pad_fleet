@@ -4,8 +4,10 @@ namespace App\Livewire\Portal\Repairs;
 
 use App\Models\Garage;
 use App\Models\Repair;
+use App\Models\RepairExpense;
 use App\Models\Vehicle;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -35,6 +37,8 @@ class Index extends Component
     public string $quality_rating = '';
     public string $delay_rating = '';
     public string $evaluation_comment = '';
+    public array $expense_lines = [];
+    public array $expense_files = [];
     
     // Nouvelle rubrique pour les réparations
     public string $repair_type = '';
@@ -89,6 +93,14 @@ class Index extends Component
         $this->quality_rating = $r->quality_rating !== null ? (string) $r->quality_rating : '';
         $this->delay_rating = $r->delay_rating !== null ? (string) $r->delay_rating : '';
         $this->evaluation_comment = $r->evaluation_comment ?? '';
+        $this->expense_lines = $r->expenses->map(fn ($e) => [
+            'label' => $e->label,
+            'amount' => (string) $e->amount,
+            'notes' => $e->notes ?? '',
+            'existing_attachment_path' => $e->attachment_path,
+            'existing_attachment_name' => $e->attachment_name,
+        ])->toArray();
+        $this->expense_files = [];
         $this->notes = $r->notes ?? '';
         $this->repair_type = $r->repair_type ?? '';
         $this->priority = $r->priority ?? 'medium';
@@ -128,10 +140,54 @@ class Index extends Component
             $data['transfer_sheet_path'] = $path;
         }
         if ($this->editingId) {
-            Repair::findOrFail($this->editingId)->update($data);
+            $repair = Repair::findOrFail($this->editingId);
+            $repair->update($data);
+            if ($this->type === Repair::TYPE_EXTERNAL) {
+                $repair->expenses()->delete();
+                foreach ($this->expense_lines as $i => $line) {
+                    if (! filled($line['label'] ?? null) || ! filled($line['amount'] ?? null)) {
+                        continue;
+                    }
+                    $attachmentPath = null;
+                    $attachmentName = null;
+                    if (isset($this->expense_files[$i]) && $this->expense_files[$i]) {
+                        $attachmentPath = $this->expense_files[$i]->store('repairs/expenses', 'public');
+                        $attachmentName = $this->expense_files[$i]->getClientOriginalName();
+                    }
+                    $repair->expenses()->create([
+                        'label' => $line['label'],
+                        'amount' => parse_french_number((string) $line['amount']) ?? (float) $line['amount'],
+                        'notes' => $line['notes'] ?? null,
+                        'attachment_path' => $attachmentPath ?: ($line['existing_attachment_path'] ?? null),
+                        'attachment_name' => $attachmentName ?: ($line['existing_attachment_name'] ?? null),
+                        'user_id' => Auth::id(),
+                    ]);
+                }
+            }
             $this->dispatch('notify', type: 'success', message: 'Réparation mise à jour.');
         } else {
-            Repair::create($data);
+            $repair = Repair::create($data);
+            if ($this->type === Repair::TYPE_EXTERNAL) {
+                foreach ($this->expense_lines as $i => $line) {
+                    if (! filled($line['label'] ?? null) || ! filled($line['amount'] ?? null)) {
+                        continue;
+                    }
+                    $attachmentPath = null;
+                    $attachmentName = null;
+                    if (isset($this->expense_files[$i]) && $this->expense_files[$i]) {
+                        $attachmentPath = $this->expense_files[$i]->store('repairs/expenses', 'public');
+                        $attachmentName = $this->expense_files[$i]->getClientOriginalName();
+                    }
+                    $repair->expenses()->create([
+                        'label' => $line['label'],
+                        'amount' => parse_french_number((string) $line['amount']) ?? (float) $line['amount'],
+                        'notes' => $line['notes'] ?? null,
+                        'attachment_path' => $attachmentPath,
+                        'attachment_name' => $attachmentName,
+                        'user_id' => Auth::id(),
+                    ]);
+                }
+            }
             $this->dispatch('notify', type: 'success', message: 'Réparation enregistrée.');
         }
         $this->showFormModal = false;
@@ -169,6 +225,8 @@ class Index extends Component
         $this->quality_rating = '';
         $this->delay_rating = '';
         $this->evaluation_comment = '';
+        $this->expense_lines = [['label' => '', 'amount' => '', 'notes' => '', 'existing_attachment_path' => null, 'existing_attachment_name' => null]];
+        $this->expense_files = [];
         $this->repair_type = '';
         $this->priority = 'medium';
         $this->estimated_duration = '';
@@ -178,7 +236,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Repair::query()->with(['vehicle:id,registration', 'garage:id,name']);
+        $query = Repair::query()->with(['vehicle:id,registration', 'garage:id,name', 'expenses']);
         if ($this->search !== '') {
             $query->whereHas('vehicle', fn ($q) => $q->where('registration', 'like', '%' . $this->search . '%'));
         }
@@ -196,5 +254,18 @@ class Index extends Component
             'garages' => $garages,
             'mechanics' => $mechanics,
         ])->layout('layouts.app', ['title' => 'Réparations']);
+    }
+
+    public function addExpenseLine(): void
+    {
+        $this->expense_lines[] = ['label' => '', 'amount' => '', 'notes' => '', 'existing_attachment_path' => null, 'existing_attachment_name' => null];
+    }
+
+    public function removeExpenseLine(int $index): void
+    {
+        if (count($this->expense_lines) <= 1) {
+            return;
+        }
+        array_splice($this->expense_lines, $index, 1);
     }
 }

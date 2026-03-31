@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Mechanic extends Model
@@ -11,7 +12,7 @@ class Mechanic extends Model
     use Auditable;
 
     protected $fillable = [
-        'first_name', 'last_name', 'phone', 'email', 'address',
+        'user_id', 'first_name', 'last_name', 'phone', 'email', 'address',
         'specialization', 'hire_date', 'certificate', 'hourly_rate',
         'is_active', 'notes'
     ];
@@ -33,6 +34,11 @@ class Mechanic extends Model
     public function repairs(): HasMany
     {
         return $this->hasMany(Repair::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     protected static function booted(): void

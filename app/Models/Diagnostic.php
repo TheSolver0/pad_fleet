@@ -6,14 +6,17 @@ use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Diagnostic extends Model
 {
     use Auditable;
 
     protected $fillable = [
-        'vehicle_id', 'mechanic_id', 'reference', 'diagnostic_date', 'user_name', 'user_role',
-        'km_arrival', 'observations', 'engine_issues', 'suspension_transmission',
+        'vehicle_id', 'garage_id', 'mechanic_id', 'reference', 'diagnostic_date', 'user_name', 'user_role',
+        'requester_type', 'requester_id',
+        'km_arrival', 'has_admin_file', 'has_jack', 'has_wheel_key', 'has_spare_wheel', 'has_first_aid',
+        'observations', 'engine_issues', 'suspension_transmission',
         'braking_system', 'electronics_electricity', 'bodywork_paint', 'air_conditioning',
         'other_issues', 'internal_works', 'external_works', 'conclusion',
         'mechanic_signature', 'maintenance_manager_signature', 'vehicle_manager_signature',
@@ -24,6 +27,11 @@ class Diagnostic extends Model
         return [
             'diagnostic_date' => 'date',
             'km_arrival' => 'integer',
+            'has_admin_file' => 'boolean',
+            'has_jack' => 'boolean',
+            'has_wheel_key' => 'boolean',
+            'has_spare_wheel' => 'boolean',
+            'has_first_aid' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -34,9 +42,19 @@ class Diagnostic extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+    public function garage(): BelongsTo
+    {
+        return $this->belongsTo(Garage::class);
+    }
+
     public function mechanic(): BelongsTo
     {
         return $this->belongsTo(Mechanic::class);
+    }
+
+    public function requester(): MorphTo
+    {
+        return $this->morphTo(__FUNCTION__, 'requester_type', 'requester_id');
     }
 
     public function workOrders(): HasMany

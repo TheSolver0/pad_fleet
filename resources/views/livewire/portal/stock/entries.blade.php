@@ -29,6 +29,8 @@
                         <th>Référence</th>
                         <th>Article</th>
                         <th>Quantité</th>
+                        <th>Prix unitaire</th>
+                        <th>Coût total</th>
                         <th>Emplacement</th>
                         <th>Fournisseur</th>
                         <th>Type</th>
@@ -45,6 +47,8 @@
                                 <small class="text-muted">{{ $entry->article->reference }}</small>
                             </td>
                             <td class="fw-semibold text-success">+{{ $entry->quantity }}</td>
+                            <td>{{ $entry->unit_price !== null ? number_format($entry->unit_price, 0, ',', ' ') . ' F' : '—' }}</td>
+                            <td>{{ $entry->total_cost !== null ? number_format($entry->total_cost, 0, ',', ' ') . ' F' : '—' }}</td>
                             <td>
                                 <span class="badge bg-{{ $entry->location === 'main' ? 'primary' : 'secondary' }}">
                                     {{ $entry->location === 'main' ? 'Magasin principal' : 'Magasin garage' }}
@@ -68,7 +72,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="10" class="text-center text-muted py-4">
                                 <i class="bi bi-box-arrow-in-down fs-1 d-block mb-2"></i>
                                 Aucune entrée de stock trouvée
                             </td>
@@ -140,6 +144,7 @@
                                         <tr>
                                             <th>Article *</th>
                                             <th style="width:110px">Quantité *</th>
+                                            <th style="width:170px">Prix unitaire (F)</th>
                                             <th style="width:60px"></th>
                                         </tr>
                                     </thead>
@@ -158,6 +163,10 @@
                                                 <td>
                                                     <input type="number" class="form-control form-control-sm" wire:model="entry_lines.{{ $index }}.quantity" min="1">
                                                     @error('entry_lines.'.$index.'.quantity') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm" wire:model="entry_lines.{{ $index }}.unit_price" min="0" step="0.01" placeholder="Optionnel">
+                                                    @error('entry_lines.'.$index.'.unit_price') <span class="text-danger small">{{ $message }}</span> @enderror
                                                 </td>
                                                 <td>
                                                     @if(count($entry_lines) > 1)

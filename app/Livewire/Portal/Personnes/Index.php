@@ -67,8 +67,13 @@ class Index extends Component
     public function savePerson(): void
     {
         $this->validate();
+        $parts = preg_split('/\s+/', trim($this->name)) ?: [];
+        $firstName = $parts[0] ?? null;
+        $lastName = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : null;
         $data = [
             'name' => $this->name,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'email' => $this->email ?: null,
             'phone' => $this->phone ?: null,
             'direction_id' => $this->direction_id,

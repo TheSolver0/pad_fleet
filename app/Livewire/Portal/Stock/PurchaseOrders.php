@@ -7,6 +7,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Request;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -21,6 +22,7 @@ class PurchaseOrders extends Component
     public ?int $editingId = null;
 
     public ?int $supplier_id = null;
+    public ?int $work_order_id = null;
     public string $order_date = '';
     public string $expected_delivery_date = '';
     public string $notes = '';
@@ -39,6 +41,7 @@ class PurchaseOrders extends Component
     {
         $rules = [
             'supplier_id' => 'required|exists:suppliers,id',
+            'work_order_id' => 'nullable|exists:work_orders,id',
             'order_date' => 'required|date',
             'expected_delivery_date' => 'nullable|date',
             'notes' => 'nullable|string',
@@ -57,6 +60,10 @@ class PurchaseOrders extends Component
         $this->editingId = null;
         $this->order_date = now()->format('Y-m-d');
         $this->lines = [['article_id' => null, 'quantity' => '1', 'unit_price' => '']];
+        $prefillWorkOrderId = Request::query('work_order_id');
+        if ($prefillWorkOrderId) {
+            $this->work_order_id = (int) $prefillWorkOrderId;
+        }
         $this->showFormModal = true;
     }
 
@@ -65,6 +72,7 @@ class PurchaseOrders extends Component
         $po = PurchaseOrder::with('items.article')->findOrFail($id);
         $this->editingId = $po->id;
         $this->supplier_id = $po->supplier_id;
+        $this->work_order_id = $po->work_order_id;
         $this->order_date = $po->order_date->format('Y-m-d');
         $this->expected_delivery_date = $po->expected_delivery_date?->format('Y-m-d') ?? '';
         $this->notes = $po->notes ?? '';
@@ -98,6 +106,7 @@ class PurchaseOrders extends Component
 
         $data = [
             'supplier_id' => $this->supplier_id,
+            'work_order_id' => $this->work_order_id,
             'order_date' => $this->order_date,
             'expected_delivery_date' => $this->expected_delivery_date ?: null,
             'notes' => $this->notes ?: null,
@@ -174,6 +183,7 @@ class PurchaseOrders extends Component
     private function resetForm(): void
     {
         $this->supplier_id = null;
+        $this->work_order_id = null;
         $this->order_date = now()->format('Y-m-d');
         $this->expected_delivery_date = '';
         $this->notes = '';
@@ -197,11 +207,13 @@ class PurchaseOrders extends Component
         $orders = $query->orderByDesc('created_at')->paginate(15);
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $articles = Article::where('is_active', true)->orderBy('name')->get(['id', 'name', 'reference', 'purchase_price']);
+        $workOrders = \App\Models\WorkOrder::orderByDesc('work_date')->limit(200)->get(['id', 'reference']);
 
         return view('livewire.portal.stock.purchase-orders', [
             'orders' => $orders,
             'suppliers' => $suppliers,
             'articles' => $articles,
+            'workOrders' => $workOrders,
         ])->layout('layouts.app', ['title' => 'Bons de commande']);
     }
 }

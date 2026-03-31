@@ -127,6 +127,50 @@
                             <label class="form-label">Notes</label>
                             <textarea class="form-control" rows="2" wire:model="notes"></textarea>
                         </div>
+
+                        @if($type === 'external')
+                            <div class="col-12 border-top pt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="text-muted mb-0"><i class="bi bi-receipt me-1"></i> Dépenses externes + pièces jointes</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" wire:click="addExpenseLine">
+                                        <i class="bi bi-plus-lg me-1"></i>Ajouter
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Libellé</th>
+                                                <th style="width:130px">Montant (F)</th>
+                                                <th>Note</th>
+                                                <th style="width:220px">Pièce jointe</th>
+                                                <th style="width:60px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($expense_lines as $i => $line)
+                                                <tr>
+                                                    <td><input type="text" class="form-control form-control-sm" wire:model="expense_lines.{{ $i }}.label"></td>
+                                                    <td><input type="text" class="form-control form-control-sm" wire:model="expense_lines.{{ $i }}.amount"></td>
+                                                    <td><input type="text" class="form-control form-control-sm" wire:model="expense_lines.{{ $i }}.notes"></td>
+                                                    <td>
+                                                        <input type="file" class="form-control form-control-sm" wire:model="expense_files.{{ $i }}" accept=".pdf,.jpg,.jpeg,.png">
+                                                        @if(!empty($line['existing_attachment_path']))
+                                                            <a class="small" href="{{ asset('storage/'.$line['existing_attachment_path']) }}" target="_blank">{{ $line['existing_attachment_name'] ?? 'Pièce existante' }}</a>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if(count($expense_lines) > 1)
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeExpenseLine({{ $i }})"><i class="bi bi-trash"></i></button>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer">

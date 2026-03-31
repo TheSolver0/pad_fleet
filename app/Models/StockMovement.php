@@ -15,7 +15,7 @@ class StockMovement extends Model
     public const TYPE_TRANSFER = 'transfer';
 
     protected $fillable = [
-        'article_id', 'location', 'type', 'quantity', 'reference',
+        'article_id', 'location', 'type', 'quantity', 'unit_price', 'total_cost', 'reference',
         'reason', 'supplier_id', 'purchase_order_id', 'repair_id', 'user_id'
     ];
 
@@ -23,6 +23,8 @@ class StockMovement extends Model
     {
         return [
             'quantity' => 'integer',
+            'unit_price' => 'decimal:2',
+            'total_cost' => 'decimal:2',
         ];
     }
 

@@ -122,71 +122,116 @@
                                 @error('vehicle_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Mécanicien</label>
-                                <select class="form-select" wire:model="mechanic_id">
-                                    <option value="">Non assigné</option>
-                                    @foreach($mechanics as $m)
-                                        <option value="{{ $m->id }}">{{ $m->last_name }} {{ $m->first_name }}</option>
+                                <label class="form-label">Garage</label>
+                                <select class="form-select" wire:model="garage_id">
+                                    <option value="">—</option>
+                                    @foreach($garages as $g)
+                                        <option value="{{ $g->id }}">{{ $g->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
+                            @php($connectedMechanicId = \App\Models\Mechanic::where('user_id', auth()->id())->value('id'))
+                            @if(!$connectedMechanicId)
+                                <div class="col-md-6">
+                                    <label class="form-label">Mécanicien</label>
+                                    <select class="form-select" wire:model="mechanic_id">
+                                        <option value="">Non assigné</option>
+                                        @foreach($mechanics as $m)
+                                            <option value="{{ $m->id }}">{{ $m->last_name }} {{ $m->first_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @else
+                                <div class="col-md-6">
+                                    <label class="form-label">Mécanicien</label>
+                                    <input class="form-control bg-light" value="Connecté automatiquement" readonly>
+                                </div>
+                            @endif
                             <div class="col-md-4">
                                 <label class="form-label">Date diagnostic <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control @error('diagnostic_date') is-invalid @enderror" wire:model="diagnostic_date">
                                 @error('diagnostic_date') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Utilisateur <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('user_name') is-invalid @enderror" wire:model="user_name" placeholder="Nom complet">
-                                @error('user_name') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                                <label class="form-label">Demandeur type <span class="text-danger">*</span></label>
+                                <select class="form-select @error('requester_kind') is-invalid @enderror" wire:model.live="requester_kind">
+                                    <option value="driver">Chauffeur</option>
+                                    <option value="person">Personne</option>
+                                </select>
+                                @error('requester_kind') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Fonction <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('user_role') is-invalid @enderror" wire:model="user_role" placeholder="ex: Chauffeur">
-                                @error('user_role') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                                <label class="form-label">Demandeur <span class="text-danger">*</span></label>
+                                @if($requester_kind === 'driver')
+                                    <select class="form-select @error('requester_id') is-invalid @enderror" wire:model="requester_id">
+                                        <option value="">—</option>
+                                        @foreach($drivers as $d)
+                                            <option value="{{ $d->id }}">{{ $d->last_name }} {{ $d->first_name }}</option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <select class="form-select @error('requester_id') is-invalid @enderror" wire:model="requester_id">
+                                        <option value="">—</option>
+                                        @foreach($persons as $p)
+                                            <option value="{{ $p->id }}">{{ $p->full_name }}</option>
+                                        @endforeach
+                                    </select>
+                                @endif
+                                @error('requester_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Km arrivée <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('km_arrival') is-invalid @enderror" wire:model="km_arrival" min="0">
                                 @error('km_arrival') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
-                            <div class="col-md-8">
-                                <label class="form-label">Observations</label>
-                                <textarea class="form-control" rows="2" wire:model="observations" placeholder="Observations générales..."></textarea>
-                            </div>
                         </div>
 
                         <div class="row g-3 mt-4">
                             <div class="col-12">
-                                <h6 class="text-primary mb-3">Constats par catégorie</h6>
+                                <h6 class="text-primary mb-2">TRAVAUX À EFFECTUER — Désignation / Constats</h6>
+                                <div class="small text-muted mb-2">Reproduit la fiche de pré-diagnostic (catégories principales).</div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Moteur</label>
-                                <textarea class="form-control" rows="2" wire:model="engine_issues" placeholder="Problèmes moteur identifiés..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Suspension / Transmission</label>
-                                <textarea class="form-control" rows="2" wire:model="suspension_transmission" placeholder="Problèmes suspension/transmission..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Freinage</label>
-                                <textarea class="form-control" rows="2" wire:model="braking_system" placeholder="Problèmes freinage..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Électronique / Électricité</label>
-                                <textarea class="form-control" rows="2" wire:model="electronics_electricity" placeholder="Problèmes électronique/électricité..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Carrosserie / Peinture</label>
-                                <textarea class="form-control" rows="2" wire:model="bodywork_paint" placeholder="Problèmes carrosserie/peinture..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Climatisation</label>
-                                <textarea class="form-control" rows="2" wire:model="air_conditioning" placeholder="Problèmes climatisation..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Autres</label>
-                                <textarea class="form-control" rows="2" wire:model="other_issues" placeholder="Autres problèmes..."></textarea>
+                            <div class="col-12">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th style="width:260px">Désignation</th>
+                                                <th>Constats</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="fw-semibold">MOTEUR</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="engine_issues"></textarea></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">SUSPENSION / TRANSMISSION</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="suspension_transmission"></textarea></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">FREINAGE</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="braking_system"></textarea></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">ELECTRONIQUE & ELECTRICITE</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="electronics_electricity"></textarea></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">CARROSSERIE & PEINTURE</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="bodywork_paint"></textarea></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">CLIMATISATION</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="air_conditioning"></textarea></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">AUTRES</td>
+                                                <td><textarea class="form-control js-rich-text" rows="2" wire:model="other_issues"></textarea></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
@@ -194,17 +239,31 @@
                             <div class="col-12">
                                 <h6 class="text-primary mb-3">Travaux recommandés</h6>
                             </div>
+                            <div class="col-12">
+                                <h6 class="text-muted mb-2">Présence matériel</h6>
+                                <div class="row g-2 small">
+                                    <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" wire:model="has_admin_file"> Dossier administratif</label></div>
+                                    <div class="col-md-2"><label class="form-check"><input class="form-check-input" type="checkbox" wire:model="has_jack"> Cric</label></div>
+                                    <div class="col-md-2"><label class="form-check"><input class="form-check-input" type="checkbox" wire:model="has_wheel_key"> Clé de roue</label></div>
+                                    <div class="col-md-2"><label class="form-check"><input class="form-check-input" type="checkbox" wire:model="has_spare_wheel"> Roue secours</label></div>
+                                    <div class="col-md-2"><label class="form-check"><input class="form-check-input" type="checkbox" wire:model="has_first_aid"> Pharmacie</label></div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Observations</label>
+                                <textarea class="form-control js-rich-text" rows="2" wire:model="observations" placeholder="Observations générales..."></textarea>
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Travaux en interne</label>
-                                <textarea class="form-control" rows="3" wire:model="internal_works" placeholder="Travaux à effectuer en interne..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="3" wire:model="internal_works" placeholder="Travaux à effectuer en interne..."></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Travaux en externe</label>
-                                <textarea class="form-control" rows="3" wire:model="external_works" placeholder="Travaux à effectuer en externe..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="3" wire:model="external_works" placeholder="Travaux à effectuer en externe..."></textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Conclusion</label>
-                                <textarea class="form-control" rows="2" wire:model="conclusion" placeholder="Conclusion du diagnostic..."></textarea>
+                                <textarea class="form-control js-rich-text" rows="2" wire:model="conclusion" placeholder="Conclusion du diagnostic..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -387,3 +446,31 @@
     </div>
     @endif
 </div>
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    (function () {
+        function initEditors() {
+            if (!window.tinymce) return;
+            document.querySelectorAll('textarea.js-rich-text').forEach((el) => {
+                if (el.dataset.richInited === '1') return;
+                el.dataset.richInited = '1';
+                tinymce.init({
+                    target: el,
+                    menubar: false,
+                    height: 180,
+                    plugins: 'lists link table',
+                    toolbar: 'undo redo | bold italic underline | bullist numlist | alignleft aligncenter alignright | table | removeformat',
+                    setup: function (editor) {
+                        editor.on('change keyup', function () {
+                            editor.save();
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                        });
+                    }
+                });
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEditors);
+        else initEditors();
+        document.addEventListener('livewire:navigated', initEditors);
+    })();
+</script>

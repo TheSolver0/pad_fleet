@@ -3,6 +3,8 @@
 namespace App\Livewire\Portal\Demandeurs;
 
 use App\Models\Demandeur;
+use App\Models\Direction;
+use App\Models\Person;
 use App\Models\Service;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -19,7 +21,10 @@ class Index extends Component
 
     public string $matricule = '';
     public string $name = '';
+    public string $demandeur_type = Demandeur::TYPE_PERSON;
     public ?int $service_id = null;
+    public ?int $person_id = null;
+    public ?int $direction_id = null;
     public string $contact_phone = '';
     public string $contact_email = '';
     public string $notes = '';
@@ -31,7 +36,10 @@ class Index extends Component
         return [
             'name' => 'required|string|max:255',
             'matricule' => 'nullable|string|max:50',
+            'demandeur_type' => 'required|in:person,direction',
             'service_id' => 'nullable|exists:services,id',
+            'person_id' => 'nullable|required_if:demandeur_type,person|exists:persons,id',
+            'direction_id' => 'nullable|required_if:demandeur_type,direction|exists:directions,id',
             'contact_phone' => 'nullable|string|max:50',
             'contact_email' => 'nullable|email|max:100',
             'notes' => 'nullable|string',
@@ -51,7 +59,10 @@ class Index extends Component
         $this->editingId = $d->id;
         $this->matricule = $d->matricule ?? '';
         $this->name = $d->name;
+        $this->demandeur_type = $d->demandeur_type ?: Demandeur::TYPE_PERSON;
         $this->service_id = $d->service_id;
+        $this->person_id = $d->person_id;
+        $this->direction_id = $d->direction_id;
         $this->contact_phone = $d->contact_phone ?? '';
         $this->contact_email = $d->contact_email ?? '';
         $this->notes = $d->notes ?? '';
@@ -64,7 +75,10 @@ class Index extends Component
         $data = [
             'matricule' => $this->matricule ?: null,
             'name' => $this->name,
+            'demandeur_type' => $this->demandeur_type,
             'service_id' => $this->service_id,
+            'person_id' => $this->demandeur_type === Demandeur::TYPE_PERSON ? $this->person_id : null,
+            'direction_id' => $this->demandeur_type === Demandeur::TYPE_DIRECTION ? $this->direction_id : null,
             'contact_phone' => $this->contact_phone ?: null,
             'contact_email' => $this->contact_email ?: null,
             'notes' => $this->notes ?: null,
@@ -100,16 +114,28 @@ class Index extends Component
     {
         $this->matricule = '';
         $this->name = '';
+        $this->demandeur_type = Demandeur::TYPE_PERSON;
         $this->service_id = null;
+        $this->person_id = null;
+        $this->direction_id = null;
         $this->contact_phone = '';
         $this->contact_email = '';
         $this->notes = '';
         $this->resetValidation();
     }
 
+    public function updatedDemandeurType(): void
+    {
+        if ($this->demandeur_type === Demandeur::TYPE_PERSON) {
+            $this->direction_id = null;
+        } else {
+            $this->person_id = null;
+        }
+    }
+
     public function render(): View
     {
-        $query = Demandeur::query()->with('service:id,name');
+        $query = Demandeur::query()->with(['service:id,name', 'person:id,name', 'direction:id,name']);
         if ($this->search !== '') {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
@@ -118,10 +144,14 @@ class Index extends Component
         }
         $demandeurs = $query->orderBy('name')->paginate(12);
         $services = Service::orderBy('name')->get(['id', 'name']);
+        $persons = Person::orderBy('name')->get(['id', 'name']);
+        $directions = Direction::orderBy('name')->get(['id', 'name']);
 
         return view('livewire.portal.demandeurs.index', [
             'demandeurs' => $demandeurs,
             'services' => $services,
+            'persons' => $persons,
+            'directions' => $directions,
         ])->layout('layouts.app', ['title' => 'Demandeurs']);
     }
 }

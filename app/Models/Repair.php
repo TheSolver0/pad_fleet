@@ -69,6 +69,11 @@ class Repair extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(RepairExpense::class);
+    }
+
     public function getTypeLabelAttribute(): string
     {
         return $this->type === self::TYPE_INTERNAL ? 'Interne' : 'Externe';
@@ -103,7 +108,7 @@ class Repair extends Model
 
     public function getTotalCostAttribute(): float
     {
-        return $this->cost + $this->parts_cost;
+        return (float) $this->cost + (float) $this->parts_cost + (float) $this->expenses()->sum('amount');
     }
 
     /** Délai donné au prestataire (jours) — entre début et date limite prévue */

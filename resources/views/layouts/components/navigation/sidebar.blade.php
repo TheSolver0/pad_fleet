@@ -33,10 +33,11 @@
             'id'     => 'personnel',
             'label'  => 'Personnel',
             'icon'   => 'bi bi-people-fill',
-            'routes' => ['drivers.index', 'drivers.driving-licenses', 'affectations.index', 'demandeurs.index'],
+            'routes' => ['drivers.index', 'drivers.driving-licenses', 'drivers.documents', 'affectations.index', 'demandeurs.index'],
             'items'  => [
                 ['route' => 'drivers.index',            'label' => 'Chauffeurs',          'icon' => 'bi bi-person-badge-fill'],
                 ['route' => 'drivers.driving-licenses', 'label' => 'Permis de conduire',  'icon' => 'bi bi-card-text'],
+                ['route' => 'drivers.documents',        'label' => 'Docs chauffeur',      'icon' => 'bi bi-folder2-open'],
                 ['route' => 'affectations.index',       'label' => 'Affectations',        'icon' => 'bi bi-diagram-3'],
                 ['route' => 'demandeurs.index',         'label' => 'Demandeurs',          'icon' => 'bi bi-person-lines-fill'],
             ],
@@ -67,7 +68,7 @@
             'id'     => 'maintenance',
             'label'  => 'Maintenance',
             'icon'   => 'bi bi-wrench-adjustable',
-            'routes' => ['garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index', 'diagnostics.index', 'work-orders.index'],
+            'routes' => ['garages.index', 'repairs.index', 'repairs.stock-usage', 'repairs.documents', 'mechanics.index', 'mechanics.my-work', 'diagnostics.index', 'work-orders.index'],
             'items'  => [
                 ['route' => 'diagnostics.index',    'label' => 'Diagnostics',       'icon' => 'bi bi-clipboard-check'],
                 ['route' => 'work-orders.index',    'label' => 'Bons de travail',   'icon' => 'bi bi-hammer'],
@@ -76,6 +77,7 @@
                 ['route' => 'repairs.stock-usage',  'label' => 'Utilisation stock', 'icon' => 'bi bi-box-arrow-down'],
                 ['route' => 'repairs.documents',    'label' => 'Documents',         'icon' => 'bi bi-file-earmark-text'],
                 ['route' => 'mechanics.index',      'label' => 'Mécaniciens',       'icon' => 'bi bi-people-fill'],
+                ['route' => 'mechanics.my-work',    'label' => 'Mes travaux',       'icon' => 'bi bi-tools', 'can' => 'enregistrement-interventions'],
             ],
         ],
         [

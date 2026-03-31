@@ -103,6 +103,15 @@
                                 </select>
                                 @error('supplier_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bon de travail lié (optionnel)</label>
+                                <select class="form-select" wire:model="work_order_id">
+                                    <option value="">—</option>
+                                    @foreach($workOrders as $wo)
+                                        <option value="{{ $wo->id }}">{{ $wo->reference }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="col-md-3">
                                 <label class="form-label">Date commande <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" wire:model="order_date">

@@ -32,9 +32,16 @@ class Person extends Model
         return $this->hasMany(Vehicle::class, 'assigned_person_id');
     }
 
+    // Backward-compatible relation name used in some screens (withCount('vehicles'))
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(Vehicle::class, 'assigned_person_id');
+    }
+
     public function getFullNameAttribute(): string
     {
-        return $this->name ?? '';
+        $full = trim(($this->first_name ?? '').' '.($this->last_name ?? ''));
+        return $full !== '' ? $full : ($this->name ?? '');
     }
 
     /** Libellé Direction / Département / Service pour affichage */

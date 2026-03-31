@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WorkOrder extends Model
 {
@@ -16,11 +17,11 @@ class WorkOrder extends Model
     public const STATUS_VALIDATED = 'validated';
 
     protected $fillable = [
-        'vehicle_id', 'diagnostic_id', 'mechanic_id', 'reference', 'work_date',
+        'vehicle_id', 'diagnostic_id', 'mechanic_id', 'reference', 'transfer_reference', 'transfer_date', 'work_date',
         'start_time', 'end_time', 'work_description', 'parts_used', 'parts_removed',
         'equipment_used', 'tools_used', 'technical_notes', 'problems_found',
         'solutions_applied', 'quality_control', 'final_checks', 'labor_cost',
-        'parts_cost', 'total_cost', 'status', 'completion_notes',
+        'parts_cost', 'total_cost', 'status', 'completion_percent', 'stock_applied_at', 'completion_notes',
         'mechanic_signature', 'supervisor_signature', 'client_signature', 'validation_date',
     ];
 
@@ -28,11 +29,14 @@ class WorkOrder extends Model
     {
         return [
             'work_date' => 'date',
+            'transfer_date' => 'date',
             'start_time' => 'datetime',
             'end_time' => 'datetime',
             'labor_cost' => 'decimal:2',
             'parts_cost' => 'decimal:2',
             'total_cost' => 'decimal:2',
+            'completion_percent' => 'integer',
+            'stock_applied_at' => 'datetime',
             'validation_date' => 'date',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
@@ -52,6 +56,26 @@ class WorkOrder extends Model
     public function mechanic(): BelongsTo
     {
         return $this->belongsTo(Mechanic::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(WorkOrderTask::class);
+    }
+
+    public function parts(): HasMany
+    {
+        return $this->hasMany(WorkOrderPart::class);
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(WorkOrderPhoto::class)->orderBy('sort_order');
+    }
+
+    public function getPartsTotalCostAttribute(): float
+    {
+        return (float) $this->parts()->sum('total_cost');
     }
 
     /**

@@ -1,5 +1,23 @@
 <div>
     <p class="section-label">Gestion des fournisseurs</p>
+    <div class="activity-card mb-3">
+        <div class="p-3">
+            <div class="fw-semibold mb-2">Top fournisseurs par nombre de commandes</div>
+            <div class="row g-2">
+                @forelse($topSuppliers as $ts)
+                    <div class="col-md-4">
+                        <div class="border rounded p-2 small">
+                            <div class="fw-semibold">{{ $ts->name }}</div>
+                            <div class="text-muted">{{ $ts->purchase_orders_count }} commandes</div>
+                            <div class="text-muted">Montant cumulé: {{ number_format((float)($ts->purchase_orders_sum_total_amount ?? 0), 0, ',', ' ') }} F</div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-12 text-muted small">Aucune commande fournisseur pour le moment.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">
@@ -23,6 +41,7 @@
                         <th>Nom</th>
                         <th>Code</th>
                         <th>Qualité / Délais / Réputation</th>
+                        <th>Commandes</th>
                         <th>Contact principal</th>
                         <th>Contact personne</th>
                         <th>Téléphone contact</th>
@@ -55,6 +74,10 @@
                                 @endif
                             </td>
                             <td>
+                                <span class="badge bg-light text-dark">{{ $supplier->purchase_orders_count ?? 0 }}</span>
+                                <div class="small text-muted">{{ number_format((float)($supplier->purchase_orders_sum_total_amount ?? 0), 0, ',', ' ') }} F</div>
+                            </td>
+                            <td>
                                 @if($supplier->phone)
                                     <div><i class="bi bi-telephone me-1"></i>{{ $supplier->phone }}</div>
                                 @endif
@@ -85,7 +108,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="bi bi-building fs-1 d-block mb-2"></i>
                                 Aucun fournisseur trouvé
                             </td>

@@ -30,6 +30,7 @@
                         <th>Description</th>
                         <th>Délai donné / réalisé</th>
                         <th>Qualité</th>
+                        <th>Dépenses externes</th>
                         <th>Coût</th>
                         <th>Début / Fin</th>
                         <th class="text-end">Actions</th>
@@ -59,6 +60,13 @@
                                     —
                                 @endif
                             </td>
+                            <td>
+                                @if($r->type === 'external')
+                                    {{ number_format($r->expenses->sum('amount'), 0, ',', ' ') }} F
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td>{{ $r->cost ? format_money($r->cost, 0) . ' F' : '—' }}</td>
                             <td class="small">{{ $r->started_at?->format('d/m/Y') ?? '—' }} → {{ $r->completed_at?->format('d/m/Y') ?? '—' }}</td>
                             <td class="text-end">
@@ -68,7 +76,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">Aucune réparation.</td>
+                            <td colspan="10" class="text-center text-muted py-4">Aucune réparation.</td>
                         </tr>
                     @endforelse
                 </tbody>

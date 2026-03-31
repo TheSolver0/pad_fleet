@@ -26,6 +26,17 @@
                     <input type="date" class="form-control form-control-sm" style="width: 140px;" wire:model="start_date">
                     <input type="date" class="form-control form-control-sm" style="width: 140px;" wire:model="end_date">
                 </div>
+                <div class="module-toolbar-actions">
+                    <a class="btn btn-sm btn-outline-secondary"
+                       href="{{ route('reports.vehicle-consumption.export.pdf', ['start_date' => $start_date, 'end_date' => $end_date, 'vehicle_category' => $vehicle_category]) }}"
+                       target="_blank">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                    </a>
+                    <a class="btn btn-sm btn-outline-success"
+                       href="{{ route('reports.vehicle-consumption.export.excel', ['start_date' => $start_date, 'end_date' => $end_date, 'vehicle_category' => $vehicle_category]) }}">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                    </a>
+                </div>
             </div>
         </div>
 

@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // Personnel
     Route::get('/drivers', DriversIndex::class)->name('drivers.index');
     Route::get('/drivers/driving-licenses', DrivingLicenses::class)->name('drivers.driving-licenses');
+    Route::get('/drivers/documents', \App\Livewire\Portal\Drivers\Documents::class)->name('drivers.documents')->middleware('permission:suivi-assurances');
     Route::get('/assureurs', \App\Livewire\Portal\Assureurs\Index::class)->name('assureurs.index');
     Route::get('/planning', \App\Livewire\Portal\Missions\Index::class)->name('missions.index');
     Route::get('/schedules', \App\Livewire\Portal\Schedules\Index::class)->name('schedules.index');
@@ -51,11 +52,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/repairs/stock-usage', \App\Livewire\Portal\Repairs\StockUsage::class)->name('repairs.stock-usage')->middleware('permission:sorties-stock');
     Route::get('/repairs/documents', \App\Livewire\Portal\Repairs\Documents::class)->name('repairs.documents');
     Route::get('/mechanics', \App\Livewire\Portal\Mechanics\Index::class)->name('mechanics.index');
+    Route::get('/mechanics/my-work', \App\Livewire\Portal\Mechanics\MyWork::class)->name('mechanics.my-work')->middleware('permission:enregistrement-interventions');
     Route::get('/diagnostics', \App\Livewire\Portal\Diagnostics\Index::class)->name('diagnostics.index');
     Route::get('/work-orders/create', [App\Http\Controllers\WorkOrderController::class, 'create'])->name('work-orders.create');
     Route::get('/work-orders', \App\Livewire\Portal\WorkOrders\Index::class)->name('work-orders.index');
     Route::get('/api/diagnostics/{id}/pdf', [App\Http\Controllers\API\DiagnosticPDFController::class, 'generatePDF']);
     Route::get('/api/work-orders/{id}/pdf', [App\Http\Controllers\API\WorkOrderPDFController::class, 'generatePDF']);
+    Route::get('/api/work-orders/{id}/transfer-pdf', [App\Http\Controllers\API\WorkOrderPDFController::class, 'generateTransferPDF']);
     Route::get('/stock', \App\Livewire\Portal\Stock\Index::class)->name('stock.index')->middleware('permission:gestion-stock');
     Route::get('/stock/articles', \App\Livewire\Portal\Stock\Articles::class)->name('stock.articles')->middleware('permission:gestion-stock');
     Route::get('/stock/categories', \App\Livewire\Portal\Stock\Categories::class)->name('stock.categories')->middleware('permission:gestion-stock');
@@ -65,6 +68,27 @@ Route::middleware('auth')->group(function () {
     Route::get('/prestataire-evaluations', \App\Livewire\Portal\PrestataireEvaluations\Index::class)->name('prestataire-evaluations.index');
     Route::get('/reports', \App\Livewire\Portal\Reports\Index::class)->name('reports.index');
     Route::get('/reports/vehicle-consumption', \App\Livewire\Portal\Reports\VehicleConsumption::class)->name('reports.vehicle-consumption');
+    Route::get('/reports/vehicle-consumption/export/excel', [\App\Http\Controllers\ReportExportController::class, 'vehicleConsumptionExcel'])->name('reports.vehicle-consumption.export.excel');
+    Route::get('/reports/vehicle-consumption/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'vehicleConsumptionPdf'])->name('reports.vehicle-consumption.export.pdf');
+    Route::get('/reports/fleet/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'fleetGlobalPdf'])->name('reports.fleet.export.pdf');
+
+    Route::get('/reports/stock-movements/export/excel', [\App\Http\Controllers\ReportExportController::class, 'stockMovementsExcel'])->name('reports.stock-movements.export.excel');
+    Route::get('/reports/stock-movements/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'stockMovementsPdf'])->name('reports.stock-movements.export.pdf');
+
+    Route::get('/reports/stock-per-vehicle/export/excel', [\App\Http\Controllers\ReportExportController::class, 'stockPerVehicleExcel'])->name('reports.stock-per-vehicle.export.excel');
+    Route::get('/reports/stock-per-vehicle/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'stockPerVehiclePdf'])->name('reports.stock-per-vehicle.export.pdf');
+
+    Route::get('/reports/drivers/export/excel', [\App\Http\Controllers\ReportExportController::class, 'driversExcel'])->name('reports.drivers.export.excel');
+    Route::get('/reports/drivers/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'driversPdf'])->name('reports.drivers.export.pdf');
+
+    Route::get('/reports/repairs/export/excel', [\App\Http\Controllers\ReportExportController::class, 'repairsExcel'])->name('reports.repairs.export.excel');
+    Route::get('/reports/repairs/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'repairsPdf'])->name('reports.repairs.export.pdf');
+
+    Route::get('/reports/missions/export/excel', [\App\Http\Controllers\ReportExportController::class, 'missionsExcel'])->name('reports.missions.export.excel');
+    Route::get('/reports/missions/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'missionsPdf'])->name('reports.missions.export.pdf');
+
+    Route::get('/reports/sinistres/export/excel', [\App\Http\Controllers\ReportExportController::class, 'sinistresExcel'])->name('reports.sinistres.export.excel');
+    Route::get('/reports/sinistres/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'sinistresPdf'])->name('reports.sinistres.export.pdf');
     Route::get('/audit', \App\Livewire\Portal\Audit\Index::class)->name('audit.index')->middleware('permission:audits');
     Route::get('/dashboard/trip-stats', [App\Http\Controllers\DashboardController::class, 'tripStats'])
     ->middleware(['auth'])

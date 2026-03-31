@@ -17,7 +17,7 @@ class PurchaseOrder extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        'reference', 'supplier_id', 'order_date', 'expected_delivery_date',
+        'reference', 'supplier_id', 'work_order_id', 'order_date', 'expected_delivery_date',
         'received_date', 'status', 'total_amount', 'tax_amount', 'notes', 'user_id'
     ];
 
@@ -36,6 +36,11 @@ class PurchaseOrder extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
     }
 
     public function user(): BelongsTo

@@ -19,6 +19,37 @@
                             @error('name') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">Type de demandeur <span class="text-danger">*</span></label>
+                            <select class="form-select @error('demandeur_type') is-invalid @enderror" wire:model.live="demandeur_type">
+                                <option value="person">Personne</option>
+                                <option value="direction">Direction</option>
+                            </select>
+                            @error('demandeur_type') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
+                        @if($demandeur_type === 'person')
+                            <div class="col-md-6">
+                                <label class="form-label">Personne liée <span class="text-danger">*</span></label>
+                                <select class="form-select @error('person_id') is-invalid @enderror" wire:model="person_id">
+                                    <option value="">—</option>
+                                    @foreach($persons as $p)
+                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('person_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            </div>
+                        @else
+                            <div class="col-md-6">
+                                <label class="form-label">Direction liée <span class="text-danger">*</span></label>
+                                <select class="form-select @error('direction_id') is-invalid @enderror" wire:model="direction_id">
+                                    <option value="">—</option>
+                                    @foreach($directions as $dir)
+                                        <option value="{{ $dir->id }}">{{ $dir->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('direction_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            </div>
+                        @endif
+                        <div class="col-md-6">
                             <label class="form-label">Service</label>
                             <select class="form-select" wire:model="service_id">
                                 <option value="">—</option>

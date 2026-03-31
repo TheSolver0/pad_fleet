@@ -4,29 +4,57 @@ namespace App\Livewire\Portal\Reports;
 
 use App\Models\Mission;
 use App\Models\Repair;
+use App\Models\RepairPart;
 use App\Models\Sinistre;
+use App\Models\StockMovement;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 class Index extends Component
 {
     public string $period = 'month'; // month, quarter, year
+    public string $vehicle_category = '';
+    public string $start_date = '';
+    public string $end_date = '';
+
+    public function mount(): void
+    {
+        $this->syncDatesFromPeriod();
+    }
+
+    public function updatedPeriod(): void
+    {
+        $this->syncDatesFromPeriod();
+    }
+
+    private function syncDatesFromPeriod(): void
+    {
+        $now = now();
+        $start = match ($this->period) {
+            'year' => $now->copy()->startOfYear(),
+            'quarter' => $now->copy()->startOfQuarter(),
+            default => $now->copy()->startOfMonth(),
+        };
+        $end = $now->copy();
+
+        $this->start_date = $start->format('Y-m-d');
+        $this->end_date = $end->format('Y-m-d');
+    }
 
     public function getStatsProperty(): array
     {
-        $start = match ($this->period) {
-            'year' => now()->startOfYear(),
-            'quarter' => now()->startOfQuarter(),
-            default => now()->startOfMonth(),
-        };
-        $end = now();
+        $start = Carbon::parse($this->start_date)->startOfDay();
+        $end = Carbon::parse($this->end_date)->endOfDay();
+        $category = $this->vehicle_category;
 
         $missions = Mission::whereBetween('date_start', [$start, $end])->where('status', Mission::STATUS_COMPLETED);
         $totalMissions = (clone $missions)->count();
         $totalDistance = (clone $missions)->sum('distance_km');
 
-        $repairs = Repair::whereBetween('created_at', [$start, $end]);
+        $repairs = Repair::whereBetween('created_at', [$start, $end])
+            ->when($category !== '', fn ($q) => $q->whereHas('vehicle', fn ($vq) => $vq->where('category', $category)));
         $totalRepairs = (clone $repairs)->count();
         $totalRepairCost = (clone $repairs)->sum('cost');
 
@@ -34,11 +62,24 @@ class Index extends Component
         $totalSinistres = (clone $sinistres)->count();
         $estimatedSinistreCost = (clone $sinistres)->sum('estimated_cost');
 
+        $parts = RepairPart::query()
+            ->whereHas('repair', fn ($q) => $q->whereBetween('created_at', [$start, $end]))
+            ->when($category !== '', fn ($q) => $q->whereHas('repair.vehicle', fn ($vq) => $vq->where('category', $category)));
+        $partsQty = (int) (clone $parts)->sum('quantity_used');
+        $partsCost = (float) (clone $parts)->sum('total_price');
+
+        $stockMovements = StockMovement::query()->whereBetween('created_at', [$start, $end]);
+        $stockEntries = (clone $stockMovements)->where('type', StockMovement::TYPE_ENTRY);
+        $stockExits = (clone $stockMovements)->where('type', StockMovement::TYPE_EXIT);
+
         $vehiclesCount = Vehicle::count();
         $availableCount = Vehicle::where('status', Vehicle::STATUS_AVAILABLE)->count();
         $repairCount = Vehicle::where('status', Vehicle::STATUS_REPAIR)->count();
 
         return [
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'vehicle_category' => $category,
             'vehicles_total' => $vehiclesCount,
             'vehicles_available' => $availableCount,
             'vehicles_repair' => $repairCount,
@@ -48,6 +89,12 @@ class Index extends Component
             'repairs_cost' => $totalRepairCost,
             'sinistres_count' => $totalSinistres,
             'sinistres_estimated_cost' => $estimatedSinistreCost,
+            'parts_quantity' => $partsQty,
+            'parts_cost' => $partsCost,
+            'stock_entries_qty' => (int) (clone $stockEntries)->sum('quantity'),
+            'stock_entries_cost' => (float) (clone $stockEntries)->sum('total_cost'),
+            'stock_exits_qty' => (int) (clone $stockExits)->sum('quantity'),
+            'stock_exits_cost' => (float) (clone $stockExits)->sum('total_cost'),
         ];
     }
 

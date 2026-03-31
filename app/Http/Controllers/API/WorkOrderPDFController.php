@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\WorkOrder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class WorkOrderPDFController extends Controller
 {
@@ -15,16 +15,22 @@ class WorkOrderPDFController extends Controller
     public function generatePDF(int $id)
     {
         $workOrder = WorkOrder::with(['vehicle', 'mechanic', 'diagnostic'])->findOrFail($id);
-        
-        // Pour l'instant, retourner une vue HTML simple
-        // TODO: Intégrer domPDF ou autre librairie PDF
-        $html = view('pdf.work-order', [
-            'workOrder' => $workOrder
-        ])->render();
-        
-        return Response::make($html, 200, [
-            'Content-Type' => 'text/html',
-            'Content-Disposition' => 'inline; filename="bon-de-travail-' . $workOrder->reference . '.html"'
-        ]);
+
+        $pdf = Pdf::loadView('pdf.work-order', [
+            'workOrder' => $workOrder,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('bon-de-travail-' . $workOrder->reference . '.pdf');
+    }
+
+    public function generateTransferPDF(int $id)
+    {
+        $workOrder = WorkOrder::with(['vehicle', 'mechanic', 'diagnostic', 'parts.article'])->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.transfer-sheet', [
+            'workOrder' => $workOrder,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('fiche-transfert-' . $workOrder->reference . '.pdf');
     }
 }
