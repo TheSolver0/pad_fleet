@@ -5,14 +5,20 @@ namespace App\Livewire\Portal\Missions;
 use App\Models\Demandeur;
 use App\Models\Driver;
 use App\Models\Mission;
+use App\Models\MissionDocument;
+use App\Models\MissionPhoto;
 use App\Models\Vehicle;
+use App\Exports\MissionReportExport;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public string $view_mode = 'list'; // list | calendar
     public string $search = '';
@@ -44,6 +50,32 @@ class Index extends Component
     public string $new_demandeur_service = '';
     public ?int $city_id = null;
 
+    // Photos
+    public $before_photos = [];
+    public $after_photos = [];
+    public bool $showPhotoModal = false;
+    public ?int $photoMissionId = null;
+    public string $photo_type = 'before'; // before or after
+
+    // New city creation
+    public bool $create_city = false;
+    public string $new_city_name = '';
+    public string $new_city_code = '';
+    public string $new_city_region = '';
+
+    // Documents
+    public $documents = [];
+    public bool $showDocumentModal = false;
+    public ?int $documentMissionId = null;
+    public string $document_type = 'autre';
+
+    // Rapport
+    public bool $showReportModal = false;
+    public string $report_start_date = '';
+    public string $report_end_date = '';
+    public string $report_status = '';
+    public ?int $report_demandeur_id = null;
+
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'view_mode' => ['except' => 'list']];
 
     public function mount(): void
@@ -70,6 +102,8 @@ class Index extends Component
             'new_demandeur_email' => 'nullable|email|max:150',
             'new_demandeur_service' => 'nullable|string|max:200',
             'city_id' => 'nullable|exists:cities,id',
+            'new_city_name' => 'required_if:create_city,true|string|max:100',
+            'new_city_region' => 'required_if:create_city,true|string|max:100',
         ];
     }
 
@@ -98,20 +132,31 @@ class Index extends Component
 
     public function saveMission(): void
     {
-        $this->validate();
-        
-        // Créer le demandeur si nécessaire
+        // Créer le demandeur AVANT validation si nécessaire
         if ($this->create_demandeur && $this->new_demandeur_name) {
             $demandeur = Demandeur::create([
                 'name' => $this->new_demandeur_name,
-                'phone' => $this->new_demandeur_phone ?: null,
-                'email' => $this->new_demandeur_email ?: null,
-                'service' => $this->new_demandeur_service ?: null,
-                'is_active' => true,
+                'contact_phone' => $this->new_demandeur_phone ?: null,
+                'contact_email' => $this->new_demandeur_email ?: null,
+                'demandeur_type' => 'person', // default type
             ]);
             $this->demandeur_id = $demandeur->id;
         }
         
+        // Créer la ville AVANT validation si nécessaire
+        if ($this->create_city && $this->new_city_name) {
+            $city = \App\Models\City::create([
+                'name' => $this->new_city_name,
+                'code' => $this->new_city_code ?: null,
+                'region' => $this->new_city_region,
+                'is_active' => true,
+            ]);
+            $this->city_id = $city->id;
+        }
+        
+        // Maintenant valider après création
+        $this->validate();
+
         $data = [
             'vehicle_id' => $this->vehicle_id,
             'driver_id' => $this->driver_id,
@@ -153,7 +198,7 @@ class Index extends Component
         $m = Mission::findOrFail($this->editingId);
         $m->update([
             'status' => $this->approve_reject ? Mission::STATUS_APPROVED : Mission::STATUS_REJECTED,
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::user()->id,
             'approved_at' => now(),
         ]);
         $this->dispatch('notify', type: 'success', message: $this->approve_reject ? 'Mission approuvée.' : 'Mission refusée.');
@@ -205,17 +250,132 @@ class Index extends Component
         $this->new_demandeur_email = '';
         $this->new_demandeur_service = '';
         $this->city_id = null;
+        $this->before_photos = [];
+        $this->after_photos = [];
+        $this->create_city = false;
+        $this->new_city_name = '';
+        $this->new_city_code = '';
+        $this->new_city_region = '';
+        $this->documents = [];
         $this->resetValidation();
     }
 
-    public function updatedCreateDemandeur(): void
+    public function updatedCreateCity(): void
     {
-        if (!$this->create_demandeur) {
-            $this->reset(['new_demandeur_name', 'new_demandeur_phone', 'new_demandeur_email', 'new_demandeur_service']);
-            $this->demandeur_id = null;
+        if (!$this->create_city) {
+            $this->reset(['new_city_name', 'new_city_region']);
+            $this->city_id = null;
         } else {
-            $this->demandeur_id = null; // Désélectionner le demandeur existant
+            $this->city_id = null; // Désélectionner la ville existante
         }
+    }
+
+    public function openPhotoModal(int $missionId, string $type = 'before'): void
+    {
+        $this->photoMissionId = $missionId;
+        $this->photo_type = $type;
+        $this->before_photos = [];
+        $this->after_photos = [];
+        $this->showPhotoModal = true;
+    }
+
+    public function savePhotos(): void
+    {
+        $this->validate([
+            'before_photos.*' => 'image|max:5120', // 5MB max
+            'after_photos.*' => 'image|max:5120',
+        ]);
+
+        $mission = Mission::findOrFail($this->photoMissionId);
+
+        // Save before photos
+        if ($this->before_photos) {
+            foreach ($this->before_photos as $photo) {
+                MissionPhoto::storeUpload($mission, $photo, 'before');
+            }
+        }
+
+        // Save after photos
+        if ($this->after_photos) {
+            foreach ($this->after_photos as $photo) {
+                MissionPhoto::storeUpload($mission, $photo, 'after');
+            }
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Photos enregistrées.');
+        $this->showPhotoModal = false;
+        $this->before_photos = [];
+        $this->after_photos = [];
+    }
+
+    public function deletePhoto(int $photoId): void
+    {
+        $photo = MissionPhoto::findOrFail($photoId);
+        $photo->delete();
+        $this->dispatch('notify', type: 'success', message: 'Photo supprimée.');
+    }
+
+    public function openDocumentModal(int $missionId): void
+    {
+        $this->documentMissionId = $missionId;
+        $this->documents = [];
+        $this->document_type = 'autre';
+        $this->showDocumentModal = true;
+    }
+
+    public function saveDocuments(): void
+    {
+        $this->validate([
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg,png,gif|max:10240', // 10MB max
+        ]);
+
+        $mission = Mission::findOrFail($this->documentMissionId);
+
+        if ($this->documents) {
+            foreach ($this->documents as $document) {
+                MissionDocument::storeUpload($mission, $document, $this->document_type);
+            }
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Documents enregistrés.');
+        $this->showDocumentModal = false;
+        $this->documents = [];
+    }
+
+    public function deleteDocument(int $documentId): void
+    {
+        $document = MissionDocument::findOrFail($documentId);
+        $document->delete();
+        $this->dispatch('notify', type: 'success', message: 'Document supprimé.');
+    }
+
+    public function openReportModal(): void
+    {
+        $this->report_start_date = now()->startOfMonth()->format('Y-m-d');
+        $this->report_end_date = now()->endOfMonth()->format('Y-m-d');
+        $this->report_status = '';
+        $this->report_demandeur_id = null;
+        $this->showReportModal = true;
+    }
+
+    public function exportReport()
+    {
+        $this->validate([
+            'report_start_date' => 'required|date',
+            'report_end_date' => 'required|date|after_or_equal:report_start_date',
+        ]);
+
+        $filename = 'rapport-missions-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
+
+        return Excel::download(
+            new MissionReportExport(
+                $this->report_start_date,
+                $this->report_end_date,
+                $this->report_status ?: null,
+                $this->report_demandeur_id
+            ),
+            $filename
+        );
     }
 
     public function getCalendarMissionsProperty(): \Illuminate\Support\Collection

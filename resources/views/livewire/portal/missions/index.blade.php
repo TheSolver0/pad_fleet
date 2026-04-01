@@ -28,6 +28,9 @@
                     @endif
                 </div>
                 <div class="module-toolbar-actions">
+                    <button type="button" class="btn btn-sm btn-info me-2" wire:click="openReportModal">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Rapport
+                    </button>
                     <button type="button" class="btn btn-sm btn-primary" wire:click="openCreate">
                         <i class="bi bi-plus-lg me-1"></i> Nouvelle réservation
                     </button>
@@ -79,6 +82,17 @@
                                     @if($m->status === 'approved')
                                         <button type="button" class="btn btn-sm btn-outline-info" wire:click="markCompleted({{ $m->id }})">Terminer</button>
                                     @endif
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openPhotoModal({{ $m->id }}, 'before')" title="Photos avant mission">
+                                            <i class="bi bi-camera"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openPhotoModal({{ $m->id }}, 'after')" title="Photos après mission">
+                                            <i class="bi bi-camera-fill"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info" wire:click="openDocumentModal({{ $m->id }})" title="Documents">
+                                            <i class="bi bi-file-earmark"></i>
+                                        </button>
+                                    </div>
                                     <button type="button" class="btn btn-sm btn-outline-danger" wire:click="confirmDelete({{ $m->id }})"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
@@ -131,4 +145,7 @@
     @include('livewire.portal.missions.partials.modal-form')
     @include('livewire.portal.missions.partials.modal-approve')
     @include('livewire.portal.missions.partials.modal-delete')
+    @include('livewire.portal.missions.partials.modal-photos')
+    @include('livewire.portal.missions.partials.modal-documents')
+    @include('livewire.portal.missions.partials.modal-report')
 </div>

@@ -65,6 +65,26 @@ class Mission extends Model
         return $this->hasOne(Sinistre::class);
     }
 
+    public function photos()
+    {
+        return $this->hasMany(MissionPhoto::class);
+    }
+
+    public function beforePhotos()
+    {
+        return $this->photos()->where('type', 'before');
+    }
+
+    public function afterPhotos()
+    {
+        return $this->photos()->where('type', 'after');
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(MissionDocument::class);
+    }
+
     /** Calcule distance_km à partir de km_departure et km_return. */
     public function computeDistance(): void
     {

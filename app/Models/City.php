@@ -23,6 +23,37 @@ class City extends Model
     ];
 
     /**
+     * Génère automatiquement un code à partir du nom si non fourni
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->code)) {
+                // Générer un code à partir du nom : utiliser 3 premières lettres en majuscules
+                $baseCode = strtoupper(substr($model->name, 0, 3));
+                $code = $baseCode;
+                $count = 1;
+
+                // Vérifier l'unicité et ajouter un suffixe si nécessaire
+                while (self::where('code', $code)->exists()) {
+                    $code = $baseCode . $count;
+                    $count++;
+                }
+
+                $model->code = $code;
+            } else {
+                // Si le code est fourni, s'assurer qu'il est unique
+                $originalCode = $model->code;
+                $count = 1;
+                while (self::where('code', $model->code)->exists()) {
+                    $model->code = $originalCode . $count;
+                    $count++;
+                }
+            }
+        });
+    }
+
+    /**
      * Get the display name with region.
      */
     public function getDisplayNameAttribute(): string
