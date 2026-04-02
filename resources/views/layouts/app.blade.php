@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     @stack('styles')
-    <script src="{{ asset('js/pdf-generator.js') }}" defer></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
             --pad-blue: #1a5490;
@@ -338,7 +338,6 @@
     </main>
 </div>
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;" id="toast-container"></div>
-<script src="{{ asset('js/sidebar-drawer.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

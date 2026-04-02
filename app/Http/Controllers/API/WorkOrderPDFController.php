@@ -14,13 +14,20 @@ class WorkOrderPDFController extends Controller
      */
     public function generatePDF(int $id)
     {
-        $workOrder = WorkOrder::with(['vehicle', 'mechanic', 'diagnostic'])->findOrFail($id);
+        $workOrder = WorkOrder::with([
+            'vehicle',
+            'mechanic',
+            'diagnostic',
+            'tasks.mechanic',
+            'parts.article',
+            'photos'
+        ])->findOrFail($id);
 
         $pdf = Pdf::loadView('pdf.work-order', [
             'workOrder' => $workOrder,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->download('bon-de-travail-' . $workOrder->reference . '.pdf');
+        return $pdf->stream('bon-de-travail-' . $workOrder->reference . '.pdf');
     }
 
     public function generateTransferPDF(int $id)

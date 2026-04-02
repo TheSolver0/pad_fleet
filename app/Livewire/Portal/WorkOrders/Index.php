@@ -25,6 +25,7 @@ class Index extends Component
     public bool $showFormModal = false;
     public bool $showViewModal = false;
     public bool $showDeleteModal = false;
+    public bool $showPhotosModal = false;
     public ?int $editingId = null;
 
     public ?int $vehicle_id = null;
@@ -158,6 +159,12 @@ class Index extends Component
         ])->toArray();
         $this->stock_applied = $workOrder->stock_applied_at !== null;
         $this->showFormModal = true;
+    }
+
+    public function openPhotos(int $id): void
+    {
+        $this->editingId = $id;
+        $this->showPhotosModal = true;
     }
 
     public function saveWorkOrder(): void
@@ -489,6 +496,26 @@ class Index extends Component
         $this->photo_caption = '';
         $this->photo_taken_at = '';
         $this->dispatch('notify', type: 'success', message: 'Photo après ajoutée.');
+    }
+
+    public function deletePhoto(int $photoId): void
+    {
+        $photo = \App\Models\WorkOrderPhoto::findOrFail($photoId);
+
+        // Vérifier que la photo appartient bien au bon de travail en cours d'édition
+        if ($this->editingId && $photo->work_order_id === $this->editingId) {
+            // Supprimer le fichier du stockage
+            if (\Storage::disk('public')->exists($photo->file_path)) {
+                \Storage::disk('public')->delete($photo->file_path);
+            }
+
+            // Supprimer de la base de données
+            $photo->delete();
+
+            $this->dispatch('notify', type: 'success', message: 'Photo supprimée.');
+        } else {
+            $this->dispatch('notify', type: 'error', message: 'Erreur lors de la suppression de la photo.');
+        }
     }
 
     public function render(): View

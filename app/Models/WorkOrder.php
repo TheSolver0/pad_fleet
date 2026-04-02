@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\HasMaintenanceEnums;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,10 +11,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class WorkOrder extends Model
 {
     use Auditable;
+    use HasMaintenanceEnums;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_IN_PROGRESS = 'in_progress';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_VALIDATED = 'validated';
 
     protected $fillable = [
@@ -23,6 +28,22 @@ class WorkOrder extends Model
         'solutions_applied', 'quality_control', 'final_checks', 'labor_cost',
         'parts_cost', 'total_cost', 'status', 'completion_percent', 'stock_applied_at', 'completion_notes',
         'mechanic_signature', 'supervisor_signature', 'client_signature', 'validation_date',
+        // Véhicule
+        'mileage',
+
+        // État systèmes
+        'system_engine',
+        'system_suspension',
+        'system_electrical',
+        'system_body',
+        'system_ac',
+
+        // Classification de l'incident
+        'failure_cause',
+        'failure_cause_comment',
+        'failure_type',
+        'maintenance_type',
+        'operation_type',
     ];
 
     protected function casts(): array
@@ -83,18 +104,18 @@ class WorkOrder extends Model
      */
     public static function generateReference(): string
     {
-        $prefix = 'BT-' . date('Y');
-        $lastNumber = self::where('reference', 'like', $prefix . '%')
-            ->orderByRaw('CAST(SUBSTRING(reference, ' . (strlen($prefix) + 1) . ') AS UNSIGNED)')
+        $prefix = 'BT-'.date('Y');
+        $lastNumber = self::where('reference', 'like', $prefix.'%')
+            ->orderByRaw('CAST(SUBSTRING(reference, '.(strlen($prefix) + 1).') AS UNSIGNED)')
             ->value('reference');
-        
+
         if ($lastNumber) {
             $number = intval(substr($lastNumber, strlen($prefix))) + 1;
         } else {
             $number = 1;
         }
-        
-        return $prefix . str_pad($number, 4, '0', STR_PAD_LEFT);
+
+        return $prefix.str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -102,7 +123,7 @@ class WorkOrder extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_PENDING => 'En attente',
             self::STATUS_IN_PROGRESS => 'En cours',
             self::STATUS_COMPLETED => 'Terminé',
@@ -116,7 +137,7 @@ class WorkOrder extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_PENDING => 'info',
             self::STATUS_IN_PROGRESS => 'warning',
             self::STATUS_COMPLETED => 'success',
@@ -130,18 +151,18 @@ class WorkOrder extends Model
      */
     public function getWorkDurationAttribute(): ?string
     {
-        if (!$this->start_time || !$this->end_time) {
+        if (! $this->start_time || ! $this->end_time) {
             return null;
         }
-        
+
         $start = \Carbon\Carbon::parse($this->start_time);
         $end = \Carbon\Carbon::parse($this->end_time);
         $duration = $start->diff($end);
-        
+
         if ($duration->h > 0) {
-            return $duration->h . 'h ' . $duration->i . 'min';
+            return $duration->h.'h '.$duration->i.'min';
         } else {
-            return $duration->i . ' min';
+            return $duration->i.' min';
         }
     }
 
@@ -150,8 +171,8 @@ class WorkOrder extends Model
      */
     public function isSigned(): bool
     {
-        return !empty($this->mechanic_signature) && 
-               !empty($this->supervisor_signature);
+        return ! empty($this->mechanic_signature) &&
+               ! empty($this->supervisor_signature);
     }
 
     /**
@@ -159,8 +180,8 @@ class WorkOrder extends Model
      */
     public function isValidated(): bool
     {
-        return $this->status === self::STATUS_VALIDATED && 
-               !empty($this->client_signature) && 
-               !empty($this->validation_date);
+        return $this->status === self::STATUS_VALIDATED &&
+               ! empty($this->client_signature) &&
+               ! empty($this->validation_date);
     }
 }

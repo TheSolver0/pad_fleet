@@ -1,14 +1,26 @@
 // Générateur PDF pour diagnostics et bons de travail
 document.addEventListener('DOMContentLoaded', function() {
     // Écouter les événements de téléchargement PDF
+    // Livewire dispatch() events support
+    Livewire.on('download-diagnostic-pdf', function(event) {
+        const id = event?.id || null;
+        if (id) generateDiagnosticPDF(id);
+    });
+
+    Livewire.on('download-work-order-pdf', function(event) {
+        const id = event?.id || null;
+        if (id) generateWorkOrderPDF(id);
+    });
+
+    // Fallbacks (DOM custom event style)
     window.addEventListener('download-diagnostic-pdf', function(event) {
-        const { id } = event.detail;
-        generateDiagnosticPDF(id);
+        const id = event?.detail?.id || null;
+        if (id) generateDiagnosticPDF(id);
     });
 
     window.addEventListener('download-work-order-pdf', function(event) {
-        const { id } = event.detail;
-        generateWorkOrderPDF(id);
+        const id = event?.detail?.id || null;
+        if (id) generateWorkOrderPDF(id);
     });
 
     // Génération PDF pour diagnostic
@@ -42,25 +54,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Afficher un indicateur de chargement
         showLoading('Génération du PDF en cours...');
 
-        // Récupérer les données du bon de travail
-        fetch(`/api/work-orders/${id}/pdf`)
-            .then(response => response.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `bon-de-travail-${id}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                hideLoading();
-            })
-            .catch(error => {
-                console.error('Erreur lors de la génération du PDF:', error);
-                hideLoading();
-                alert('Erreur lors de la génération du PDF');
-            });
+        // Ouvrir le PDF dans un nouvel onglet
+        const url = `/api/work-orders/${id}/pdf`;
+        window.open(url, '_blank');
+
+        // Masquer le loading après un court délai
+        setTimeout(() => {
+            hideLoading();
+        }, 1000);
     }
 
     // Fonctions utilitaires

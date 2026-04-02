@@ -52,6 +52,21 @@ class Index extends Component
     public string $external_works = '';
     public string $conclusion = '';
 
+    public int|null $mileage = null;
+    // État des systèmes (valeurs : '' | 'ok' | 'defaillant' | 'a_surveiller')
+    public string $system_engine     = '';
+    public string $system_suspension = '';
+    public string $system_electrical = '';
+    public string $system_body       = '';
+    public string $system_ac         = '';
+    // Classification
+    public string $failure_cause         = '';
+    public string $failure_cause_comment = '';
+    public string $failure_type          = '';
+    public string $maintenance_type      = '';
+    public string $operation_type        = '';
+
+
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'date_filter' => ['except' => '']];
 
     protected function rules(): array
@@ -82,6 +97,16 @@ class Index extends Component
             'internal_works' => 'nullable|string',
             'external_works' => 'nullable|string',
             'conclusion' => 'nullable|string',
+            'mileage'           => ['nullable', 'integer', 'min:0'],
+            'system_engine'     => ['nullable', 'string'],
+            'system_suspension' => ['nullable', 'string'],
+            'system_electrical' => ['nullable', 'string'],
+            'system_body'       => ['nullable', 'string'],
+            'system_ac'         => ['nullable', 'string'],
+            'failure_cause'     => ['nullable', Rule::in(array_keys(\App\Models\WorkOrder::failureCauses()))],
+            'failure_type'      => ['nullable', Rule::in(array_keys(\App\Models\WorkOrder::failureTypes()))],
+            'maintenance_type'  => ['nullable', Rule::in(array_keys(\App\Models\WorkOrder::maintenanceTypes()))],
+            'operation_type'    => ['nullable', Rule::in(array_keys(\App\Models\WorkOrder::operationTypes()))],
         ];
     }
 
@@ -122,6 +147,18 @@ class Index extends Component
         $this->external_works = $diagnostic->external_works ?? '';
         $this->conclusion = $diagnostic->conclusion ?? '';
         $this->showFormModal = true;
+
+        $this->mileage               = $workOrder->mileage;
+        $this->system_engine         = $workOrder->system_engine ?? '';
+        $this->system_suspension     = $workOrder->system_suspension ?? '';
+        $this->system_electrical     = $workOrder->system_electrical ?? '';
+        $this->system_body           = $workOrder->system_body ?? '';
+        $this->system_ac             = $workOrder->system_ac ?? '';
+        $this->failure_cause         = $workOrder->failure_cause ?? '';
+        $this->failure_cause_comment = $workOrder->failure_cause_comment ?? '';
+        $this->failure_type          = $workOrder->failure_type ?? '';
+        $this->maintenance_type      = $workOrder->maintenance_type ?? '';
+        $this->operation_type        = $workOrder->operation_type ?? '';
     }
 
     public function saveDiagnostic(): void
@@ -182,6 +219,18 @@ class Index extends Component
                         'work_description' => trim((string) ($diagnostic->internal_works ?: $diagnostic->external_works ?: 'Travaux à compléter à partir du pré-diagnostic.')),
                         'status' => WorkOrder::STATUS_PENDING,
                         'completion_percent' => 0,
+
+                        'mileage'               => $this->mileage,
+                        'system_engine'         => $this->system_engine       ?: null,
+                        'system_suspension'     => $this->system_suspension   ?: null,
+                        'system_electrical'     => $this->system_electrical   ?: null,
+                        'system_body'           => $this->system_body         ?: null,
+                        'system_ac'             => $this->system_ac           ?: null,
+                        'failure_cause'         => $this->failure_cause       ?: null,
+                        'failure_cause_comment' => $this->failure_cause_comment ?: null,
+                        'failure_type'          => $this->failure_type        ?: null,
+                        'maintenance_type'      => $this->maintenance_type    ?: null,
+                        'operation_type'        => $this->operation_type      ?: null,
                     ]
                 );
             }
