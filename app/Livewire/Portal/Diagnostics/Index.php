@@ -12,6 +12,7 @@ use App\Models\WorkOrder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
 use Livewire\WithPagination;
 
 class Index extends Component
@@ -148,17 +149,18 @@ class Index extends Component
         $this->conclusion = $diagnostic->conclusion ?? '';
         $this->showFormModal = true;
 
-        $this->mileage               = $workOrder->mileage;
-        $this->system_engine         = $workOrder->system_engine ?? '';
-        $this->system_suspension     = $workOrder->system_suspension ?? '';
-        $this->system_electrical     = $workOrder->system_electrical ?? '';
-        $this->system_body           = $workOrder->system_body ?? '';
-        $this->system_ac             = $workOrder->system_ac ?? '';
-        $this->failure_cause         = $workOrder->failure_cause ?? '';
-        $this->failure_cause_comment = $workOrder->failure_cause_comment ?? '';
-        $this->failure_type          = $workOrder->failure_type ?? '';
-        $this->maintenance_type      = $workOrder->maintenance_type ?? '';
-        $this->operation_type        = $workOrder->operation_type ?? '';
+        $workOrder = $diagnostic->workOrders()->first();
+        $this->mileage               = $workOrder?->mileage;
+        $this->system_engine         = $workOrder?->system_engine ?? '';
+        $this->system_suspension     = $workOrder?->system_suspension ?? '';
+        $this->system_electrical     = $workOrder?->system_electrical ?? '';
+        $this->system_body           = $workOrder?->system_body ?? '';
+        $this->system_ac             = $workOrder?->system_ac ?? '';
+        $this->failure_cause         = $workOrder?->failure_cause ?? '';
+        $this->failure_cause_comment = $workOrder?->failure_cause_comment ?? '';
+        $this->failure_type          = $workOrder?->failure_type ?? '';
+        $this->maintenance_type      = $workOrder?->maintenance_type ?? '';
+        $this->operation_type        = $workOrder?->operation_type ?? '';
     }
 
     public function saveDiagnostic(): void
