@@ -37,6 +37,7 @@ class Index extends Component
         'result_filter' => ['except' => ''],
         'status_filter' => ['except' => ''],
     ];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

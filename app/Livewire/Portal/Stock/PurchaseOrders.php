@@ -29,6 +29,7 @@ class PurchaseOrders extends Component
     public array $lines = []; // [ ['article_id' => x, 'quantity' => 1, 'unit_price' => ''], ... ]
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     public function mount(): void
     {

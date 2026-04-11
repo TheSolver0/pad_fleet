@@ -30,6 +30,8 @@ class Index extends Component
     public bool $is_active = true;
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
+
 
     protected function rules(): array
     {
@@ -146,6 +148,11 @@ class Index extends Component
         $this->showFormModal = false;
         $this->showDeleteModal = false;
         $this->resetForm();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
     }
 
     public function render(): View

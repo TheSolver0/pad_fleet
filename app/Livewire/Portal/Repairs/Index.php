@@ -47,6 +47,7 @@ class Index extends Component
     public ?int $mechanic_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'type_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

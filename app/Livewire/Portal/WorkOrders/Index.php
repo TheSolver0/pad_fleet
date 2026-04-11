@@ -61,6 +61,7 @@ class Index extends Component
     public string $photo_taken_at = '';
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'date_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     public function mount(): void
     {

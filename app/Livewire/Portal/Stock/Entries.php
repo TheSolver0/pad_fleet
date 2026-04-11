@@ -44,6 +44,7 @@ class Entries extends Component
     public ?int $purchase_order_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'entry_type' => ['except' => 'direct']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

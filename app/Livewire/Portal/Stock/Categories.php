@@ -22,6 +22,7 @@ class Categories extends Component
     public bool $is_active = true;
 
     protected $queryString = ['search' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

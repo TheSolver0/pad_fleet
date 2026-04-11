@@ -77,6 +77,7 @@ class Index extends Component
     public ?int $report_demandeur_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'view_mode' => ['except' => 'list']];
+    protected $paginationTheme = 'bootstrap'; 
 
     public function mount(): void
     {

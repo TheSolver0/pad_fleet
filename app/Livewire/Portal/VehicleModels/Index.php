@@ -23,6 +23,7 @@ class Index extends Component
     public string $code = '';
 
     protected $queryString = ['search' => ['except' => ''], 'brand_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

@@ -41,6 +41,7 @@ class Index extends Component
     public ?int $driver_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     public function mount(): void
     {

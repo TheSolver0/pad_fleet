@@ -30,6 +30,7 @@ class Index extends Component
     public string $evaluated_at = '';
 
     protected $queryString = ['search' => ['except' => ''], 'type_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     public function mount(): void
     {

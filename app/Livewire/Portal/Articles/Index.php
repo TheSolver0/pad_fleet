@@ -6,6 +6,14 @@ use Livewire\Component;
 
 class Index extends Component
 {
+
+    protected $paginationTheme = 'bootstrap'; 
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         return view('livewire.portal.articles.index');

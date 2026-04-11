@@ -35,6 +35,7 @@ class Index extends Component
     public string $contract_original_name = '';
 
     protected $queryString = ['search' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {
@@ -183,6 +184,10 @@ class Index extends Component
         $this->optional_prime = '';
         $this->notes = '';
         $this->resetValidation();
+    }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
     }
 
     public function render(): View

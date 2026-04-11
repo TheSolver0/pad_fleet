@@ -46,6 +46,7 @@ class Index extends Component
     public bool $showLicenseForm = false;
 
     protected $queryString = ['search' => ['except' => ''], 'availability_filter' => ['except' => ''], 'direction_filter' => ['except' => ''], 'person_filter' => ['except' => ''], 'license_status_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

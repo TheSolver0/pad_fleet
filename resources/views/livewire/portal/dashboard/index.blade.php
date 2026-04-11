@@ -199,7 +199,7 @@
     <div class="kpi-grid kpi-grid-sm mt-3">
         <div class="kpi-card kpi-card-sm">
             <div class="kpi-card-header">
-                <span class="kpi-card-label">Missions ce mois</span>
+                <span class="kpi-card-label">Missions </span>
                 <span class="kpi-card-icon missions"><i class="bi bi-calendar3-week"></i></span>
             </div>
             <div class="kpi-card-value">{{ number_format($kpis['missions_this_month']) }}</div>
@@ -214,7 +214,7 @@
         </div>
         <div class="kpi-card kpi-card-sm">
             <div class="kpi-card-header">
-                <span class="kpi-card-label">Km ce mois</span>
+                <span class="kpi-card-label">Km</span>
                 <span class="kpi-card-icon km"><i class="bi bi-speedometer2"></i></span>
             </div>
             <div class="kpi-card-value">{{ number_format($quickStats['km_this_month']) }}</div>

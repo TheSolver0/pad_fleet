@@ -18,6 +18,7 @@ class Index extends Component
     public string $category_filter = '';
     public string $location_filter = '';
     public string $stock_status = 'all'; // 'all', 'low', 'out'
+    protected $paginationTheme = 'bootstrap'; 
 
     public function render(): View
     {

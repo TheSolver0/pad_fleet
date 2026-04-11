@@ -26,6 +26,7 @@ class Index extends Component
     public string $notes = '';
 
     protected $queryString = ['search' => ['except' => ''], 'type_filter' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
     {

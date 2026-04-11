@@ -93,9 +93,11 @@
             </table>
         </div>
 
-       @if($repairs->hasPages())
-            <div class="p-3 border-top">{{ $repairs->links() }}</div>
-        @endif
+     @if($repairs->hasPages())
+    <div class="p-3 border-top">
+        {{ $repairs->links() }}
+    </div>
+@endif
     </div>
 
     <!-- Modal Formulaire Utilisation Stock -->

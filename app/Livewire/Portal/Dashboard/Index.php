@@ -11,9 +11,12 @@ use App\Models\Sinistre;
 use App\Models\Vehicle;
 use Livewire\Component;
 
+
 class Index extends Component
 {
     public string $tripPeriod = 'month';
+    protected $paginationTheme = 'bootstrap'; 
+
 
     public function getKpis(): array
     {
@@ -29,10 +32,12 @@ class Index extends Component
             Sinistre::STATUS_IN_REPAIR,
         ])->count();
 
-        $missionsThisMonth = Mission::whereMonth('date_start', now()->month)
+        /*$missionsThisMonth = Mission::whereMonth('date_start', now()->month)
             ->whereYear('date_start', now()->year)
             ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
-            ->count();
+            ->count();*/
+
+        $missionsThisMonth = Mission::count();
 
         $insurancesExpiring = InsuranceContractGlobal::where('end_date', '>=', now())
             ->where('end_date', '<=', now()->addDays(30))
@@ -314,8 +319,8 @@ class Index extends Component
     public function getQuickStats(): array
     {
         $totalMissionsKm = Mission::whereIn('status', [Mission::STATUS_COMPLETED])
-            ->whereMonth('date_end', now()->month)
-            ->whereYear('date_end', now()->year)
+           // ->whereMonth('date_end', now()->month)
+           // ->whereYear('date_end', now()->year)
             ->sum('distance_km');
 
         $baseRepairs = Repair::whereMonth('completed_at', now()->month)

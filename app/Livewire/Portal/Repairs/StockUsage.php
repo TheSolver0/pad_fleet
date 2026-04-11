@@ -26,6 +26,8 @@ class StockUsage extends Component
 
     protected $queryString = ['search' => ['except' => '']];
 
+    protected $paginationTheme = 'bootstrap'; 
+
     protected function rules(): array
     {
         $rules = [
@@ -205,6 +207,9 @@ class StockUsage extends Component
         $this->resetValidation();
     }
 
+
+  
+
     public function render(): View
     {
         $query = Repair::with(['vehicle', 'garage', 'mechanic', 'repairParts.article', 'usedMaterials.article'])
@@ -222,7 +227,7 @@ class StockUsage extends Component
         }
 
         $repairs = $query->paginate(20);
-        
+
         $articles = Article::where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'reference', 'purchase_price']);

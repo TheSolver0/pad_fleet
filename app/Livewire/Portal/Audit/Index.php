@@ -24,6 +24,8 @@ class Index extends Component
         'date_to' => ['except' => ''],
         'search' => ['except' => ''],
     ];
+    protected $paginationTheme = 'bootstrap'; 
+
 
     public function mount(): void
     {
@@ -64,6 +66,8 @@ class Index extends Component
         $this->search = '';
         $this->resetPage();
     }
+
+    
 
     public function render()
     {

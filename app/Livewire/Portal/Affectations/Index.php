@@ -32,6 +32,7 @@ class Index extends Component
     public string $quick_department = '';
 
     protected $queryString = ['search' => ['except' => ''], 'filter_type' => ['except' => '']];
+    protected $paginationTheme = 'bootstrap'; 
 
     public function openCreate(): void
     {
@@ -155,6 +156,12 @@ class Index extends Component
         $this->quick_department = '';
         $this->dispatch('notify', type: 'success', message: 'Personne ajoutée et sélectionnée.');
     }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
 
     public function render(): View
     {
