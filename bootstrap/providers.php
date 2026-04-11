@@ -3,4 +3,5 @@
 return [
     App\Providers\AppServiceProvider::class,
     Barryvdh\DomPDF\ServiceProvider::class,
+    Spatie\Permission\PermissionServiceProvider::class
 ];

@@ -93,9 +93,9 @@
             </table>
         </div>
 
-        <div class="card-footer bg-light">
-            {{ $repairs->links() }}
-        </div>
+       @if($repairs->hasPages())
+            <div class="p-3 border-top">{{ $repairs->links() }}</div>
+        @endif
     </div>
 
     <!-- Modal Formulaire Utilisation Stock -->

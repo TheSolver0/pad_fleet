@@ -371,3 +371,37 @@
         flex: 1 !important;
     }
 }
+
+/* ── 12. PAGINATION FIXES ───────────────────────────────────── */
+
+.pagination {
+    margin-bottom: 0;
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    border-radius: 0.375rem;
+}
+
+/* Fix pour les flèches trop grosses (SVG) */
+.pagination svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    vertical-align: middle;
+}
+
+.page-link {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--bs-primary);
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+
+@media (max-width: 576px) {
+    .pagination {
+        scale: 0.9;
+    }
+    .page-item:not(.active):not(:first-child):not(:last-child) {
+        display: none; /* Cache les numéros intermédiaires sur tout petit écran */
+    }
+}
