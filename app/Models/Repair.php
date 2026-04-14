@@ -74,6 +74,26 @@ class Repair extends Model
         return $this->hasMany(RepairExpense::class);
     }
 
+    public function photos(): HasMany
+    {
+        return $this->hasMany(RepairPhoto::class);
+    }
+
+    public function beforePhotos(): HasMany
+    {
+        return $this->photos()->where('type', 'before');
+    }
+
+    public function afterPhotos(): HasMany
+    {
+        return $this->photos()->where('type', 'after');
+    }
+
+    public function controlSheets(): HasMany
+    {
+        return $this->hasMany(VehicleControlSheet::class, 'vehicle_id', 'vehicle_id');
+    }
+
     public function getTypeLabelAttribute(): string
     {
         return $this->type === self::TYPE_INTERNAL ? 'Interne' : 'Externe';

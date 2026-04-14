@@ -199,10 +199,11 @@
     <div class="kpi-grid kpi-grid-sm mt-3">
         <div class="kpi-card kpi-card-sm">
             <div class="kpi-card-header">
-                <span class="kpi-card-label">Missions </span>
+                <span class="kpi-card-label">Missions</span>
                 <span class="kpi-card-icon missions"><i class="bi bi-calendar3-week"></i></span>
             </div>
             <div class="kpi-card-value">{{ number_format($kpis['missions_this_month']) }}</div>
+            <div class="kpi-card-sub">Total général</div>
         </div>
         <div class="kpi-card kpi-card-sm">
             <div class="kpi-card-header">
@@ -359,6 +360,100 @@
     </div>
 </div>
 
+    {{-- Réparations par type de véhicule --}}
+    <div class="dashboard-section mt-4">
+        <h3 class="dashboard-section-title"><i class="bi bi-wrench-adjustable me-2"></i>État des réparations par type de véhicule</h3>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-card-header">En cours vs terminées ({{ now()->year }})</div>
+                <div class="chart-wrap" style="min-height:260px;position:relative">
+                    <canvas id="chartRepairsByCategory"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-header">Détail par catégorie</div>
+                <div class="chart-wrap" style="padding-top:.75rem;padding-bottom:.75rem">
+                    @if(count($repairsByCategory['rows']) > 0)
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Type de véhicule</th>
+                                    <th class="text-center">En cours</th>
+                                    <th class="text-center">Terminées</th>
+                                    <th class="text-end">Coût {{ now()->year }} (FCFA)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($repairsByCategory['rows'] as $row)
+                                    <tr>
+                                        <td class="fw-semibold">{{ $row['category'] }}</td>
+                                        <td class="text-center">
+                                            @if($row['ongoing'] > 0)
+                                                <span class="badge bg-warning text-dark">{{ $row['ongoing'] }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success bg-opacity-75">{{ $row['completed'] }}</span>
+                                        </td>
+                                        <td class="text-end small">{{ number_format($row['cost'], 0, ',', ' ') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-muted text-center py-3 mb-0">Aucune réparation enregistrée.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Analyse consommation des pièces --}}
+    <div class="dashboard-section mt-4">
+        <h3 class="dashboard-section-title"><i class="bi bi-boxes me-2"></i>Analyse de la consommation des pièces</h3>
+        <div class="chart-card">
+            <div class="chart-card-header">Top 10 pièces les plus utilisées en réparation</div>
+            <div class="chart-wrap" style="padding-top:.75rem;padding-bottom:.75rem">
+                @if($partsConsumption->count() > 0)
+                    @php $maxQty = $partsConsumption->max('total_qty') ?: 1; @endphp
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Désignation</th>
+                                <th class="text-center">Qté consommée</th>
+                                <th class="text-center">Nb réparations</th>
+                                <th class="text-end">Coût total (FCFA)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($partsConsumption as $i => $part)
+                                <tr>
+                                    <td class="text-muted small">{{ $i + 1 }}</td>
+                                    <td>
+                                        <div class="fw-semibold" style="font-size:.875rem">{{ $part['name'] }}</div>
+                                        <div class="progress mt-1" style="height:3px">
+                                            <div class="progress-bar" style="width:{{ round($part['total_qty'] / $maxQty * 100) }}%;background:rgba(26,84,144,0.7)"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary">{{ number_format($part['total_qty']) }} {{ $part['unit'] }}</span>
+                                    </td>
+                                    <td class="text-center text-muted small">{{ $part['repair_count'] }}</td>
+                                    <td class="text-end small">{{ number_format($part['total_cost'], 0, ',', ' ') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <p class="text-muted text-center py-3 mb-0">Aucune pièce consommée enregistrée.</p>
+                @endif
+            </div>
+        </div>
+    </div>
+
     {{-- Activité récente --}}
     <div class="dashboard-section mt-4">
         <div class="activity-card">
@@ -393,13 +488,14 @@
 (function () {
     // ── Données injectées par Blade (recalculées à chaque re-render Livewire) ──
     const DATA = {
-        status:    @json($chartStatus),
-        category:  @json($chartCategory),
-        missions:  @json($chartMissions),
-        sinistres: @json($chartSinistres),
-        repairs:   @json($chartRepairs),
-        drivers:   @json($driverTripStats),
-        vehicles:  @json($vehicleTripStats),
+        status:           @json($chartStatus),
+        category:         @json($chartCategory),
+        missions:         @json($chartMissions),
+        sinistres:        @json($chartSinistres),
+        repairs:          @json($chartRepairs),
+        drivers:          @json($driverTripStats),
+        vehicles:         @json($vehicleTripStats),
+        repairsByCategory: @json($repairsByCategory),
     };
 
     // ── Registre des instances Chart.js ──
@@ -653,6 +749,38 @@
                     scales: {
                         y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Missions' } },
                         y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Km' }, grid: { drawOnChartArea: false } },
+                    },
+                },
+            });
+        }
+
+        // ── Réparations par catégorie de véhicule (bar groupé) ──
+        if (DATA.repairsByCategory.labels && DATA.repairsByCategory.labels.length) {
+            make('chartRepairsByCategory', {
+                type: 'bar',
+                data: {
+                    labels: DATA.repairsByCategory.labels,
+                    datasets: [
+                        {
+                            label: 'En cours',
+                            data: DATA.repairsByCategory.ongoing,
+                            backgroundColor: 'rgba(0, 184, 212, 0.75)',
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'Terminées (' + new Date().getFullYear() + ')',
+                            data: DATA.repairsByCategory.completed,
+                            backgroundColor: 'rgba(122, 144, 0, 0.7)',
+                            borderRadius: 6,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
                     },
                 },
             });

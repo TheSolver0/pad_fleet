@@ -17,17 +17,28 @@
                     @if($view_mode === 'list')
                         <input type="text" class="form-control form-control-sm" style="width: 180px;" placeholder="Véhicule, demandeur..." wire:model.live.debounce.300ms="search">
                         <select class="form-select form-select-sm" style="width: 130px;" wire:model.live="status_filter">
-                            <option value="">Tous</option>
+                            <option value="">Tous statuts</option>
                             <option value="pending">En attente</option>
                             <option value="approved">Approuvée</option>
                             <option value="rejected">Refusée</option>
                             <option value="completed">Terminée</option>
                         </select>
+                        <input type="date" class="form-control form-control-sm" style="width: 145px;" wire:model.live="filter_start" title="Date de début">
+                        <span class="text-muted small align-self-center">→</span>
+                        <input type="date" class="form-control form-control-sm" style="width: 145px;" wire:model.live="filter_end" title="Date de fin">
+                        @if($filter_start !== '' || $filter_end !== '')
+                            <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="resetPeriodFilter" title="Effacer la période">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        @endif
                     @else
                         <input type="month" class="form-control form-control-sm" style="width: 160px;" wire:model.live="month_calendar">
                     @endif
                 </div>
                 <div class="module-toolbar-actions">
+                    <a href="{{ route('missions.synthesis') }}" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="bi bi-graph-up me-1"></i> Synthèse
+                    </a>
                     <button type="button" class="btn btn-sm btn-info me-2" wire:click="openReportModal">
                         <i class="bi bi-file-earmark-spreadsheet me-1"></i> Rapport
                     </button>

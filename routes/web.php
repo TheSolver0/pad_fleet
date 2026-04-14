@@ -41,8 +41,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/drivers', DriversIndex::class)->name('drivers.index');
     Route::get('/drivers/driving-licenses', DrivingLicenses::class)->name('drivers.driving-licenses');
     Route::get('/drivers/documents', \App\Livewire\Portal\Drivers\Documents::class)->name('drivers.documents')->middleware('permission:suivi-assurances');
+    Route::get('/drivers/leaves', \App\Livewire\Portal\Drivers\Leaves::class)->name('drivers.leaves');
+    Route::get('/drivers/dispatches', \App\Livewire\Portal\Drivers\Dispatches::class)->name('drivers.dispatches');
+    Route::get('/vehicles/control-sheets', \App\Livewire\Portal\Vehicles\ControlSheets::class)->name('vehicles.control-sheets');
     Route::get('/assureurs', \App\Livewire\Portal\Assureurs\Index::class)->name('assureurs.index');
     Route::get('/planning', \App\Livewire\Portal\Missions\Index::class)->name('missions.index');
+    Route::get('/planning/synthese', \App\Livewire\Portal\Missions\Synthesis::class)->name('missions.synthesis');
     Route::get('/schedules', \App\Livewire\Portal\Schedules\Index::class)->name('schedules.index');
     Route::get('/demandeurs', \App\Livewire\Portal\Demandeurs\Index::class)->name('demandeurs.index');
     Route::get('/assurances', \App\Livewire\Portal\Assurances\Index::class)->name('assurances.index');

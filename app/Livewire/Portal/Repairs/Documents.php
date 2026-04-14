@@ -205,8 +205,14 @@ class Documents extends Component
 
         $documents = $query->paginate(20);
 
+        $repairs = Repair::with('vehicle:id,registration')
+            ->orderByDesc('created_at')
+            ->limit(300)
+            ->get(['id', 'vehicle_id', 'created_at']);
+
         return view('livewire.portal.repairs.documents', [
             'documents' => $documents,
+            'repairs'   => $repairs,
         ]);
     }
 }

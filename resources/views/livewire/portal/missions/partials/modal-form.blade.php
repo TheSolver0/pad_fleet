@@ -152,6 +152,11 @@
                             <input type="number" min="0" class="form-control" wire:model.live="km_return">
                         </div>
                         <div class="col-12">
+                            <label class="form-label">Raison du déplacement</label>
+                            <input type="text" class="form-control @error('raison') is-invalid @enderror" wire:model="raison" placeholder="ex: Réunion budgétaire, Festival culturel, Obsèques…" maxlength="300">
+                            @error('raison') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="col-12">
                             <label class="form-label">Notes</label>
                             <textarea class="form-control" rows="2" wire:model="notes"></textarea>
                         </div>

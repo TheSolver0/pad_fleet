@@ -5,6 +5,7 @@ namespace App\Livewire\Portal\Repairs;
 use App\Models\Garage;
 use App\Models\Repair;
 use App\Models\RepairExpense;
+use App\Models\RepairPhoto;
 use App\Models\Vehicle;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,13 @@ class Index extends Component
     public string $evaluation_comment = '';
     public array $expense_lines = [];
     public array $expense_files = [];
+
+    // Photos avant/après réparation
+    public bool $showPhotoModal = false;
+    public ?int $photoRepairId = null;
+    public string $repair_photo_type = 'before';
+    public $repair_before_photos = [];
+    public $repair_after_photos = [];
     
     // Nouvelle rubrique pour les réparations
     public string $repair_type = '';
@@ -237,7 +245,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Repair::query()->with(['vehicle:id,registration', 'garage:id,name', 'expenses']);
+        $query = Repair::query()->with(['vehicle:id,registration', 'garage:id,name', 'expenses', 'photos']);
         if ($this->search !== '') {
             $query->whereHas('vehicle', fn ($q) => $q->where('registration', 'like', '%' . $this->search . '%'));
         }
@@ -255,6 +263,46 @@ class Index extends Component
             'garages' => $garages,
             'mechanics' => $mechanics,
         ])->layout('layouts.app', ['title' => 'Réparations']);
+    }
+
+    public function openPhotoModal(int $repairId): void
+    {
+        $this->photoRepairId = $repairId;
+        $this->repair_before_photos = [];
+        $this->repair_after_photos  = [];
+        $this->showPhotoModal = true;
+    }
+
+    public function saveRepairPhotos(): void
+    {
+        $this->validate([
+            'repair_before_photos.*' => 'image|max:8192',
+            'repair_after_photos.*'  => 'image|max:8192',
+        ]);
+
+        $repair = Repair::findOrFail($this->photoRepairId);
+
+        foreach ($this->repair_before_photos as $photo) {
+            RepairPhoto::storeUpload($repair, $photo, 'before');
+        }
+        foreach ($this->repair_after_photos as $photo) {
+            RepairPhoto::storeUpload($repair, $photo, 'after');
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Photos enregistrées.');
+        $this->showPhotoModal = false;
+        $this->repair_before_photos = [];
+        $this->repair_after_photos  = [];
+    }
+
+    public function deleteRepairPhoto(int $photoId): void
+    {
+        $photo = RepairPhoto::findOrFail($photoId);
+        if (file_exists(storage_path('app/public/' . $photo->file_path))) {
+            unlink(storage_path('app/public/' . $photo->file_path));
+        }
+        $photo->delete();
+        $this->dispatch('notify', type: 'success', message: 'Photo supprimée.');
     }
 
     public function addExpenseLine(): void

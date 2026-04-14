@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('repair_photos', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('repair_id')->constrained('repairs')->cascadeOnDelete();
+            $table->string('type', 20)->default('before'); // before | after
+            $table->string('file_path');
+            $table->string('original_filename')->nullable();
+            $table->unsignedBigInteger('file_size')->nullable();
+            $table->string('mime_type', 100)->nullable();
+            $table->string('notes', 300)->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('repair_photos');
+    }
+};

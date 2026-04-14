@@ -96,4 +96,30 @@ public function activeAssignment(): \Illuminate\Database\Eloquent\Relations\HasO
         ->where('type', DriverAssignment::TYPE_VEHICLE)
         ->latest('started_at');
 }
+
+public function activeDispatch(): \Illuminate\Database\Eloquent\Relations\HasOne
+{
+    return $this->hasOne(DriverAssignment::class)
+        ->where('status', DriverAssignment::STATUS_ACTIVE)
+        ->whereIn('type', [DriverAssignment::TYPE_DIRECTION, DriverAssignment::TYPE_PERSON])
+        ->latest('started_at');
+}
+
+public function leaves(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(DriverLeave::class)->orderByDesc('start_date');
+}
+
+public function activeLeave(): \Illuminate\Database\Eloquent\Relations\HasOne
+{
+    return $this->hasOne(DriverLeave::class)
+        ->where('status', DriverLeave::STATUS_APPROVED)
+        ->where('start_date', '<=', now())
+        ->where('end_date', '>=', now());
+}
+
+public function getIsOnLeaveAttribute(): bool
+{
+    return $this->activeLeave()->exists();
+}
 }

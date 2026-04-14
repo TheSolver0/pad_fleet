@@ -19,7 +19,7 @@ class Mission extends Model
 
     protected $fillable = [
         'vehicle_id', 'driver_id', 'demandeur_id', 'city_id', 'date_start', 'date_end',
-        'km_departure', 'km_return', 'distance_km', 'destination', 'status',
+        'km_departure', 'km_return', 'distance_km', 'destination', 'raison', 'status',
         'approved_by', 'approved_at', 'notes',
     ];
 

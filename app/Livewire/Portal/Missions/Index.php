@@ -24,6 +24,8 @@ class Index extends Component
     public string $search = '';
     public string $status_filter = '';
     public string $month_calendar = '';
+    public string $filter_start = '';
+    public string $filter_end = '';
 
     public bool $showFormModal = false;
     public bool $showDeleteModal = false;
@@ -38,6 +40,7 @@ class Index extends Component
     public string $km_departure = '';
     public string $km_return = '';
     public string $destination = '';
+    public string $raison = '';
     public string $notes = '';
     public bool $apply_approve = false;
     public bool $approve_reject = true; // true = approve, false = reject
@@ -76,7 +79,13 @@ class Index extends Component
     public string $report_status = '';
     public ?int $report_demandeur_id = null;
 
-    protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'view_mode' => ['except' => 'list']];
+    protected $queryString = [
+        'search'        => ['except' => ''],
+        'status_filter' => ['except' => ''],
+        'view_mode'     => ['except' => 'list'],
+        'filter_start'  => ['except' => ''],
+        'filter_end'    => ['except' => ''],
+    ];
     protected $paginationTheme = 'bootstrap'; 
 
     public function mount(): void
@@ -97,6 +106,7 @@ class Index extends Component
             'km_departure' => 'nullable|integer|min:0',
             'km_return' => 'nullable|integer|min:0',
             'destination' => 'nullable|string|max:255',
+            'raison' => 'nullable|string|max:300',
             'notes' => 'nullable|string',
             'new_demandeur_name' => 'required_if:create_demandeur,true|string|max:200',
             'new_demandeur_phone' => 'nullable|string|max:30',
@@ -127,6 +137,7 @@ class Index extends Component
         $this->km_departure = $m->km_departure !== null ? (string) $m->km_departure : '';
         $this->km_return = $m->km_return !== null ? (string) $m->km_return : '';
         $this->destination = $m->destination ?? '';
+        $this->raison = $m->raison ?? '';
         $this->notes = $m->notes ?? '';
         $this->showFormModal = true;
     }
@@ -167,6 +178,7 @@ class Index extends Component
             'km_departure' => $this->km_departure ? (int) $this->km_departure : null,
             'km_return' => $this->km_return ? (int) $this->km_return : null,
             'destination' => $this->destination ?: null,
+            'raison' => $this->raison ?: null,
             'city_id' => $this->city_id ?: null,
             'notes' => $this->notes ?: null,
         ];
@@ -244,6 +256,7 @@ class Index extends Component
         $this->km_departure = '';
         $this->km_return = '';
         $this->destination = '';
+        $this->raison = '';
         $this->notes = '';
         $this->create_demandeur = false;
         $this->new_demandeur_name = '';
@@ -350,6 +363,13 @@ class Index extends Component
         $this->dispatch('notify', type: 'success', message: 'Document supprimé.');
     }
 
+    public function resetPeriodFilter(): void
+    {
+        $this->filter_start = '';
+        $this->filter_end   = '';
+        $this->resetPage();
+    }
+
     public function openReportModal(): void
     {
         $this->report_start_date = now()->startOfMonth()->format('Y-m-d');
@@ -404,6 +424,12 @@ class Index extends Component
         }
         if ($this->status_filter !== '') {
             $query->where('status', $this->status_filter);
+        }
+        if ($this->filter_start !== '') {
+            $query->where('date_start', '>=', $this->filter_start . ' 00:00:00');
+        }
+        if ($this->filter_end !== '') {
+            $query->where('date_start', '<=', $this->filter_end . ' 23:59:59');
         }
         $missions = $query->orderByDesc('date_start')->paginate(12);
         $vehicles = Vehicle::query()

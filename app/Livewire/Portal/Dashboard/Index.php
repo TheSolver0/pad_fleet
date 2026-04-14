@@ -7,6 +7,7 @@ use App\Models\Driver;
 use App\Models\InsuranceContractGlobal;
 use App\Models\Mission;
 use App\Models\Repair;
+use App\Models\RepairPart;
 use App\Models\Sinistre;
 use App\Models\Vehicle;
 use Livewire\Component;
@@ -31,11 +32,6 @@ class Index extends Component
             Sinistre::STATUS_DECLARED,
             Sinistre::STATUS_IN_REPAIR,
         ])->count();
-
-        /*$missionsThisMonth = Mission::whereMonth('date_start', now()->month)
-            ->whereYear('date_start', now()->year)
-            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED])
-            ->count();*/
 
         $missionsThisMonth = Mission::count();
 
@@ -423,6 +419,95 @@ public function getVehicleTripStats(string $period = 'month'): \Illuminate\Suppo
 }
 
 
+    /** Réparations en cours et terminées (année) par catégorie de véhicule */
+    public function getRepairsByVehicleCategory(): array
+    {
+        $categories = Vehicle::categoryOptions();
+
+        $ongoing = Repair::join('vehicles', 'repairs.vehicle_id', '=', 'vehicles.id')
+            ->whereNull('repairs.completed_at')
+            ->selectRaw('vehicles.category, count(*) as total')
+            ->groupBy('vehicles.category')
+            ->pluck('total', 'category')
+            ->toArray();
+
+        $completedYear = Repair::join('vehicles', 'repairs.vehicle_id', '=', 'vehicles.id')
+            ->whereNotNull('repairs.completed_at')
+            ->whereYear('repairs.completed_at', now()->year)
+            ->selectRaw('vehicles.category, count(*) as total')
+            ->groupBy('vehicles.category')
+            ->pluck('total', 'category')
+            ->toArray();
+
+        $costYear = Repair::join('vehicles', 'repairs.vehicle_id', '=', 'vehicles.id')
+            ->whereNotNull('repairs.completed_at')
+            ->whereYear('repairs.completed_at', now()->year)
+            ->selectRaw('vehicles.category, coalesce(sum(repairs.cost), 0) as total_cost')
+            ->groupBy('vehicles.category')
+            ->pluck('total_cost', 'category')
+            ->toArray();
+
+        $rows = [];
+        foreach ($categories as $key => $label) {
+            $o = (int) ($ongoing[$key] ?? 0);
+            $c = (int) ($completedYear[$key] ?? 0);
+            $cost = round((float) ($costYear[$key] ?? 0), 0);
+            if ($o > 0 || $c > 0) {
+                $rows[] = [
+                    'category' => $label,
+                    'ongoing'  => $o,
+                    'completed' => $c,
+                    'cost'     => $cost,
+                ];
+            }
+        }
+
+        // Données pour le graphique
+        $palette = [
+            'rgba(26, 84, 144, 0.8)',
+            'rgba(0, 184, 212, 0.75)',
+            'rgba(122, 144, 0, 0.8)',
+            'rgba(201, 107, 107, 0.7)',
+            'rgba(100, 120, 160, 0.8)',
+            'rgba(60, 140, 180, 0.75)',
+            'rgba(184, 100, 50, 0.7)',
+            'rgba(140, 140, 140, 0.7)',
+        ];
+
+        return [
+            'rows'   => $rows,
+            'labels' => array_column($rows, 'category'),
+            'ongoing'    => array_column($rows, 'ongoing'),
+            'completed'  => array_column($rows, 'completed'),
+            'colors' => array_slice($palette, 0, count($rows)),
+        ];
+    }
+
+    /** Top 10 pièces les plus consommées sur les réparations */
+    public function getPartsConsumptionStats(): \Illuminate\Support\Collection
+    {
+        return RepairPart::join('articles', 'repair_parts.article_id', '=', 'articles.id')
+            ->selectRaw('
+                articles.id,
+                articles.name,
+                articles.unit,
+                sum(repair_parts.quantity_used) as total_qty,
+                sum(repair_parts.total_price)   as total_cost,
+                count(distinct repair_parts.repair_id) as repair_count
+            ')
+            ->groupBy('articles.id', 'articles.name', 'articles.unit')
+            ->orderByDesc('total_qty')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => [
+                'name'         => $r->name,
+                'unit'         => $r->unit ?? 'u.',
+                'total_qty'    => (int) $r->total_qty,
+                'total_cost'   => round((float) $r->total_cost, 0),
+                'repair_count' => (int) $r->repair_count,
+            ]);
+    }
+
     public function render()
     {
         $kpis = $this->getKpis();
@@ -435,24 +520,25 @@ public function getVehicleTripStats(string $period = 'month'): \Illuminate\Suppo
         $chartMissions = $this->getMissionsTrendChart();
         $chartSinistres = $this->getSinistresTrendChart();
         $chartRepairs = $this->getRepairsCostTrendChart();
-        $driverTripStats = $this->getDriverTripStats();
-        $vehicleTripStats = $this->getVehicleTripStats();
         $driverTripStats  = $this->getDriverTripStats($this->tripPeriod);
         $vehicleTripStats = $this->getVehicleTripStats($this->tripPeriod);
+        $repairsByCategory = $this->getRepairsByVehicleCategory();
+        $partsConsumption  = $this->getPartsConsumptionStats();
 
         return view('livewire.portal.dashboard.index', [
-            'kpis' => $kpis,
-            'activity' => $activity,
-            'insights' => $insights,
-            'quickStats' => $quickStats,
-            'chartStatus' => $chartStatus,
-            'chartCategory' => $chartCategory,
-            'chartMissions' => $chartMissions,
-            'chartSinistres' => $chartSinistres,
-            'chartRepairs' => $chartRepairs,
-            'driverTripStats' => $driverTripStats,
-            'vehicleTripStats' => $vehicleTripStats,
-            
+            'kpis'              => $kpis,
+            'activity'          => $activity,
+            'insights'          => $insights,
+            'quickStats'        => $quickStats,
+            'chartStatus'       => $chartStatus,
+            'chartCategory'     => $chartCategory,
+            'chartMissions'     => $chartMissions,
+            'chartSinistres'    => $chartSinistres,
+            'chartRepairs'      => $chartRepairs,
+            'driverTripStats'   => $driverTripStats,
+            'vehicleTripStats'  => $vehicleTripStats,
+            'repairsByCategory' => $repairsByCategory,
+            'partsConsumption'  => $partsConsumption,
         ])->layout('layouts.app', ['title' => 'Tableau de bord']);
     }
 }

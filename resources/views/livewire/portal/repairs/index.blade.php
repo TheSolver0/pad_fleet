@@ -71,6 +71,12 @@
                             <td class="small">{{ $r->started_at?->format('d/m/Y') ?? '—' }} → {{ $r->completed_at?->format('d/m/Y') ?? '—' }}</td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-primary" wire:click="openEdit({{ $r->id }})"><i class="bi bi-pencil"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary position-relative" wire:click="openPhotoModal({{ $r->id }})" title="Photos avant/après">
+                                    <i class="bi bi-camera"></i>
+                                    @if($r->photos->count() > 0)
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info" style="font-size:.6rem">{{ $r->photos->count() }}</span>
+                                    @endif
+                                </button>
                                 <button type="button" class="btn btn-sm btn-outline-danger" wire:click="confirmDelete({{ $r->id }})"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>
@@ -89,4 +95,5 @@
 
     @include('livewire.portal.repairs.partials.modal-form')
     @include('livewire.portal.repairs.partials.modal-delete')
+    @include('livewire.portal.repairs.partials.modal-photos')
 </div>
