@@ -160,6 +160,38 @@
                             <label class="form-label">Notes</label>
                             <textarea class="form-control" rows="2" wire:model="notes"></textarea>
                         </div>
+                        <div class="col-12">
+                            <hr class="my-1">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-paperclip me-1"></i> Document de validation
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <select class="form-select form-select-sm" wire:model="form_document_type">
+                                        <option value="ordre_mission">Ordre de mission</option>
+                                        <option value="rapport">Rapport de mission</option>
+                                        <option value="facture">Facture</option>
+                                        <option value="recu">Reçu</option>
+                                        <option value="autre">Autre document</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="file" class="form-control form-control-sm" wire:model="form_documents" multiple accept=".pdf,image/*">
+                                    @error('form_documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    <div class="form-text">PDF, JPG, PNG — 10 Mo max par fichier.</div>
+                                </div>
+                            </div>
+                            @if($form_documents)
+                                <div class="mt-2 d-flex flex-wrap gap-2">
+                                    @foreach($form_documents as $file)
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-file-earmark me-1"></i>{{ $file->getClientOriginalName() }}
+                                            <span class="text-muted ms-1">({{ number_format($file->getSize() / 1024, 1) }} KB)</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

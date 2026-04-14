@@ -5,14 +5,16 @@ namespace App\Livewire\Portal\Schedules;
 use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\VehicleSchedule;
+use App\Models\VehicleScheduleDocument;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public string $search = '';
     public string $status_filter = '';
@@ -37,6 +39,16 @@ class Index extends Component
     public string $fuel_consumed = '';
     public string $notes = '';
 
+    // Document de validation dans le formulaire
+    public $form_documents = [];
+    public string $form_document_type = 'ordre_mission';
+
+    // Modal de gestion des documents existants
+    public $documents = [];
+    public bool $showDocumentModal = false;
+    public ?int $documentScheduleId = null;
+    public string $document_type = 'autre';
+
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'date_filter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
 
@@ -58,6 +70,7 @@ class Index extends Component
             'mileage_end' => 'nullable|integer|min:0',
             'fuel_consumed' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'form_documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -116,11 +129,19 @@ class Index extends Component
         ];
 
         if ($this->editingId) {
-            VehicleSchedule::findOrFail($this->editingId)->update($data);
+            $schedule = VehicleSchedule::findOrFail($this->editingId);
+            $schedule->update($data);
             $this->dispatch('notify', type: 'success', message: 'Planning mis à jour.');
         } else {
-            VehicleSchedule::create($data);
+            $schedule = VehicleSchedule::create($data);
             $this->dispatch('notify', type: 'success', message: 'Planning créé.');
+        }
+
+        // Enregistrer les documents de validation joints au formulaire
+        if (!empty($this->form_documents)) {
+            foreach ($this->form_documents as $file) {
+                VehicleScheduleDocument::storeUpload($schedule, $file, $this->form_document_type);
+            }
         }
 
         $this->showFormModal = false;
@@ -166,12 +187,45 @@ class Index extends Component
         $this->mileage_end = '';
         $this->fuel_consumed = '';
         $this->notes = '';
+        $this->form_documents = [];
+        $this->form_document_type = 'ordre_mission';
         $this->resetValidation();
+    }
+
+    public function openDocumentModal(int $scheduleId): void
+    {
+        $this->documentScheduleId = $scheduleId;
+        $this->documents = [];
+        $this->document_type = 'autre';
+        $this->showDocumentModal = true;
+    }
+
+    public function saveDocuments(): void
+    {
+        $this->validate([
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg,png|max:10240',
+        ]);
+
+        $schedule = VehicleSchedule::findOrFail($this->documentScheduleId);
+
+        foreach ($this->documents as $file) {
+            VehicleScheduleDocument::storeUpload($schedule, $file, $this->document_type);
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Documents enregistrés.');
+        $this->showDocumentModal = false;
+        $this->documents = [];
+    }
+
+    public function deleteDocument(int $documentId): void
+    {
+        VehicleScheduleDocument::findOrFail($documentId)->delete();
+        $this->dispatch('notify', type: 'success', message: 'Document supprimé.');
     }
 
     public function render(): View
     {
-        $query = VehicleSchedule::with(['vehicle', 'driver']);
+        $query = VehicleSchedule::with(['vehicle', 'driver'])->withCount('documents');
 
         if ($this->search !== '') {
             $query->where(function ($q) {

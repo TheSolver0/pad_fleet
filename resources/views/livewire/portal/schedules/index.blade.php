@@ -83,6 +83,12 @@
                                     <button type="button" class="btn btn-outline-primary" wire:click="openEdit({{ $schedule->id }})" title="Modifier">
                                         <i class="bi bi-pencil"></i>
                                     </button>
+                                    <button type="button" class="btn btn-outline-info" wire:click="openDocumentModal({{ $schedule->id }})" title="Documents">
+                                        <i class="bi bi-file-earmark"></i>
+                                        @if($schedule->documents_count > 0)
+                                            <span class="badge bg-info ms-1">{{ $schedule->documents_count }}</span>
+                                        @endif
+                                    </button>
                                     <button type="button" class="btn btn-outline-danger" wire:click="confirmDelete({{ $schedule->id }})" title="Supprimer">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -261,11 +267,138 @@
                             <textarea class="form-control" rows="3" wire:model="notes"></textarea>
                             @error('notes') <span class="text-danger small">{{ $message }}</span> @enderror
                         </div>
+
+                        <hr class="my-2">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-paperclip me-1"></i> Document de validation
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <select class="form-select form-select-sm" wire:model="form_document_type">
+                                        <option value="ordre_mission">Ordre de mission</option>
+                                        <option value="rapport">Rapport de déplacement</option>
+                                        <option value="facture">Facture</option>
+                                        <option value="recu">Reçu</option>
+                                        <option value="autre">Autre document</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="file" class="form-control form-control-sm" wire:model="form_documents" multiple accept=".pdf,image/*">
+                                    @error('form_documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    <div class="form-text">PDF, JPG, PNG — 10 Mo max par fichier.</div>
+                                </div>
+                            </div>
+                            @if($form_documents)
+                                <div class="mt-2 d-flex flex-wrap gap-2">
+                                    @foreach($form_documents as $file)
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-file-earmark me-1"></i>{{ $file->getClientOriginalName() }}
+                                            <span class="text-muted ms-1">({{ number_format($file->getSize() / 1024, 1) }} KB)</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="closeFormModal">Annuler</button>
                         <button type="submit" class="btn btn-primary">
                             {{ $editingId ? 'Mettre à jour' : 'Créer' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Modal Documents -->
+    @if($showDocumentModal)
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark me-2"></i>Documents du déplacement</h5>
+                    <button type="button" class="btn-close" wire:click="$set('showDocumentModal', false)"></button>
+                </div>
+                <form wire:submit="saveDocuments">
+                    <div class="modal-body">
+                        @php
+                            $schedule = \App\Models\VehicleSchedule::find($documentScheduleId);
+                            $existingDocs = $schedule ? $schedule->documents()->orderBy('sort_order')->get() : collect();
+                        @endphp
+
+                        {{-- Documents existants --}}
+                        @if($existingDocs->count() > 0)
+                            <div class="mb-4">
+                                <h6 class="fw-semibold mb-2">Documents enregistrés</h6>
+                                <div class="row g-2">
+                                    @foreach($existingDocs as $doc)
+                                        <div class="col-md-6">
+                                            <div class="card border">
+                                                <div class="card-body p-2 d-flex align-items-center">
+                                                    <i class="bi {{ $doc->file_type === 'image' ? 'bi-image' : 'bi-file-earmark-pdf' }} fs-4 text-muted me-2"></i>
+                                                    <div class="flex-grow-1 overflow-hidden">
+                                                        <div class="fw-semibold small text-truncate">{{ $doc->original_name }}</div>
+                                                        <div class="text-muted small">{{ $doc->document_type_label }} · {{ $doc->formatted_file_size }}</div>
+                                                    </div>
+                                                    <div class="ms-2 d-flex gap-1">
+                                                        <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Voir">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="deleteDocument({{ $doc->id }})" title="Supprimer">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <p class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i>Aucun document enregistré pour ce déplacement.</p>
+                        @endif
+
+                        {{-- Ajout de nouveaux documents --}}
+                        <hr class="my-3">
+                        <h6 class="fw-semibold mb-2">Ajouter un document</h6>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-5">
+                                <label class="form-label small">Type de document</label>
+                                <select class="form-select form-select-sm" wire:model="document_type">
+                                    <option value="ordre_mission">Ordre de mission</option>
+                                    <option value="rapport">Rapport de déplacement</option>
+                                    <option value="facture">Facture</option>
+                                    <option value="recu">Reçu</option>
+                                    <option value="autre">Autre document</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label small">Fichier(s)</label>
+                                <input type="file" class="form-control form-control-sm" wire:model="documents" multiple accept=".pdf,image/*">
+                                @error('documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
+                                <div class="form-text">PDF, JPG, PNG — 10 Mo max.</div>
+                            </div>
+                        </div>
+
+                        @if($documents)
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($documents as $file)
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="bi bi-file-earmark me-1"></i>{{ $file->getClientOriginalName() }}
+                                        <span class="text-muted ms-1">({{ number_format($file->getSize() / 1024, 1) }} KB)</span>
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" wire:click="$set('showDocumentModal', false)">Fermer</button>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                            <span wire:loading.remove><i class="bi bi-upload me-1"></i>Enregistrer</span>
+                            <span wire:loading><i class="bi bi-hourglass-split me-1"></i>Envoi...</span>
                         </button>
                     </div>
                 </form>

@@ -66,11 +66,15 @@ class Index extends Component
     public string $new_city_code = '';
     public string $new_city_region = '';
 
-    // Documents
+    // Documents (modal séparé)
     public $documents = [];
     public bool $showDocumentModal = false;
     public ?int $documentMissionId = null;
     public string $document_type = 'autre';
+
+    // Document de validation dans le formulaire de création/édition
+    public $form_documents = [];
+    public string $form_document_type = 'ordre_mission';
 
     // Rapport
     public bool $showReportModal = false;
@@ -115,6 +119,7 @@ class Index extends Component
             'city_id' => 'nullable|exists:cities,id',
             'new_city_name' => 'required_if:create_city,true|string|max:100',
             'new_city_region' => 'required_if:create_city,true|string|max:100',
+            'form_documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -192,6 +197,14 @@ class Index extends Component
             $mission->computeDistance();
             $this->dispatch('notify', type: 'success', message: 'Réservation créée.');
         }
+
+        // Enregistrer les documents de validation joints au formulaire
+        if (!empty($this->form_documents)) {
+            foreach ($this->form_documents as $file) {
+                MissionDocument::storeUpload($mission, $file, $this->form_document_type);
+            }
+        }
+
         $this->showFormModal = false;
         $this->resetForm();
     }
@@ -271,6 +284,8 @@ class Index extends Component
         $this->new_city_code = '';
         $this->new_city_region = '';
         $this->documents = [];
+        $this->form_documents = [];
+        $this->form_document_type = 'ordre_mission';
         $this->resetValidation();
     }
 
