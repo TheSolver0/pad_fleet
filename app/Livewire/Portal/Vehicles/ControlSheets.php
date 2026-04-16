@@ -7,6 +7,7 @@ use App\Models\Mission;
 use App\Models\Vehicle;
 use App\Models\VehicleControlSheet;
 use App\Models\VehicleControlSheetPhoto;
+use App\Models\VehicleSchedule;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -24,9 +25,10 @@ class ControlSheets extends Component
     public ?int $viewingId = null;
 
     // Champs fiche
-    public ?int    $vehicle_id    = null;
-    public ?int    $mission_id    = null;
-    public ?int    $driver_id     = null;
+    public ?int    $vehicle_id          = null;
+    public ?int    $mission_id          = null;
+    public ?int    $vehicle_schedule_id = null;
+    public ?int    $driver_id           = null;
     public string  $ordre_mission = '';
     public string  $lieu          = '';
     public string  $date_depart   = '';
@@ -53,6 +55,37 @@ class ControlSheets extends Component
     public function mount(): void
     {
         $this->initChecks();
+
+        // Pré-remplissage depuis l'URL : ?mission_id=X ou ?schedule_id=X
+        $missionId  = request()->query('mission_id');
+        $scheduleId = request()->query('schedule_id');
+
+        if ($missionId) {
+            $mission = Mission::find($missionId);
+            if ($mission) {
+                $this->mission_id  = $mission->id;
+                $this->vehicle_id  = $mission->vehicle_id;
+                $this->driver_id   = $mission->driver_id;
+                $this->date_depart = $mission->date_start->format('Y-m-d');
+                $this->date_retour = $mission->date_end->format('Y-m-d');
+                $this->km_depart   = $mission->km_departure !== null ? (string) $mission->km_departure : '';
+                $this->km_retour   = $mission->km_return !== null ? (string) $mission->km_return : '';
+                $this->lieu        = $mission->destination ?? '';
+                $this->showFormModal = true;
+            }
+        } elseif ($scheduleId) {
+            $schedule = VehicleSchedule::find($scheduleId);
+            if ($schedule) {
+                $this->vehicle_schedule_id = $schedule->id;
+                $this->vehicle_id          = $schedule->vehicle_id;
+                $this->driver_id           = $schedule->driver_id;
+                $this->date_depart         = $schedule->start_datetime->format('Y-m-d');
+                $this->date_retour         = $schedule->end_datetime->format('Y-m-d');
+                $this->km_depart           = $schedule->mileage_start !== null ? (string) $schedule->mileage_start : '';
+                $this->lieu                = $schedule->destination ?? '';
+                $this->showFormModal = true;
+            }
+        }
     }
 
     private function initChecks(): void
@@ -63,9 +96,23 @@ class ControlSheets extends Component
         }
     }
 
+    /**
+     * Toggle a checkbox value in a nested check section.
+     * For string-valued fields (docs): toggles between $onValue and null.
+     * For boolean fields (check4/outillage): toggles between true and false.
+     */
+    public function toggleCheck(string $section, string $item, string $key, mixed $onValue = true): void
+    {
+        $arr = $this->$section;
+        $current = $arr[$item][$key] ?? null;
+        $offValue = is_string($onValue) ? null : false;
+        $arr[$item][$key] = ($current === $onValue) ? $offValue : $onValue;
+        $this->$section = $arr;
+    }
+
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'vehicle_id', 'mission_id', 'driver_id',
+        $this->reset(['editingId', 'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id',
             'ordre_mission', 'lieu', 'date_depart', 'date_retour',
             'km_depart', 'km_retour', 'observations_depart', 'observations_retour']);
         $this->initChecks();
@@ -115,8 +162,9 @@ class ControlSheets extends Component
 
         $data = [
             'vehicle_id'     => $this->vehicle_id,
-            'mission_id'     => $this->mission_id ?: null,
-            'driver_id'      => $this->driver_id ?: null,
+            'mission_id'          => $this->mission_id ?: null,
+            'vehicle_schedule_id' => $this->vehicle_schedule_id ?: null,
+            'driver_id'           => $this->driver_id ?: null,
             'created_by'     => auth()->id(),
             'ordre_mission'  => $this->ordre_mission ?: null,
             'lieu'           => $this->lieu ?: null,

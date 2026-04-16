@@ -12,7 +12,7 @@ class VehicleControlSheet extends Model
     use Auditable;
 
     protected $fillable = [
-        'vehicle_id', 'mission_id', 'driver_id', 'created_by',
+        'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id', 'created_by',
         'ordre_mission', 'lieu', 'date_depart', 'date_retour',
         'km_depart', 'km_retour',
         'docs_administratifs', 'controle_exterieur',
@@ -144,9 +144,10 @@ class VehicleControlSheet extends Model
         ];
     }
 
-    public function vehicle(): BelongsTo  { return $this->belongsTo(Vehicle::class); }
-    public function mission(): BelongsTo  { return $this->belongsTo(Mission::class); }
-    public function driver(): BelongsTo   { return $this->belongsTo(Driver::class); }
+    public function vehicle(): BelongsTo         { return $this->belongsTo(Vehicle::class); }
+    public function mission(): BelongsTo         { return $this->belongsTo(Mission::class); }
+    public function vehicleSchedule(): BelongsTo { return $this->belongsTo(VehicleSchedule::class); }
+    public function driver(): BelongsTo          { return $this->belongsTo(Driver::class); }
     public function createdBy(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
 
     public function photos(): HasMany

@@ -71,10 +71,12 @@ class Index extends Component
     public bool $showDocumentModal = false;
     public ?int $documentMissionId = null;
     public string $document_type = 'autre';
+    public string $document_note = '';
 
-    // Document de validation dans le formulaire de création/édition
-    public $form_documents = [];
-    public string $form_document_type = 'ordre_mission';
+    // Lignes documents de validation dans le formulaire (type + note individuelle)
+    public array $form_doc_rows = [
+        ['file' => null, 'type' => 'ordre_mission', 'note' => '']
+    ];
 
     // Rapport
     public bool $showReportModal = false;
@@ -119,7 +121,7 @@ class Index extends Component
             'city_id' => 'nullable|exists:cities,id',
             'new_city_name' => 'required_if:create_city,true|string|max:100',
             'new_city_region' => 'required_if:create_city,true|string|max:100',
-            'form_documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'form_doc_rows.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -199,9 +201,9 @@ class Index extends Component
         }
 
         // Enregistrer les documents de validation joints au formulaire
-        if (!empty($this->form_documents)) {
-            foreach ($this->form_documents as $file) {
-                MissionDocument::storeUpload($mission, $file, $this->form_document_type);
+        foreach ($this->form_doc_rows as $row) {
+            if (!empty($row['file'])) {
+                MissionDocument::storeUpload($mission, $row['file'], $row['type'], $row['note'] ?: null);
             }
         }
 
@@ -284,8 +286,7 @@ class Index extends Component
         $this->new_city_code = '';
         $this->new_city_region = '';
         $this->documents = [];
-        $this->form_documents = [];
-        $this->form_document_type = 'ordre_mission';
+        $this->form_doc_rows = [['file' => null, 'type' => 'ordre_mission', 'note' => '']];
         $this->resetValidation();
     }
 
@@ -344,6 +345,18 @@ class Index extends Component
         $this->dispatch('notify', type: 'success', message: 'Photo supprimée.');
     }
 
+    public function addFormDocRow(): void
+    {
+        $this->form_doc_rows[] = ['file' => null, 'type' => 'ordre_mission', 'note' => ''];
+    }
+
+    public function removeFormDocRow(int $index): void
+    {
+        if (count($this->form_doc_rows) > 1) {
+            array_splice($this->form_doc_rows, $index, 1);
+        }
+    }
+
     public function openDocumentModal(int $missionId): void
     {
         $this->documentMissionId = $missionId;
@@ -362,13 +375,14 @@ class Index extends Component
 
         if ($this->documents) {
             foreach ($this->documents as $document) {
-                MissionDocument::storeUpload($mission, $document, $this->document_type);
+                MissionDocument::storeUpload($mission, $document, $this->document_type, $this->document_note ?: null);
             }
         }
 
         $this->dispatch('notify', type: 'success', message: 'Documents enregistrés.');
         $this->showDocumentModal = false;
         $this->documents = [];
+        $this->document_note = '';
     }
 
     public function deleteDocument(int $documentId): void
@@ -429,7 +443,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Mission::query()->with(['vehicle:id,registration', 'driver:id,first_name,last_name', 'demandeur:id,name']);
+        $query = Mission::query()->with(['vehicle:id,registration', 'driver:id,first_name,last_name', 'demandeur:id,name'])->withCount('controlSheets');
         if ($this->search !== '') {
             $query->where(function ($q) {
                 $q->whereHas('vehicle', fn ($q2) => $q2->where('registration', 'like', '%' . $this->search . '%'))

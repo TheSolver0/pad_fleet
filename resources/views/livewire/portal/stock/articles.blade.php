@@ -40,7 +40,7 @@
                 <tbody>
                     @forelse($articles as $article)
                         <tr>
-                            <td class="font-monospace">{{ $article->reference }}</td>
+                            <td class="font-monospace">{{ Str::upper($article->reference) }}</td>
                             <td>
                                 <div class="d-flex align-items-center">
                                     @if($article->photo_path)

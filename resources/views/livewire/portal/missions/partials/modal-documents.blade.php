@@ -27,6 +27,9 @@
                                                         <div class="text-muted small">
                                                             {{ $document->document_type_label }} • {{ $document->formatted_file_size }}
                                                         </div>
+                                                        @if($document->caption)
+                                                            <div class="text-info small"><i class="bi bi-chat-left-text me-1"></i>{{ $document->caption }}</div>
+                                                        @endif
                                                     </div>
                                                     <div class="ms-2">
                                                         @if($document->file_type === 'image')
@@ -62,11 +65,28 @@
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Ajouter de nouveaux documents</label>
-                        <input type="file" class="form-control" wire:model="documents" multiple accept=".pdf,image/*">
-                        @error('documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
-                        <div class="form-text">Formats acceptés: PDF, JPG, PNG, GIF. Taille max: 10MB par fichier.</div>
+                    <div class="mb-2">
+                        <label class="form-label">Ajouter un document</label>
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <select class="form-select form-select-sm" wire:model="document_type">
+                                    <option value="ordre_mission">Ordre de mission</option>
+                                    <option value="rapport">Rapport de mission</option>
+                                    <option value="facture">Facture</option>
+                                    <option value="recu">Reçu</option>
+                                    <option value="autre">Autre document</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <input type="text" class="form-control form-control-sm" wire:model="document_note"
+                                    placeholder="Note de validation (optionnel)">
+                            </div>
+                            <div class="col-12">
+                                <input type="file" class="form-control form-control-sm" wire:model="documents" multiple accept=".pdf,image/*">
+                                @error('documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
+                                <div class="form-text">PDF, JPG, PNG — 10 Mo max par fichier.</div>
+                            </div>
+                        </div>
                     </div>
 
                     @if($documents)

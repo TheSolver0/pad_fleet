@@ -15,6 +15,7 @@ use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use App\Models\Department;
 
 class Index extends Component
 {
@@ -68,6 +69,8 @@ class Index extends Component
     public string $quick_email = '';
     public string $quick_phone = '';
     public string $quick_department = '';
+    public ?int $quick_department_id = null;
+
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
@@ -330,20 +333,20 @@ class Index extends Component
             'quick_name' => 'required|string|max:150',
             'quick_email' => 'nullable|email|max:150',
             'quick_phone' => 'nullable|string|max:30',
-            'quick_department' => 'nullable|string|max:100',
+            'quick_department_id' => 'nullable|exists:departments,id',
         ]);
         $person = Person::create([
             'name' => $this->quick_name,
             'email' => $this->quick_email ?: null,
             'phone' => $this->quick_phone ?: null,
-            'department' => $this->quick_department ?: null,
+            'department_id' => $this->quick_department_id ?: null,
         ]);
-        $this->assigned_person_id = $person->id;
+        $this->assignment_person_id = $person->id;
         $this->showQuickAddPerson = false;
         $this->quick_name = '';
         $this->quick_email = '';
         $this->quick_phone = '';
-        $this->quick_department = '';
+        $this->quick_department_id = null;
         $this->dispatch('notify', type: 'success', message: 'Personne ajoutée et sélectionnée.');
     }
 
@@ -393,6 +396,7 @@ class Index extends Component
             : collect();
         $persons = Person::orderBy('name')->get(['id', 'name']);
         $docVehicle = $this->docVehicleId ? Vehicle::with(['documents', 'photos', 'carteGrises'])->find($this->docVehicleId) : null;
+        $departments = Department::orderBy('name')->get();
 
         return view('livewire.portal.vehicles.index', [
             'vehicles' => $vehicles,
@@ -402,6 +406,7 @@ class Index extends Component
             'vehicleModelsForBrand' => $vehicleModelsForBrand,
             'persons' => $persons,
             'docVehicle' => $docVehicle,
+            'departments' => $departments,
         ])->layout('layouts.app', ['title' => 'Gestion des véhicules']);
     }
 }

@@ -106,6 +106,8 @@ class Index extends Component
             'parts_lines' => 'array',
             'parts_lines.*.article_id' => 'nullable|exists:articles,id',
             'parts_lines.*.quantity' => 'nullable|integer|min:1',
+            'parts_lines.*.unit_price' => 'nullable|numeric|min:0',
+            'parts_lines.*.part_description' => 'nullable|string|max:300',
             'parts_lines.*.stock_location' => 'nullable|in:main,garage',
             'before_photo_file' => 'nullable|image|max:5120',
             'after_photo_file' => 'nullable|image|max:5120',
@@ -154,9 +156,11 @@ class Index extends Component
             'is_done' => (bool) $t->is_done,
         ])->toArray();
         $this->parts_lines = $workOrder->parts->map(fn ($p) => [
-            'article_id' => $p->article_id,
-            'quantity' => (string) $p->quantity,
-            'stock_location' => $p->stock_location,
+            'article_id'       => $p->article_id,
+            'quantity'         => (string) $p->quantity,
+            'unit_price'       => $p->unit_price ? number_format((float) $p->unit_price, 2, '.', '') : '',
+            'part_description' => $p->notes ?? '',
+            'stock_location'   => $p->stock_location,
         ])->toArray();
         $this->stock_applied = $workOrder->stock_applied_at !== null;
         $this->showFormModal = true;
@@ -245,11 +249,20 @@ class Index extends Component
                     continue;
                 }
                 $qty = (int) $line['quantity'];
+                $unitPrice = filled($line['unit_price'] ?? null) ? (float) $line['unit_price'] : null;
                 $workOrder->parts()->create([
-                    'article_id' => (int) $line['article_id'],
-                    'quantity' => $qty,
-                    'stock_location' => $line['stock_location'] ?? 'main',
+                    'article_id'       => (int) $line['article_id'],
+                    'quantity'         => $qty,
+                    'unit_price'       => $unitPrice,
+                    'total_cost'       => $unitPrice !== null ? round($unitPrice * $qty, 2) : null,
+                    'notes'            => $line['part_description'] ?: null,
+                    'stock_location'   => $line['stock_location'] ?? 'main',
                 ]);
+            }
+            // Recalculer parts_cost depuis les lignes si non saisi manuellement
+            $autoPartsCost = $workOrder->parts()->whereNotNull('total_cost')->sum('total_cost');
+            if ($autoPartsCost > 0 && ! filled($this->parts_cost)) {
+                $workOrder->update(['parts_cost' => $autoPartsCost, 'total_cost' => (float) ($this->labor_cost ?: 0) + $autoPartsCost]);
             }
             $this->dispatch('notify', type: 'success', message: 'Bon de travail mis à jour.');
         } else {
@@ -271,11 +284,19 @@ class Index extends Component
                     continue;
                 }
                 $qty = (int) $line['quantity'];
+                $unitPrice = filled($line['unit_price'] ?? null) ? (float) $line['unit_price'] : null;
                 $workOrder->parts()->create([
-                    'article_id' => (int) $line['article_id'],
-                    'quantity' => $qty,
-                    'stock_location' => $line['stock_location'] ?? 'main',
+                    'article_id'       => (int) $line['article_id'],
+                    'quantity'         => $qty,
+                    'unit_price'       => $unitPrice,
+                    'total_cost'       => $unitPrice !== null ? round($unitPrice * $qty, 2) : null,
+                    'notes'            => $line['part_description'] ?: null,
+                    'stock_location'   => $line['stock_location'] ?? 'main',
                 ]);
+            }
+            $autoPartsCost = $workOrder->parts()->whereNotNull('total_cost')->sum('total_cost');
+            if ($autoPartsCost > 0 && ! filled($this->parts_cost)) {
+                $workOrder->update(['parts_cost' => $autoPartsCost, 'total_cost' => (float) ($this->labor_cost ?: 0) + $autoPartsCost]);
             }
             $this->dispatch('notify', type: 'success', message: 'Bon de travail créé.');
         }
@@ -384,7 +405,7 @@ class Index extends Component
         $this->status = WorkOrder::STATUS_PENDING;
         $this->completion_percent = 0;
         $this->tasks = [['title' => '', 'estimated_minutes' => '', 'mechanic_id' => null, 'is_done' => false]];
-        $this->parts_lines = [['article_id' => null, 'quantity' => '1', 'stock_location' => 'main']];
+        $this->parts_lines = [['article_id' => null, 'quantity' => '1', 'unit_price' => '', 'part_description' => '', 'stock_location' => 'main']];
         $this->stock_applied = false;
         $this->resetValidation();
     }
@@ -422,7 +443,19 @@ class Index extends Component
 
     public function addPartLine(): void
     {
-        $this->parts_lines[] = ['article_id' => null, 'quantity' => '1', 'stock_location' => 'main'];
+        $this->parts_lines[] = ['article_id' => null, 'quantity' => '1', 'unit_price' => '', 'part_description' => '', 'stock_location' => 'main'];
+    }
+
+    public function updatedPartsLines(mixed $value, string $key): void
+    {
+        // Auto-remplir le prix unitaire quand on sélectionne un article
+        if (str_ends_with($key, '.article_id') && $value) {
+            $index = (int) explode('.', $key)[0];
+            $article = \App\Models\Article::find($value);
+            if ($article && $article->purchase_price && ! filled($this->parts_lines[$index]['unit_price'] ?? null)) {
+                $this->parts_lines[$index]['unit_price'] = number_format((float) $article->purchase_price, 2, '.', '');
+            }
+        }
     }
 
     public function removePartLine(int $index): void

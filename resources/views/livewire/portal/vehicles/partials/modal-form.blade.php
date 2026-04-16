@@ -1,7 +1,7 @@
 @if($showFormModal)
-<div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4); height: 110%; margin-top:-25px;" >
+<div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4); height: 120%; margin-top:-25px; overflow-y: scroll !important;" >
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
+        <div class="modal-content" style="overflow-y: scroll">
             <div class="modal-header">
                 <h5 class="modal-title">{{ $editingId ? 'Modifier le véhicule' : 'Nouveau véhicule' }}</h5>
                 <button type="button" class="btn-close" wire:click="closeFormModal"></button>

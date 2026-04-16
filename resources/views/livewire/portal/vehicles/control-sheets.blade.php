@@ -55,6 +55,10 @@
                             <button class="btn btn-sm btn-outline-primary" wire:click="openView({{ $s->id }})" title="Voir la fiche">
                                 <i class="bi bi-eye"></i>
                             </button>
+                            <a href="{{ route('vehicles.control-sheets.pdf', $s->id) }}" target="_blank"
+                               class="btn btn-sm btn-outline-danger" title="Télécharger PDF">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
                             <button class="btn btn-sm btn-outline-secondary" wire:click="openPhotoModal({{ $s->id }})" title="Photos avant/après">
                                 <i class="bi bi-camera"></i>
                             </button>
@@ -81,7 +85,7 @@
     @if($showFormModal)
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
+            <div class="modal-content" style="overflow-y: scroll;">
                 <div class="modal-header" style="background:rgba(26,84,144,.08)">
                     <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i>
                         {{ $editingId ? 'Modifier la fiche de contrôle' : 'Nouvelle fiche de contrôle' }}
@@ -195,16 +199,16 @@
                                         <tr>
                                             <td style="font-size:.82rem">{{ $labels[$itemKey] ?? $itemKey }}</td>
                                             @if($section['type'] === 'docs')
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" wire:model="{{ $sKey }}.{{ $itemKey }}.depart" value="ok" @if(($vals['depart'] ?? null) === 'ok') checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.depart', (${{ $sKey }}['{{ $itemKey }}']['depart'] ?? null) === 'ok' ? null : 'ok')"></td>
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" wire:model="{{ $sKey }}.{{ $itemKey }}.retour" value="ok" @if(($vals['retour'] ?? null) === 'ok') checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.retour', (${{ $sKey }}['{{ $itemKey }}']['retour'] ?? null) === 'ok' ? null : 'ok')"></td>
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if(($vals['depart'] ?? null) === 'absent') checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.depart', (${{ $sKey }}['{{ $itemKey }}']['depart'] ?? null) === 'absent' ? null : 'absent')"></td>
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if(($vals['retour'] ?? null) === 'absent') checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.retour', (${{ $sKey }}['{{ $itemKey }}']['retour'] ?? null) === 'absent' ? null : 'absent')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if(($vals['depart'] ?? null) === 'ok') checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', 'depart', 'ok')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if(($vals['retour'] ?? null) === 'ok') checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', 'retour', 'ok')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if(($vals['depart'] ?? null) === 'absent') checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', 'depart', 'absent')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if(($vals['retour'] ?? null) === 'absent') checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', 'retour', 'absent')"></td>
                                             @else
                                                 @php $k1 = $section['type'] === 'outillage' ? 'present_d' : 'correct_d'; $k2 = $section['type'] === 'outillage' ? 'present_r' : 'correct_r'; $k3 = $section['type'] === 'outillage' ? 'absent_d' : 'defaut_d'; $k4 = $section['type'] === 'outillage' ? 'absent_r' : 'defaut_r'; @endphp
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k1] ?? false) checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.{{ $k1 }}', !(${{ $sKey }}['{{ $itemKey }}']['{{ $k1 }}'] ?? false))"></td>
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k2] ?? false) checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.{{ $k2 }}', !(${{ $sKey }}['{{ $itemKey }}']['{{ $k2 }}'] ?? false))"></td>
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k3] ?? false) checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.{{ $k3 }}', !(${{ $sKey }}['{{ $itemKey }}']['{{ $k3 }}'] ?? false))"></td>
-                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k4] ?? false) checked @endif wire:click="$set('{{ $sKey }}.{{ $itemKey }}.{{ $k4 }}', !(${{ $sKey }}['{{ $itemKey }}']['{{ $k4 }}'] ?? false))"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k1] ?? false) checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', '{{ $k1 }}')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k2] ?? false) checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', '{{ $k2 }}')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k3] ?? false) checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', '{{ $k3 }}')"></td>
+                                                <td class="text-center"><input type="checkbox" class="form-check-input" @if($vals[$k4] ?? false) checked @endif wire:click="toggleCheck('{{ $sKey }}', '{{ $itemKey }}', '{{ $k4 }}')"></td>
                                             @endif
                                         </tr>
                                         @endforeach
@@ -328,7 +332,11 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-outline-secondary" wire:click="$set('showViewModal', false)">Fermer</button>
-                    <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimer</button>
+                    <a href="{{ route('vehicles.control-sheets.pdf', $viewingSheet->id) }}"
+                       target="_blank"
+                       class="btn btn-primary">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>Télécharger PDF
+                    </a>
                 </div>
             </div>
         </div>

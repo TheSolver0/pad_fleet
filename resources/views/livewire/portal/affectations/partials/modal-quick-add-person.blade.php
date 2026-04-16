@@ -24,8 +24,13 @@
                             <input type="text" class="form-control form-control-sm" wire:model="quick_phone" placeholder="+237...">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small">Service</label>
-                            <input type="text" class="form-control form-control-sm" wire:model="quick_department" placeholder="Département">
+                            <label class="form-label small">Département</label>
+                            <select wire:model="quick_department_id">
+    <option value="">— Aucun département —</option>
+    @foreach($departments as $dept)
+        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+    @endforeach
+</select>
                         </div>
                     </div>
                 </div>

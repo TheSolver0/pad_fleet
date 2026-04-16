@@ -103,6 +103,12 @@
                                         <button type="button" class="btn btn-sm btn-outline-info" wire:click="openDocumentModal({{ $m->id }})" title="Documents">
                                             <i class="bi bi-file-earmark"></i>
                                         </button>
+                                        <a href="{{ route('vehicles.control-sheets', ['mission_id' => $m->id]) }}" class="btn btn-sm btn-outline-warning" title="Fiche de contrôle véhicule">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            @if($m->control_sheets_count > 0)
+                                                <span class="badge bg-success ms-1">{{ $m->control_sheets_count }}</span>
+                                            @endif
+                                        </a>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-danger" wire:click="confirmDelete({{ $m->id }})"><i class="bi bi-trash"></i></button>
                                 </td>

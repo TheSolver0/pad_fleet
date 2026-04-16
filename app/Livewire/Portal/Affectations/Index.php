@@ -7,6 +7,7 @@ use App\Models\Vehicle;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Department;
 
 class Index extends Component
 {
@@ -30,6 +31,7 @@ class Index extends Component
     public string $quick_email = '';
     public string $quick_phone = '';
     public string $quick_department = '';
+    public ?int $quick_department_id = null;
 
     protected $queryString = ['search' => ['except' => ''], 'filter_type' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
@@ -140,20 +142,20 @@ class Index extends Component
             'quick_name' => 'required|string|max:150',
             'quick_email' => 'nullable|email|max:150',
             'quick_phone' => 'nullable|string|max:30',
-            'quick_department' => 'nullable|string|max:100',
+            'quick_department_id' => 'nullable|exists:departments,id',
         ]);
         $person = Person::create([
             'name' => $this->quick_name,
             'email' => $this->quick_email ?: null,
             'phone' => $this->quick_phone ?: null,
-            'department' => $this->quick_department ?: null,
+            'department_id' => $this->quick_department_id ?: null,
         ]);
         $this->assignment_person_id = $person->id;
         $this->showQuickAddPerson = false;
         $this->quick_name = '';
         $this->quick_email = '';
         $this->quick_phone = '';
-        $this->quick_department = '';
+        $this->quick_department_id = null;
         $this->dispatch('notify', type: 'success', message: 'Personne ajoutée et sélectionnée.');
     }
 
@@ -184,11 +186,13 @@ class Index extends Component
         $assignments = $query->orderBy('registration')->paginate(15);
         $vehicles = Vehicle::query()->with('vehicleModel.brand')->orderBy('registration')->get(['id', 'registration', 'vehicle_model_id']);
         $persons = Person::orderBy('name')->get(['id', 'name']);
+        $departments = Department::orderBy('name')->get();
 
         return view('livewire.portal.affectations.index', [
             'assignments' => $assignments,
             'vehicles' => $vehicles,
             'persons' => $persons,
+            'departments' => $departments,
             'editingVehicle' => $this->editingVehicleId ? Vehicle::with('vehicleModel.brand')->find($this->editingVehicleId) : null,
         ])->layout('layouts.app', ['title' => 'Affectations véhicules']);
     }

@@ -8,6 +8,7 @@ use App\Models\RepairPart;
 use App\Models\Sinistre;
 use App\Models\StockMovement;
 use App\Models\Vehicle;
+use App\Models\WorkOrder;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -98,10 +99,88 @@ class Index extends Component
         ];
     }
 
+    /** Coût maintenance (WorkOrders) par véhicule sur la période */
+    public function getMaintenanceCostByVehicleProperty(): \Illuminate\Support\Collection
+    {
+        $start = Carbon::parse($this->start_date)->startOfDay();
+        $end   = Carbon::parse($this->end_date)->endOfDay();
+        $category = $this->vehicle_category;
+
+        return WorkOrder::query()
+            ->join('vehicles', 'work_orders.vehicle_id', '=', 'vehicles.id')
+            ->whereBetween('work_orders.work_date', [$start, $end])
+            ->whereNotNull('work_orders.total_cost')
+            ->when($category !== '', fn ($q) => $q->where('vehicles.category', $category))
+            ->selectRaw('
+                vehicles.id as vehicle_id,
+                vehicles.registration,
+                vehicles.category,
+                count(work_orders.id) as wo_count,
+                coalesce(sum(work_orders.labor_cost), 0) as total_labor,
+                coalesce(sum(work_orders.parts_cost), 0) as total_parts,
+                coalesce(sum(work_orders.total_cost), 0) as total_cost
+            ')
+            ->groupBy('vehicles.id', 'vehicles.registration', 'vehicles.category')
+            ->orderByDesc('total_cost')
+            ->limit(15)
+            ->get();
+    }
+
+    /** Coût maintenance (WorkOrders) par type de véhicule sur la période */
+    public function getMaintenanceCostByCategoryProperty(): \Illuminate\Support\Collection
+    {
+        $start = Carbon::parse($this->start_date)->startOfDay();
+        $end   = Carbon::parse($this->end_date)->endOfDay();
+
+        return WorkOrder::query()
+            ->join('vehicles', 'work_orders.vehicle_id', '=', 'vehicles.id')
+            ->whereBetween('work_orders.work_date', [$start, $end])
+            ->whereNotNull('work_orders.total_cost')
+            ->selectRaw('
+                vehicles.category,
+                count(work_orders.id) as wo_count,
+                coalesce(sum(work_orders.labor_cost), 0) as total_labor,
+                coalesce(sum(work_orders.parts_cost), 0) as total_parts,
+                coalesce(sum(work_orders.total_cost), 0) as total_cost
+            ')
+            ->groupBy('vehicles.category')
+            ->orderByDesc('total_cost')
+            ->get()
+            ->map(function ($row) {
+                $row->category_label = Vehicle::categoryOptions()[$row->category] ?? $row->category;
+                return $row;
+            });
+    }
+
+    /** Évolution mensuelle du coût maintenance sur 12 mois glissants */
+    public function getMaintenanceCostTrendProperty(): array
+    {
+        $labels  = [];
+        $costs   = [];
+        $category = $this->vehicle_category;
+
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $labels[] = $month->translatedFormat('M Y');
+            $costs[]  = (float) WorkOrder::query()
+                ->join('vehicles', 'work_orders.vehicle_id', '=', 'vehicles.id')
+                ->whereYear('work_orders.work_date', $month->year)
+                ->whereMonth('work_orders.work_date', $month->month)
+                ->whereNotNull('work_orders.total_cost')
+                ->when($category !== '', fn ($q) => $q->where('vehicles.category', $category))
+                ->sum('work_orders.total_cost');
+        }
+
+        return ['labels' => $labels, 'costs' => $costs];
+    }
+
     public function render(): View
     {
         return view('livewire.portal.reports.index', [
-            'stats' => $this->stats,
+            'stats'                    => $this->stats,
+            'maintenanceCostByVehicle' => $this->maintenanceCostByVehicle,
+            'maintenanceCostByCategory'=> $this->maintenanceCostByCategory,
+            'maintenanceCostTrend'     => $this->maintenanceCostTrend,
         ])->layout('layouts.app', ['title' => 'Rapports']);
     }
 }

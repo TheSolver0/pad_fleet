@@ -39,15 +39,17 @@ class Index extends Component
     public string $fuel_consumed = '';
     public string $notes = '';
 
-    // Document de validation dans le formulaire
-    public $form_documents = [];
-    public string $form_document_type = 'ordre_mission';
+    // Lignes documents de validation dans le formulaire (type + note individuelle)
+    public array $form_doc_rows = [
+        ['file' => null, 'type' => 'ordre_mission', 'note' => '']
+    ];
 
     // Modal de gestion des documents existants
     public $documents = [];
     public bool $showDocumentModal = false;
     public ?int $documentScheduleId = null;
     public string $document_type = 'autre';
+    public string $document_note = '';
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => ''], 'date_filter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
@@ -70,7 +72,7 @@ class Index extends Component
             'mileage_end' => 'nullable|integer|min:0',
             'fuel_consumed' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
-            'form_documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'form_doc_rows.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -138,9 +140,9 @@ class Index extends Component
         }
 
         // Enregistrer les documents de validation joints au formulaire
-        if (!empty($this->form_documents)) {
-            foreach ($this->form_documents as $file) {
-                VehicleScheduleDocument::storeUpload($schedule, $file, $this->form_document_type);
+        foreach ($this->form_doc_rows as $row) {
+            if (!empty($row['file'])) {
+                VehicleScheduleDocument::storeUpload($schedule, $row['file'], $row['type'], $row['note'] ?: null);
             }
         }
 
@@ -187,9 +189,20 @@ class Index extends Component
         $this->mileage_end = '';
         $this->fuel_consumed = '';
         $this->notes = '';
-        $this->form_documents = [];
-        $this->form_document_type = 'ordre_mission';
+        $this->form_doc_rows = [['file' => null, 'type' => 'ordre_mission', 'note' => '']];
         $this->resetValidation();
+    }
+
+    public function addFormDocRow(): void
+    {
+        $this->form_doc_rows[] = ['file' => null, 'type' => 'ordre_mission', 'note' => ''];
+    }
+
+    public function removeFormDocRow(int $index): void
+    {
+        if (count($this->form_doc_rows) > 1) {
+            array_splice($this->form_doc_rows, $index, 1);
+        }
     }
 
     public function openDocumentModal(int $scheduleId): void
@@ -209,12 +222,13 @@ class Index extends Component
         $schedule = VehicleSchedule::findOrFail($this->documentScheduleId);
 
         foreach ($this->documents as $file) {
-            VehicleScheduleDocument::storeUpload($schedule, $file, $this->document_type);
+            VehicleScheduleDocument::storeUpload($schedule, $file, $this->document_type, $this->document_note ?: null);
         }
 
         $this->dispatch('notify', type: 'success', message: 'Documents enregistrés.');
         $this->showDocumentModal = false;
         $this->documents = [];
+        $this->document_note = '';
     }
 
     public function deleteDocument(int $documentId): void
@@ -225,7 +239,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = VehicleSchedule::with(['vehicle', 'driver'])->withCount('documents');
+        $query = VehicleSchedule::with(['vehicle', 'driver'])->withCount(['documents', 'controlSheets']);
 
         if ($this->search !== '') {
             $query->where(function ($q) {

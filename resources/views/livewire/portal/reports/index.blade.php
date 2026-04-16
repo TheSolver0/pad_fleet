@@ -158,4 +158,140 @@
             </div>
         </div>
     </div>
+
+    {{-- ═══════════════════════════════════════════════════════════════
+         SECTION : COÛTS DE MAINTENANCE (Bons de travail)
+    ═══════════════════════════════════════════════════════════════ --}}
+    <div class="activity-card mb-4">
+        <div class="activity-card-header">
+            <div class="module-toolbar">
+                <span class="module-toolbar-title"><i class="bi bi-wrench me-1"></i> Coûts de maintenance — Bons de travail</span>
+            </div>
+        </div>
+        <div class="p-3">
+
+            {{-- Évolution mensuelle (12 mois) --}}
+            <h6 class="fw-semibold mb-3">Évolution mensuelle du coût (12 derniers mois)</h6>
+            <div style="height:220px; position:relative;" class="mb-4">
+                <canvas id="maintenanceTrendChart"></canvas>
+            </div>
+
+            <div class="row g-4">
+                {{-- Par véhicule --}}
+                <div class="col-lg-7">
+                    <h6 class="fw-semibold mb-2">Par véhicule <span class="text-muted fw-normal small">({{ $stats['start_date'] }} → {{ $stats['end_date'] }})</span></h6>
+                    @if($maintenanceCostByVehicle->isEmpty())
+                        <p class="text-muted small">Aucun bon de travail avec coût sur la période.</p>
+                    @else
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Véhicule</th>
+                                    <th>Catégorie</th>
+                                    <th class="text-end">BT</th>
+                                    <th class="text-end">M.O. (FCFA)</th>
+                                    <th class="text-end">Pièces (FCFA)</th>
+                                    <th class="text-end fw-semibold">Total (FCFA)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($maintenanceCostByVehicle as $row)
+                                <tr>
+                                    <td class="fw-semibold">{{ $row->registration }}</td>
+                                    <td><span class="badge bg-secondary">{{ \App\Models\Vehicle::categoryOptions()[$row->category] ?? $row->category }}</span></td>
+                                    <td class="text-end">{{ $row->wo_count }}</td>
+                                    <td class="text-end">{{ number_format($row->total_labor, 0, ',', ' ') }}</td>
+                                    <td class="text-end">{{ number_format($row->total_parts, 0, ',', ' ') }}</td>
+                                    <td class="text-end fw-semibold text-primary">{{ number_format($row->total_cost, 0, ',', ' ') }}</td>
+                                </tr>
+                                @endforeach
+                                <tr class="table-light fw-semibold border-top">
+                                    <td colspan="5" class="text-end">TOTAL :</td>
+                                    <td class="text-end text-primary">{{ number_format($maintenanceCostByVehicle->sum('total_cost'), 0, ',', ' ') }} FCFA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Par type de véhicule --}}
+                <div class="col-lg-5">
+                    <h6 class="fw-semibold mb-2">Par type de véhicule</h6>
+                    @if($maintenanceCostByCategory->isEmpty())
+                        <p class="text-muted small">Aucune donnée.</p>
+                    @else
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th class="text-end">BT</th>
+                                    <th class="text-end">M.O.</th>
+                                    <th class="text-end">Pièces</th>
+                                    <th class="text-end fw-semibold">Total (FCFA)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($maintenanceCostByCategory as $row)
+                                <tr>
+                                    <td class="fw-semibold">{{ $row->category_label }}</td>
+                                    <td class="text-end">{{ $row->wo_count }}</td>
+                                    <td class="text-end">{{ number_format($row->total_labor, 0, ',', ' ') }}</td>
+                                    <td class="text-end">{{ number_format($row->total_parts, 0, ',', ' ') }}</td>
+                                    <td class="text-end fw-semibold text-primary">{{ number_format($row->total_cost, 0, ',', ' ') }}</td>
+                                </tr>
+                                @endforeach
+                                <tr class="table-light fw-semibold border-top">
+                                    <td colspan="4" class="text-end">TOTAL :</td>
+                                    <td class="text-end text-primary">{{ number_format($maintenanceCostByCategory->sum('total_cost'), 0, ',', ' ') }} FCFA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const trendCtx = document.getElementById('maintenanceTrendChart');
+    if (!trendCtx || typeof Chart === 'undefined') return;
+    const labels = @json($maintenanceCostTrend['labels']);
+    const costs  = @json($maintenanceCostTrend['costs']);
+    new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Coût total BT (FCFA)',
+                data: costs,
+                backgroundColor: 'rgba(26,84,144,0.75)',
+                borderColor: 'rgba(26,84,144,1)',
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') } } }
+        }
+    });
+});
+document.addEventListener('livewire:updated', function () {
+    const trendCtx = document.getElementById('maintenanceTrendChart');
+    if (!trendCtx || typeof Chart === 'undefined') return;
+    Chart.getChart(trendCtx)?.destroy();
+    const labels = @json($maintenanceCostTrend['labels']);
+    const costs  = @json($maintenanceCostTrend['costs']);
+    new Chart(trendCtx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Coût total BT (FCFA)', data: costs, backgroundColor: 'rgba(26,84,144,0.75)' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+});
+</script>

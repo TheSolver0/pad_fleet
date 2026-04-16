@@ -162,35 +162,69 @@
                         </div>
                         <div class="col-12">
                             <hr class="my-1">
-                            <label class="form-label fw-semibold">
-                                <i class="bi bi-paperclip me-1"></i> Document de validation
-                            </label>
-                            <div class="row g-2">
-                                <div class="col-md-5">
-                                    <select class="form-select form-select-sm" wire:model="form_document_type">
-                                        <option value="ordre_mission">Ordre de mission</option>
-                                        <option value="rapport">Rapport de mission</option>
-                                        <option value="facture">Facture</option>
-                                        <option value="recu">Reçu</option>
-                                        <option value="autre">Autre document</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-7">
-                                    <input type="file" class="form-control form-control-sm" wire:model="form_documents" multiple accept=".pdf,image/*">
-                                    @error('form_documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
-                                    <div class="form-text">PDF, JPG, PNG — 10 Mo max par fichier.</div>
-                                </div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label fw-semibold mb-0">
+                                    <i class="bi bi-paperclip me-1"></i> Documents de validation
+                                </label>
+                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="addFormDocRow">
+                                    <i class="bi bi-plus-lg me-1"></i> Ajouter
+                                </button>
                             </div>
-                            @if($form_documents)
-                                <div class="mt-2 d-flex flex-wrap gap-2">
-                                    @foreach($form_documents as $file)
-                                        <span class="badge bg-light text-dark border">
-                                            <i class="bi bi-file-earmark me-1"></i>{{ $file->getClientOriginalName() }}
-                                            <span class="text-muted ms-1">({{ number_format($file->getSize() / 1024, 1) }} KB)</span>
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @endif
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-1 align-middle">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Fichier <span class="text-muted fw-normal small">(PDF, JPG, PNG)</span></th>
+                                            <th style="width:160px">Type</th>
+                                            <th>Note de validation</th>
+                                            <th style="width:36px"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($form_doc_rows as $i => $row)
+                                        <tr>
+                                            <td>
+                                                <input type="file" class="form-control form-control-sm"
+                                                    wire:model="form_doc_rows.{{ $i }}.file"
+                                                    accept=".pdf,image/*">
+                                                @error("form_doc_rows.$i.file")
+                                                    <span class="text-danger small">{{ $message }}</span>
+                                                @enderror
+                                                @if(!empty($row['file']))
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="bi bi-file-earmark me-1"></i>{{ $row['file']->getClientOriginalName() }}
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm"
+                                                    wire:model="form_doc_rows.{{ $i }}.type">
+                                                    <option value="ordre_mission">Ordre de mission</option>
+                                                    <option value="rapport">Rapport de mission</option>
+                                                    <option value="facture">Facture</option>
+                                                    <option value="recu">Reçu</option>
+                                                    <option value="autre">Autre document</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    wire:model="form_doc_rows.{{ $i }}.note"
+                                                    placeholder="Note de validation…">
+                                            </td>
+                                            <td class="text-center">
+                                                @if(count($form_doc_rows) > 1)
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    wire:click="removeFormDocRow({{ $i }})">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-text">10 Mo max par fichier.</div>
                         </div>
                     </div>
                 </div>

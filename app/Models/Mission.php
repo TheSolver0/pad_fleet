@@ -85,6 +85,11 @@ class Mission extends Model
         return $this->hasMany(MissionDocument::class);
     }
 
+    public function controlSheets()
+    {
+        return $this->hasMany(VehicleControlSheet::class);
+    }
+
     /** Calcule distance_km à partir de km_departure et km_return. */
     public function computeDistance(): void
     {

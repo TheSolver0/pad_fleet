@@ -55,6 +55,11 @@ class VehicleSchedule extends Model
         return $this->hasMany(VehicleScheduleDocument::class);
     }
 
+    public function controlSheets(): HasMany
+    {
+        return $this->hasMany(VehicleControlSheet::class);
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {

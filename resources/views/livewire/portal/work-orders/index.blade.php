@@ -471,32 +471,73 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered mb-2">
+                                        <table class="table table-sm table-bordered mb-2 align-middle">
                                             <thead class="bg-light">
                                                 <tr>
-                                                    <th>Article</th>
-                                                    <th style="width:110px">Qté</th>
-                                                    <th style="width:160px">Magasin</th>
-                                                    <th style="width:60px"></th>
+                                                    <th>Article <span class="text-muted fw-normal">(recherche par mots-clés)</span></th>
+                                                    <th style="width:90px">Qté</th>
+                                                    <th style="width:130px">Prix unit. (FCFA)</th>
+                                                    <th style="width:120px">Total ligne</th>
+                                                    <th>Description / Marque</th>
+                                                    <th style="width:150px">Magasin</th>
+                                                    <th style="width:36px"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                @php $partsTotal = 0; @endphp
                                                 @foreach ($parts_lines as $i => $line)
+                                                    @php
+                                                        $lineTotal = (filled($line['unit_price'] ?? null) && filled($line['quantity'] ?? null))
+                                                            ? round((float) $line['unit_price'] * (int) $line['quantity'], 0)
+                                                            : null;
+                                                        if ($lineTotal !== null) $partsTotal += $lineTotal;
+                                                    @endphp
                                                     <tr>
                                                         <td>
-                                                            <select class="form-select form-select-sm"
-                                                                wire:model="parts_lines.{{ $i }}.article_id">
-                                                                <option value="">—</option>
+                                                            <input type="text"
+                                                                class="form-control form-control-sm mb-1"
+                                                                placeholder="Taper un mot-clé pour filtrer…"
+                                                                oninput="filterArticleSelect(this, 'art-sel-{{ $i }}')">
+                                                            <select id="art-sel-{{ $i }}"
+                                                                class="form-select form-select-sm"
+                                                                wire:model.live="parts_lines.{{ $i }}.article_id">
+                                                                <option value="">— Sélectionner —</option>
                                                                 @foreach ($articles as $a)
-                                                                    <option value="{{ $a->id }}">
+                                                                    <option value="{{ $a->id }}"
+                                                                        data-price="{{ $a->purchase_price ?? '' }}"
+                                                                        data-stock="{{ $a->total_stock ?? 0 }}">
                                                                         {{ $a->name }} ({{ $a->reference }})
+                                                                        @if(($a->total_stock ?? 0) > 0)
+                                                                            — Stock: {{ $a->total_stock }}
+                                                                        @else
+                                                                            — Rupture
+                                                                        @endif
                                                                     </option>
                                                                 @endforeach
                                                             </select>
                                                         </td>
-                                                        <td><input type="number" class="form-control form-control-sm"
-                                                                wire:model="parts_lines.{{ $i }}.quantity"
-                                                                min="1"></td>
+                                                        <td>
+                                                            <input type="number" class="form-control form-control-sm"
+                                                                wire:model.live="parts_lines.{{ $i }}.quantity"
+                                                                min="1">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" class="form-control form-control-sm"
+                                                                wire:model.live="parts_lines.{{ $i }}.unit_price"
+                                                                min="0" step="1" placeholder="FCFA">
+                                                        </td>
+                                                        <td class="fw-semibold text-end">
+                                                            @if($lineTotal !== null)
+                                                                {{ number_format($lineTotal, 0, ',', ' ') }}
+                                                            @else
+                                                                <span class="text-muted">—</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control form-control-sm"
+                                                                wire:model="parts_lines.{{ $i }}.part_description"
+                                                                placeholder="Marque, N° série…">
+                                                        </td>
                                                         <td>
                                                             <select class="form-select form-select-sm"
                                                                 wire:model="parts_lines.{{ $i }}.stock_location">
@@ -508,12 +549,20 @@
                                                             @if (count($parts_lines) > 1)
                                                                 <button type="button"
                                                                     class="btn btn-sm btn-outline-danger"
-                                                                    wire:click="removePartLine({{ $i }})"><i
-                                                                        class="bi bi-trash"></i></button>
+                                                                    wire:click="removePartLine({{ $i }})">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
                                                             @endif
                                                         </td>
                                                     </tr>
                                                 @endforeach
+                                                @if($partsTotal > 0)
+                                                <tr class="table-light fw-semibold">
+                                                    <td colspan="3" class="text-end">Total pièces :</td>
+                                                    <td class="text-end text-primary">{{ number_format($partsTotal, 0, ',', ' ') }} FCFA</td>
+                                                    <td colspan="3"></td>
+                                                </tr>
+                                                @endif
                                             </tbody>
                                         </table>
                                     </div>
@@ -1069,6 +1118,20 @@
     @endif
 
 </div>
+<script>
+function filterArticleSelect(input, selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const filter = input.value.toLowerCase().trim();
+    let firstVisible = null;
+    Array.from(select.options).forEach(opt => {
+        if (opt.value === '') { opt.style.display = ''; return; }
+        const match = filter === '' || opt.text.toLowerCase().includes(filter);
+        opt.style.display = match ? '' : 'none';
+        if (match && !firstVisible) firstVisible = opt;
+    });
+}
+</script>
 <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
     (function() {
