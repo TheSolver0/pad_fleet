@@ -256,13 +256,14 @@
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const trendCtx = document.getElementById('maintenanceTrendChart');
     if (!trendCtx || typeof Chart === 'undefined') return;
     const labels = @json($maintenanceCostTrend['labels']);
     const costs  = @json($maintenanceCostTrend['costs']);
+    console.log('Maintenance cost trend data:', { labels, costs });
     new Chart(trendCtx, {
         type: 'bar',
         data: {
