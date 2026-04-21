@@ -18,9 +18,10 @@
             'id'     => 'flotte',
             'label'  => 'Flotte',
             'icon'   => 'bi bi-truck-front-fill',
-            'routes' => ['vehicles.index', 'carte-grises.index', 'brands.index', 'vehicle-models.index', 'personnes.index'],
+            'routes' => ['vehicles.index', 'motorcycles.index', 'carte-grises.index', 'brands.index', 'vehicle-models.index', 'personnes.index'],
             'items'  => [
                 ['route' => 'vehicles.index',       'label' => 'Véhicules',      'icon' => 'bi bi-car-front-fill'],
+                ['route' => 'motorcycles.index',    'label' => 'Motos',          'icon' => 'bi bi-bicycle'],
                 ['route' => 'carte-grises.index',   'label' => 'Cartes grises',  'icon' => 'bi bi-card-checklist'],
                 ['route' => 'vehicle-inspections.index',   'label' => 'Visites techniques', 'icon' => 'bi bi-clipboard-check'],
                 ['route' => 'brands.index',         'label' => 'Marques',        'icon' => 'bi bi-tag-fill'],

@@ -160,6 +160,8 @@
 @endpush
 <div class="dashboard-page container">
     <p class="section-label">Vue d’ensemble</p>
+
+    <h3 class="dashboard-section-title"><i class="bi bi-car-front me-2"></i>Parc véhicules</h3>
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-card-header">
@@ -167,7 +169,7 @@
                 <span class="kpi-card-icon vehicules"><i class="bi bi-car-front"></i></span>
             </div>
             <div class="kpi-card-value">{{ number_format($kpis['total_vehicles']) }}</div>
-            <div class="kpi-card-sub">Total parc</div>
+            <div class="kpi-card-sub">Total parc (hors motos)</div>
         </div>
         <div class="kpi-card">
             <div class="kpi-card-header">
@@ -193,6 +195,12 @@
             <div class="kpi-card-value">{{ number_format($kpis['sinistres_open']) }}</div>
             <div class="kpi-card-sub">À traiter ou en cours</div>
         </div>
+    </div>
+
+    <div class="mt-2 text-end">
+        <a href="{{ route('vehicles.index') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-car-front me-1"></i>Gérer les véhicules
+        </a>
     </div>
 
     {{-- Deuxième ligne KPIs léger --}}
@@ -237,6 +245,50 @@
             <div class="kpi-card-value">
                 {{ number_format($quickStats['repair_cost_external_this_month'], 0, ',', ' ') }}</div>
             <div class="kpi-card-sub">FCFA ce mois</div>
+        </div>
+    </div>
+
+    {{-- KPIs Motos --}}
+    <div class="dashboard-section mt-4">
+        <h3 class="dashboard-section-title"><i class="bi bi-bicycle me-2"></i>Parc motos</h3>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-card-header">
+                    <span class="kpi-card-label">Motos</span>
+                    <span class="kpi-card-icon vehicules"><i class="bi bi-bicycle"></i></span>
+                </div>
+                <div class="kpi-card-value">{{ number_format($motoKpis['total']) }}</div>
+                <div class="kpi-card-sub">Total parc motos</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card-header">
+                    <span class="kpi-card-label">Disponibles</span>
+                    <span class="kpi-card-icon dispo"><i class="bi bi-check-circle"></i></span>
+                </div>
+                <div class="kpi-card-value">{{ number_format($motoKpis['available']) }}</div>
+                <div class="kpi-card-sub">{{ $motoKpis['availability_rate'] }}% du parc — utilisables</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card-header">
+                    <span class="kpi-card-label">En réparation</span>
+                    <span class="kpi-card-icon repa"><i class="bi bi-wrench"></i></span>
+                </div>
+                <div class="kpi-card-value">{{ number_format($motoKpis['repair']) }}</div>
+                <div class="kpi-card-sub">{{ $motoKpis['out_of_service'] }} hors service</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card-header">
+                    <span class="kpi-card-label">En mission</span>
+                    <span class="kpi-card-icon missions"><i class="bi bi-signpost-2"></i></span>
+                </div>
+                <div class="kpi-card-value">{{ number_format($motoKpis['in_use']) }}</div>
+                <div class="kpi-card-sub">Actuellement utilisées</div>
+            </div>
+        </div>
+        <div class="mt-2 text-end">
+            <a href="{{ route('motorcycles.index') }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-bicycle me-1"></i>Gérer les motos
+            </a>
         </div>
     </div>
 

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(php artisan:*)",
-      "Bash(composer show *)"
+      "Bash(composer show *)",
+      "Bash(xargs grep *)"
     ]
   }
 }

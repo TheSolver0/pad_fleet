@@ -29,6 +29,7 @@ Route::post('/logout', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardIndex::class)->name('dashboard');
     Route::get('/vehicles', \App\Livewire\Portal\Vehicles\Index::class)->name('vehicles.index');
+    Route::get('/motorcycles', \App\Livewire\Portal\Motorcycles\Index::class)->name('motorcycles.index');
     Route::get('/carte-grises', \App\Livewire\Portal\CarteGrises\Index::class)->name('carte-grises.index');
     Route::get('/brands', \App\Livewire\Portal\Brands\Index::class)->name('brands.index');
     Route::get('/vehicle-models', \App\Livewire\Portal\VehicleModels\Index::class)->name('vehicle-models.index');

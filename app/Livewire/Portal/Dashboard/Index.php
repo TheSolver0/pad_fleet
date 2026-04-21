@@ -19,13 +19,33 @@ class Index extends Component
     protected $paginationTheme = 'bootstrap'; 
 
 
+    public function getMotoKpis(): array
+    {
+        $total = Vehicle::where('category', Vehicle::CATEGORY_MOTO)->count();
+        $available = Vehicle::where('category', Vehicle::CATEGORY_MOTO)->where('status', Vehicle::STATUS_AVAILABLE)->count();
+        $inUse = Vehicle::where('category', Vehicle::CATEGORY_MOTO)->where('status', Vehicle::STATUS_IN_USE)->count();
+        $repair = Vehicle::where('category', Vehicle::CATEGORY_MOTO)->where('status', Vehicle::STATUS_REPAIR)->count();
+        $outOfService = Vehicle::where('category', Vehicle::CATEGORY_MOTO)->where('status', Vehicle::STATUS_OUT_OF_SERVICE)->count();
+        $rate = $total > 0 ? round((float) $available / $total * 100, 1) : 0;
+
+        return [
+            'total' => $total,
+            'available' => $available,
+            'in_use' => $inUse,
+            'repair' => $repair,
+            'out_of_service' => $outOfService,
+            'availability_rate' => $rate,
+        ];
+    }
+
     public function getKpis(): array
     {
-        $total = Vehicle::count();
-        $available = Vehicle::where('status', Vehicle::STATUS_AVAILABLE)->count();
-        $inUse = Vehicle::where('status', Vehicle::STATUS_IN_USE)->count();
-        $repair = Vehicle::where('status', Vehicle::STATUS_REPAIR)->count();
-        $outOfService = Vehicle::where('status', Vehicle::STATUS_OUT_OF_SERVICE)->count();
+        $base = Vehicle::where('category', '!=', Vehicle::CATEGORY_MOTO);
+        $total = (clone $base)->count();
+        $available = (clone $base)->where('status', Vehicle::STATUS_AVAILABLE)->count();
+        $inUse = (clone $base)->where('status', Vehicle::STATUS_IN_USE)->count();
+        $repair = (clone $base)->where('status', Vehicle::STATUS_REPAIR)->count();
+        $outOfService = (clone $base)->where('status', Vehicle::STATUS_OUT_OF_SERVICE)->count();
 
         $repairsOngoing = Repair::whereNull('completed_at')->count();
         $sinistresOpen = Sinistre::whereIn('status', [
@@ -281,7 +301,7 @@ class Index extends Component
             ];
         }
 
-        $vehiclesWithoutInsurance = Vehicle::whereNull('insurance_contract_global_id')->count();
+        $vehiclesWithoutInsurance = Vehicle::where('category', '!=', Vehicle::CATEGORY_MOTO)->whereNull('insurance_contract_global_id')->count();
         if ($vehiclesWithoutInsurance > 0) {
             $list[] = [
                 'type' => 'danger',
@@ -511,6 +531,7 @@ public function getVehicleTripStats(string $period = 'month'): \Illuminate\Suppo
     public function render()
     {
         $kpis = $this->getKpis();
+        $motoKpis = $this->getMotoKpis();
         $activity = $this->getRecentActivity();
         $insights = $this->getInsights();
         $quickStats = $this->getQuickStats();
@@ -527,6 +548,7 @@ public function getVehicleTripStats(string $period = 'month'): \Illuminate\Suppo
 
         return view('livewire.portal.dashboard.index', [
             'kpis'              => $kpis,
+            'motoKpis'          => $motoKpis,
             'activity'          => $activity,
             'insights'          => $insights,
             'quickStats'        => $quickStats,
