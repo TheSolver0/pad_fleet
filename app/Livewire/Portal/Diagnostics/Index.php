@@ -365,6 +365,10 @@ class Index extends Component
         $drivers = Driver::orderBy('last_name')->get(['id', 'first_name', 'last_name']);
         $persons = Person::orderBy('name')->get(['id', 'name', 'first_name', 'last_name']);
 
+        $viewDiagnostic = ($this->showViewModal && $this->editingId)
+            ? Diagnostic::with(['vehicle', 'mechanic'])->find($this->editingId)
+            : null;
+
         return view('livewire.portal.diagnostics.index', [
             'diagnostics' => $diagnostics,
             'vehicles' => $vehicles,
@@ -372,6 +376,7 @@ class Index extends Component
             'mechanics' => $mechanics,
             'drivers' => $drivers,
             'persons' => $persons,
+            'viewDiagnostic' => $viewDiagnostic,
         ])->layout('layouts.app', ['title' => 'Diagnostics']);
     }
 }
