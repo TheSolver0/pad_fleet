@@ -17,6 +17,7 @@ class VehicleConsumption extends Component
     public string $vehicle_category = '';
     public string $start_date = '';
     public string $end_date = '';
+    public string $vehicle_id = '';
 
     public function mount(): void
     {
@@ -24,9 +25,23 @@ class VehicleConsumption extends Component
         $this->end_date = now()->format('Y-m-d');
     }
 
+    public function getVehiclesListProperty(): \Illuminate\Support\Collection
+    {
+        $query = Vehicle::orderBy('registration');
+        if ($this->vehicle_category !== '') {
+            $query->where('category', $this->vehicle_category);
+        }
+        return $query->get(['id', 'registration']);
+    }
+
     public function updatedPeriod(): void
     {
         $this->updateDateRange();
+    }
+
+    public function updatedVehicleCategory(): void
+    {
+        $this->vehicle_id = '';
     }
 
     private function updateDateRange(): void
@@ -63,6 +78,9 @@ class VehicleConsumption extends Component
 
         if ($this->vehicle_category !== '') {
             $query->where('category', $this->vehicle_category);
+        }
+        if ($this->vehicle_id !== '') {
+            $query->where('id', $this->vehicle_id);
         }
 
         $vehicles = $query->with(['repairs' => function ($q) use ($startDate, $endDate) {
@@ -118,6 +136,9 @@ class VehicleConsumption extends Component
                 if ($this->vehicle_category !== '') {
                     $q->where('category', $this->vehicle_category);
                 }
+                if ($this->vehicle_id !== '') {
+                    $q->where('id', $this->vehicle_id);
+                }
             })
             ->with('vehicle')
             ->get();
@@ -156,6 +177,9 @@ class VehicleConsumption extends Component
         ->whereHas('repair.vehicle', function ($q) {
             if ($this->vehicle_category !== '') {
                 $q->where('category', $this->vehicle_category);
+            }
+            if ($this->vehicle_id !== '') {
+                $q->where('id', $this->vehicle_id);
             }
         })
         ->with('article')
@@ -213,6 +237,7 @@ class VehicleConsumption extends Component
             'consumptionByType' => $this->consumptionByVehicleType,
             'topParts' => $this->topConsumedParts,
             'tireAlerts' => $this->tireAlerts,
+            'vehiclesList' => $this->vehiclesList,
         ]);
     }
 }

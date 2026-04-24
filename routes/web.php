@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/prestataire-evaluations', \App\Livewire\Portal\PrestataireEvaluations\Index::class)->name('prestataire-evaluations.index');
     Route::get('/reports', \App\Livewire\Portal\Reports\Index::class)->name('reports.index');
     Route::get('/reports/vehicle-consumption', \App\Livewire\Portal\Reports\VehicleConsumption::class)->name('reports.vehicle-consumption');
+    Route::get('/reports/vehicle-reform', \App\Livewire\Portal\Reports\VehicleReform::class)->name('reports.vehicle-reform');
     Route::get('/reports/vehicle-consumption/export/excel', [\App\Http\Controllers\ReportExportController::class, 'vehicleConsumptionExcel'])->name('reports.vehicle-consumption.export.excel');
     Route::get('/reports/vehicle-consumption/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'vehicleConsumptionPdf'])->name('reports.vehicle-consumption.export.pdf');
     Route::get('/reports/fleet/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'fleetGlobalPdf'])->name('reports.fleet.export.pdf');

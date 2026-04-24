@@ -23,6 +23,12 @@
                         <option value="moto">Moto</option>
                         <option value="autre">Autre</option>
                     </select>
+                    <select class="form-select form-select-sm" style="width: 180px;" wire:model.live="vehicle_id">
+                        <option value="">Tous les véhicules</option>
+                        @foreach($vehiclesList as $v)
+                            <option value="{{ $v->id }}">{{ $v->registration }}</option>
+                        @endforeach
+                    </select>
                     <input type="date" class="form-control form-control-sm" style="width: 140px;" wire:model="start_date">
                     <input type="date" class="form-control form-control-sm" style="width: 140px;" wire:model="end_date">
                 </div>
@@ -79,7 +85,7 @@
                                 <small class="text-muted">Réparations</small>
                             </div>
                             <div class="col-4">
-                                <div class="fw-bold text-success">{{ number_format($data['total_parts_cost'], 0, ',', ' ') }} €</div>
+                                <div class="fw-bold text-success">{{ number_format($data['total_parts_cost'], 0, ',', ' ') }} FCFA</div>
                                 <small class="text-muted">Coût pièces</small>
                             </div>
                             <div class="col-4">
@@ -107,7 +113,7 @@
                             @foreach(array_slice($data['parts_used'], 0, 3) as $part)
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <small class="text-truncate">{{ $part['name'] }}</small>
-                                <small class="text-muted">{{ $part['quantity'] }}x / {{ number_format($part['total_cost'], 0, ',', ' ') }} €</small>
+                                <small class="text-muted">{{ $part['quantity'] }}x / {{ number_format($part['total_cost'], 0, ',', ' ') }} FCFA</small>
                             </div>
                             @endforeach
                         </div>
@@ -139,9 +145,9 @@
                             <td class="fw-semibold">{{ $part['name'] }}</td>
                             <td><span class="badge bg-light text-dark">{{ $part['reference'] }}</span></td>
                             <td>{{ $part['total_quantity'] }}</td>
-                            <td class="fw-semibold">{{ number_format($part['total_cost'], 2, ',', ' ') }} €</td>
+                            <td class="fw-semibold">{{ number_format($part['total_cost'], 2, ',', ' ') }} FCFA</td>
                             <td>{{ $part['usage_count'] }}</td>
-                            <td>{{ number_format($part['total_cost'] / $part['total_quantity'], 2, ',', ' ') }} €</td>
+                            <td>{{ number_format($part['total_cost'] / $part['total_quantity'], 2, ',', ' ') }} FCFA</td>
                         </tr>
                         @endforeach
                     </tbody>
