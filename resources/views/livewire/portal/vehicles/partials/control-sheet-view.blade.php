@@ -86,6 +86,28 @@
 </div>
 @endif
 
+@if($sheet->signature_depart_path || $sheet->signature_retour_path)
+<hr>
+<div class="row g-3 mt-1">
+    @if($sheet->signature_depart_path)
+    <div class="col-md-6">
+        <h6 class="fw-bold text-muted">Signature depart</h6>
+        <a href="{{ asset('storage/' . $sheet->signature_depart_path) }}" target="_blank">
+            <img src="{{ asset('storage/' . $sheet->signature_depart_path) }}" class="img-thumbnail" style="height:100px;object-fit:contain" alt="Signature depart">
+        </a>
+    </div>
+    @endif
+    @if($sheet->signature_retour_path)
+    <div class="col-md-6">
+        <h6 class="fw-bold text-muted">Signature retour</h6>
+        <a href="{{ asset('storage/' . $sheet->signature_retour_path) }}" target="_blank">
+            <img src="{{ asset('storage/' . $sheet->signature_retour_path) }}" class="img-thumbnail" style="height:100px;object-fit:contain" alt="Signature retour">
+        </a>
+    </div>
+    @endif
+</div>
+@endif
+
 {{-- Photos --}}
 @if($sheet->photos->count() > 0)
 @php $beforeP = $sheet->photos->where('type','before'); $afterP = $sheet->photos->where('type','after'); @endphp

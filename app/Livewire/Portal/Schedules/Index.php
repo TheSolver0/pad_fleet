@@ -3,6 +3,8 @@
 namespace App\Livewire\Portal\Schedules;
 
 use App\Models\Driver;
+use App\Models\City;
+use App\Models\Region;
 use App\Models\Vehicle;
 use App\Models\VehicleSchedule;
 use App\Models\VehicleScheduleDocument;
@@ -28,6 +30,10 @@ class Index extends Component
     public string $title = '';
     public string $description = '';
     public string $destination = '';
+    public ?int $city_id = null;
+    public bool $create_city = false;
+    public string $new_city_name = '';
+    public ?int $new_region_id = null;
     public string $departure_location = '';
     public string $start_datetime = '';
     public string $end_datetime = '';
@@ -61,7 +67,10 @@ class Index extends Component
             'driver_id' => 'nullable|exists:drivers,id',
             'title' => 'required|string|max:200',
             'description' => 'nullable|string',
-            'destination' => 'required|string|max:200',
+            'destination' => 'nullable|string|max:200',
+            'city_id' => 'nullable|exists:cities,id',
+            'new_city_name' => 'required_if:create_city,true|string|max:100',
+            'new_region_id' => 'required_if:create_city,true|exists:regions,id',
             'departure_location' => 'nullable|string|max:200',
             'start_datetime' => 'required|date',
             'end_datetime' => 'required|date|after:start_datetime',
@@ -111,13 +120,36 @@ class Index extends Component
         $this->fuel_consumed = str_replace([' ', ','], ['', '.'], $this->fuel_consumed);
         
         $this->validate();
+
+        $cityName = null;
+        if ($this->create_city) {
+            $city = City::create([
+                'name' => trim($this->new_city_name),
+                'region_id' => $this->new_region_id,
+                'region' => Region::whereKey($this->new_region_id)->value('name'),
+                'is_active' => true,
+            ]);
+            $cityName = $city->name;
+            $this->city_id = $city->id;
+        } elseif ($this->city_id) {
+            $cityName = City::whereKey($this->city_id)->value('name');
+        }
+
+        $finalDestination = trim($this->destination);
+        if ($cityName) {
+            $finalDestination = $finalDestination !== '' ? ($finalDestination . ' - ' . $cityName) : $cityName;
+        }
+        if ($finalDestination === '') {
+            $this->addError('destination', 'Veuillez choisir une ville ou saisir une destination.');
+            return;
+        }
         
         $data = [
             'vehicle_id' => $this->vehicle_id,
             'driver_id' => $this->driver_id ?: null,
             'title' => $this->title,
             'description' => $this->description ?: null,
-            'destination' => $this->destination,
+            'destination' => $finalDestination,
             'departure_location' => $this->departure_location ?: null,
             'start_datetime' => $this->start_datetime,
             'end_datetime' => $this->end_datetime,
@@ -179,6 +211,10 @@ class Index extends Component
         $this->title = '';
         $this->description = '';
         $this->destination = '';
+        $this->city_id = null;
+        $this->create_city = false;
+        $this->new_city_name = '';
+        $this->new_region_id = null;
         $this->departure_location = '';
         $this->start_datetime = '';
         $this->end_datetime = '';
@@ -267,11 +303,15 @@ class Index extends Component
         $schedules = $query->orderBy('start_datetime', 'desc')->paginate(20);
         $vehicles = Vehicle::where('status', '!=', 'out_of_service')->orderBy('registration')->get(['id', 'registration']);
         $drivers = Driver::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+        $cities = City::active()->orderBy('name')->get(['id', 'name', 'region']);
+        $regions = Region::orderBy('name')->get(['id', 'name']);
 
         return view('livewire.portal.schedules.index', [
             'schedules' => $schedules,
             'vehicles' => $vehicles,
             'drivers' => $drivers,
+            'cities' => $cities,
+            'regions' => $regions,
         ]);
     }
 }

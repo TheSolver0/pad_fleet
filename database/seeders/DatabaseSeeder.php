@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ArticleCategorySeeder::class);
         $this->call(ArticleSeeder::class);
         $this->call(MechanicSeeder::class);
+        $this->call(RegionSeeder::class);
         $this->call(CitySeeder::class);
         $this->call(OperationsAndReportsSeeder::class);
 

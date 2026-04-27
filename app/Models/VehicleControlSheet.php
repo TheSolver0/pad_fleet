@@ -18,6 +18,7 @@ class VehicleControlSheet extends Model
         'docs_administratifs', 'controle_exterieur',
         'compartiment_moteur', 'controle_fonctionnalites', 'outillages',
         'observations_depart', 'observations_retour',
+        'signature_depart_path', 'signature_retour_path',
     ];
 
     protected $casts = [

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class City extends Model
 {
@@ -12,6 +13,7 @@ class City extends Model
     protected $fillable = [
         'name',
         'code',
+        'region_id',
         'region',
         'is_active',
     ];
@@ -58,7 +60,8 @@ class City extends Model
      */
     public function getDisplayNameAttribute(): string
     {
-        return "{$this->name} ({$this->region})";
+        $region = $this->regionRelation?->name ?? $this->region;
+        return "{$this->name} ({$region})";
     }
 
     /**
@@ -74,7 +77,18 @@ class City extends Model
      */
     public function scopeByRegion($query, $region)
     {
-        return $query->where('region', $region);
+        if (is_numeric($region)) {
+            return $query->where('region_id', (int) $region);
+        }
+
+        return $query->where(function ($q) use ($region) {
+            $q->where('region', $region)->orWhereHas('regionRelation', fn ($r) => $r->where('name', $region));
+        });
+    }
+
+    public function regionRelation(): BelongsTo
+    {
+        return $this->belongsTo(Region::class, 'region_id');
     }
 
     /**
@@ -83,10 +97,11 @@ class City extends Model
     public static function getGroupedByRegion(): array
     {
         return self::active()
+            ->with('regionRelation:id,name')
             ->orderBy('region')
             ->orderBy('name')
             ->get()
-            ->groupBy('region')
+            ->groupBy(fn ($city) => $city->regionRelation?->name ?? $city->region)
             ->map(function ($cities) {
                 return $cities->pluck('name', 'id')->toArray();
             })

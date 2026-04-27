@@ -19,7 +19,9 @@
                         <select class="form-select form-select-sm" style="width: 130px;" wire:model.live="status_filter">
                             <option value="">Tous statuts</option>
                             <option value="pending">En attente</option>
-                            <option value="approved">Approuvée</option>
+                            <option value="programmed">Programmée</option>
+                            <option value="in_progress">En cours</option>
+                            <option value="postponed">Reportée</option>
                             <option value="rejected">Refusée</option>
                             <option value="completed">Terminée</option>
                         </select>
@@ -36,7 +38,7 @@
                     @endif
                 </div>
                 <div class="module-toolbar-actions">
-                    <a href="{{ route('missions.synthesis') }}" class="btn btn-sm btn-outline-primary me-2">
+                    <a href="{{ route('missions.analytics') }}" class="btn btn-sm btn-outline-primary me-2">
                         <i class="bi bi-graph-up me-1"></i> Synthèse
                     </a>
                     <button type="button" class="btn btn-sm btn-info me-2" wire:click="openReportModal">
@@ -59,6 +61,7 @@
                             <th>Demandeur</th>
                             <th>Période</th>
                             <th>Destination</th>
+                            <th>Techniciens</th>
                             <th>KM / Distance</th>
                             <th>Statut</th>
                             <th class="text-end">Actions</th>
@@ -72,12 +75,21 @@
                                 <td>{{ $m->demandeur?->name ?? '—' }}</td>
                                 <td class="small">{{ $m->date_start->format('d/m/Y') }} → {{ $m->date_end->format('d/m/Y') }}</td>
                                 <td>{{ Str::limit($m->destination, 20) ?? '—' }}</td>
+                                <td>
+                                    @if($m->technicians->isNotEmpty())
+                                        <span class="badge bg-secondary">{{ $m->technicians->count() }} affecté(s)</span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td>{{ $m->km_departure ?? '—' }} / {{ $m->km_return ?? '—' }} @if($m->distance_km) ({{ $m->distance_km }} km) @endif</td>
                                 <td>
                                     @php
                                         $badge = match($m->status) {
                                             'pending' => 'bg-warning text-dark',
-                                            'approved' => 'bg-info',
+                                            'approved', 'programmed' => 'bg-primary',
+                                            'in_progress' => 'bg-info',
+                                            'postponed' => 'bg-dark',
                                             'rejected' => 'bg-danger',
                                             'completed' => 'bg-success',
                                             default => 'bg-secondary',
@@ -90,8 +102,17 @@
                                     @if($m->status === 'pending')
                                         <button type="button" class="btn btn-sm btn-outline-success" wire:click="openApproveModal({{ $m->id }})"><i class="bi bi-check-lg"></i></button>
                                     @endif
-                                    @if($m->status === 'approved')
-                                        <button type="button" class="btn btn-sm btn-outline-info" wire:click="markCompleted({{ $m->id }})">Terminer</button>
+                                    @if(in_array($m->status, ['approved', 'programmed', 'postponed']))
+                                        <button type="button" class="btn btn-sm btn-outline-info" wire:click="markInProgress({{ $m->id }})">Démarrer</button>
+                                    @endif
+                                    @if($m->status === 'in_progress')
+                                        <button type="button" class="btn btn-sm btn-outline-success" wire:click="markCompleted({{ $m->id }})">Terminer</button>
+                                    @endif
+                                    @if(in_array($m->status, ['programmed', 'in_progress', 'approved']))
+                                        <button type="button" class="btn btn-sm btn-outline-dark" wire:click="markPostponed({{ $m->id }})">Reporter</button>
+                                    @endif
+                                    @if($m->status === 'postponed')
+                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="markProgrammed({{ $m->id }})">Reprogrammer</button>
                                     @endif
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openPhotoModal({{ $m->id }}, 'before')" title="Photos avant mission">
@@ -115,7 +136,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">Aucune mission.</td>
+                                <td colspan="9" class="text-center text-muted py-4">Aucune mission.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -135,7 +156,13 @@
                                         <strong>{{ $m->vehicle?->registration }}</strong> — {{ $m->demandeur?->name }}
                                         <br><small class="text-muted">{{ $m->date_start->format('d/m') }} → {{ $m->date_end->format('d/m') }} · {{ $m->destination ?? '—' }}</small>
                                     </div>
-                                    <span class="badge {{ $m->status === 'pending' ? 'bg-warning text-dark' : ($m->status === 'completed' ? 'bg-success' : 'bg-secondary') }}">{{ $m->status_label }}</span>
+                                    <span class="badge {{
+                                        in_array($m->status, ['approved', 'programmed']) ? 'bg-primary' :
+                                        ($m->status === 'in_progress' ? 'bg-info' :
+                                        ($m->status === 'postponed' ? 'bg-dark' :
+                                        ($m->status === 'pending' ? 'bg-warning text-dark' :
+                                        ($m->status === 'completed' ? 'bg-success' : 'bg-secondary'))))
+                                    }}">{{ $m->status_label }}</span>
                                 </div>
                             @endforeach
                             @if($this->calendarMissions->isEmpty())

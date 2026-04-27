@@ -21,6 +21,7 @@ class Driver extends Model
     {
         return [
             'is_available' => 'boolean',
+            'is_garage_driver' => 'boolean',
         ];
     }
 

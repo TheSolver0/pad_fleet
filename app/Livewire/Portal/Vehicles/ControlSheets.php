@@ -42,6 +42,10 @@ class ControlSheets extends Component
     public array   $outillages              = [];
     public string  $observations_depart = '';
     public string  $observations_retour = '';
+    public $signature_depart_file = null;
+    public $signature_retour_file = null;
+    public ?string $signature_depart_path = null;
+    public ?string $signature_retour_path = null;
 
     // Photos
     public bool  $showPhotoModal = false;
@@ -114,7 +118,8 @@ class ControlSheets extends Component
     {
         $this->reset(['editingId', 'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id',
             'ordre_mission', 'lieu', 'date_depart', 'date_retour',
-            'km_depart', 'km_retour', 'observations_depart', 'observations_retour']);
+            'km_depart', 'km_retour', 'observations_depart', 'observations_retour',
+            'signature_depart_file', 'signature_retour_file', 'signature_depart_path', 'signature_retour_path']);
         $this->initChecks();
         $this->showFormModal = true;
     }
@@ -134,6 +139,10 @@ class ControlSheets extends Component
         $this->km_retour     = $sheet->km_retour !== null ? (string)$sheet->km_retour : '';
         $this->observations_depart = $sheet->observations_depart ?? '';
         $this->observations_retour = $sheet->observations_retour ?? '';
+        $this->signature_depart_path = $sheet->signature_depart_path;
+        $this->signature_retour_path = $sheet->signature_retour_path;
+        $this->signature_depart_file = null;
+        $this->signature_retour_file = null;
 
         // Merge saved data with default structure (to handle new keys)
         $defaults = VehicleControlSheet::defaultStructure();
@@ -158,6 +167,8 @@ class ControlSheets extends Component
             'date_depart' => 'required|date',
             'km_depart'   => 'nullable|integer|min:0',
             'km_retour'   => 'nullable|integer|min:0',
+            'signature_depart_file' => 'nullable|image|max:5120',
+            'signature_retour_file' => 'nullable|image|max:5120',
         ]);
 
         $data = [
@@ -179,7 +190,16 @@ class ControlSheets extends Component
             'outillages'               => $this->outillages,
             'observations_depart'      => $this->observations_depart ?: null,
             'observations_retour'      => $this->observations_retour ?: null,
+            'signature_depart_path'    => $this->signature_depart_path,
+            'signature_retour_path'    => $this->signature_retour_path,
         ];
+
+        if ($this->signature_depart_file) {
+            $data['signature_depart_path'] = $this->signature_depart_file->store('control-sheets/signatures', 'public');
+        }
+        if ($this->signature_retour_file) {
+            $data['signature_retour_path'] = $this->signature_retour_file->store('control-sheets/signatures', 'public');
+        }
 
         if ($this->editingId) {
             VehicleControlSheet::findOrFail($this->editingId)->update($data);

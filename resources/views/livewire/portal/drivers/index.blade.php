@@ -52,6 +52,14 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-2 mt-3">
+            <div class="card border-dark">
+                <div class="card-body text-center">
+                    <h4 class="text-dark mb-1">{{ $stats['garage_available'] }}/{{ $stats['garage_drivers'] }}</h4>
+                    <small class="text-muted">Chauffeurs garage dispo</small>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="activity-card mb-4">
@@ -83,6 +91,11 @@
                         <option value="1">Disponibles</option>
                         <option value="0">Indisponibles</option>
                     </select>
+                    <select class="form-select form-select-sm" style="width: 170px;" wire:model.live="garage_driver_filter">
+                        <option value="">Tous profils</option>
+                        <option value="1">Chauffeur du Garage</option>
+                        <option value="0">Chauffeur standard</option>
+                    </select>
                 </div>
                 <div class="module-toolbar-actions">
                     <button type="button" class="btn btn-sm btn-primary" wire:click="openCreate">
@@ -104,6 +117,7 @@
                         <th>Personne ressource</th>
                         <th>Permis de conduire</th>
                         <th>Statut</th>
+                        <th>Profil</th>
                         <th>Missions</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -138,6 +152,13 @@
         </small>
     @endif
 </td>
+                            <td>
+                                @if($d->is_garage_driver)
+                                    <span class="badge bg-dark">Chauffeur du Garage</span>
+                                @else
+                                    <span class="badge bg-light text-dark border">Standard</span>
+                                @endif
+                            </td>
                             <td>{{ $d->missions_count }}</td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
@@ -165,7 +186,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">Aucun chauffeur</td>
+                            <td colspan="10" class="text-center text-muted py-4">Aucun chauffeur</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -269,6 +290,17 @@
                                         <input class="form-check-input" type="checkbox" wire:model="is_available" id="is_available">
                                         <label class="form-check-label" for="is_available">
                                             Disponible pour les missions
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Rubrique</label>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" wire:model="is_garage_driver" id="is_garage_driver">
+                                        <label class="form-check-label" for="is_garage_driver">
+                                            Chauffeur du Garage
                                         </label>
                                     </div>
                                 </div>

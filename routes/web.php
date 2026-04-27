@@ -48,7 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/vehicles/control-sheets/{id}/pdf', \App\Http\Controllers\VehicleControlSheetPdfController::class)->name('vehicles.control-sheets.pdf');
     Route::get('/assureurs', \App\Livewire\Portal\Assureurs\Index::class)->name('assureurs.index');
     Route::get('/planning', \App\Livewire\Portal\Missions\Index::class)->name('missions.index');
-    Route::get('/planning/synthese', \App\Livewire\Portal\Missions\Synthesis::class)->name('missions.synthesis');
+    Route::get('/planning/analytics', \App\Livewire\Portal\Missions\Analytics::class)->name('missions.analytics');
+    Route::get('/planning/synthese', \App\Livewire\Portal\Missions\Analytics::class)->name('missions.synthesis');
     Route::get('/schedules', \App\Livewire\Portal\Schedules\Index::class)->name('schedules.index');
     Route::get('/demandeurs', \App\Livewire\Portal\Demandeurs\Index::class)->name('demandeurs.index');
     Route::get('/assurances', \App\Livewire\Portal\Assurances\Index::class)->name('assurances.index');
@@ -93,6 +94,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/reports/missions/export/excel', [\App\Http\Controllers\ReportExportController::class, 'missionsExcel'])->name('reports.missions.export.excel');
     Route::get('/reports/missions/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'missionsPdf'])->name('reports.missions.export.pdf');
+    Route::get('/reports/missions-analytics/export/excel', [\App\Http\Controllers\ReportExportController::class, 'missionsAnalyticsExcel'])->name('reports.missions-analytics.export.excel');
+    Route::get('/reports/missions-analytics/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'missionsAnalyticsPdf'])->name('reports.missions-analytics.export.pdf');
 
     Route::get('/reports/sinistres/export/excel', [\App\Http\Controllers\ReportExportController::class, 'sinistresExcel'])->name('reports.sinistres.export.excel');
     Route::get('/reports/sinistres/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'sinistresPdf'])->name('reports.sinistres.export.pdf');

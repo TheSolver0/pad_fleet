@@ -18,6 +18,10 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
+    'tinymce' => [
+        'api_key' => env('TINYMCE_API_KEY', 'no-api-key'),
+    ],
+
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],

@@ -6,9 +6,10 @@
             'id'     => 'operations',
             'label'  => 'Opérations',
             'icon'   => 'bi bi-calendar3-week-fill',
-            'routes' => ['missions.index', 'schedules.index', 'reports.index', 'reports.vehicle-consumption', 'reports.vehicle-reform', 'vehicles.control-sheets'],
+            'routes' => ['missions.index', 'missions.analytics', 'missions.synthesis', 'schedules.index', 'reports.index', 'reports.vehicle-consumption', 'reports.vehicle-reform', 'vehicles.control-sheets'],
             'items'  => [
                 ['route' => 'missions.index',              'label' => 'Planning',           'icon' => 'bi bi-calendar3-week'],
+                ['route' => 'missions.analytics',          'label' => 'Analyses déplacements', 'icon' => 'bi bi-graph-up'],
                 ['route' => 'schedules.index',             'label' => 'Déplacements',       'icon' => 'bi bi-route'],
                 ['route' => 'vehicles.control-sheets',     'label' => 'Fiches de contrôle', 'icon' => 'bi bi-card-checklist'],
                 ['route' => 'reports.index',               'label' => 'Rapports',           'icon' => 'bi bi-graph-up-arrow'],

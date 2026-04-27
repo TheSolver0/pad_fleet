@@ -227,6 +227,20 @@
                                 <label class="form-label">Observations retour</label>
                                 <textarea class="form-control" rows="2" wire:model="observations_retour"></textarea>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Signature départ (image)</label>
+                                <input type="file" class="form-control" wire:model="signature_depart_file" accept="image/*">
+                                @if($signature_depart_path)
+                                    <a href="{{ asset('storage/' . $signature_depart_path) }}" target="_blank" class="small">Voir signature actuelle</a>
+                                @endif
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Signature retour (image)</label>
+                                <input type="file" class="form-control" wire:model="signature_retour_file" accept="image/*">
+                                @if($signature_retour_path)
+                                    <a href="{{ asset('storage/' . $signature_retour_path) }}" target="_blank" class="small">Voir signature actuelle</a>
+                                @endif
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">

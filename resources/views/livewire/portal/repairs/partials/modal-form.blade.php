@@ -11,7 +11,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Véhicule <span class="text-danger">*</span></label>
-                            <select class="form-select @error('vehicle_id') is-invalid @enderror" wire:model="vehicle_id">
+                            <select class="form-select @error('vehicle_id') is-invalid @enderror" wire:model.live="vehicle_id">
                                 <option value="">—</option>
                                 @foreach($vehicles as $v)
                                     <option value="{{ $v->id }}">{{ $v->registration }}</option>
@@ -44,7 +44,10 @@
                         @endif
                         <div class="col-12">
                             <label class="form-label">Description <span class="text-danger">*</span></label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" rows="3" wire:model="description"></textarea>
+                            <div wire:ignore>
+                                <textarea id="repair-description-editor" class="form-control @error('description') is-invalid @enderror" rows="4">{{ $description }}</textarea>
+                            </div>
+                            <small class="text-muted">Vous pouvez saisir plusieurs constats sous forme de points.</small>
                             @error('description') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
                         
@@ -56,12 +59,15 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Priorité</label>
-                            <select class="form-select @error('priority') is-invalid @enderror" wire:model="priority">
+                            <select class="form-select @error('priority') is-invalid @enderror" wire:model="priority" @if($priority_auto_locked) disabled @endif>
                                 <option value="low">Basse</option>
                                 <option value="medium">Moyenne</option>
                                 <option value="high">Haute</option>
                                 <option value="urgent">Urgente</option>
                             </select>
+                            @if($priority_auto_locked)
+                                <small class="text-danger">Véhicule DG/Adjoint détecté : priorité verrouillée sur Urgente.</small>
+                            @endif
                             @error('priority') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-md-4">
@@ -182,3 +188,44 @@
     </div>
 </div>
 @endif
+
+@once
+    <script>
+        const initRepairDescriptionEditor = () => {
+            if (!window.tinymce) return;
+            const textarea = document.getElementById('repair-description-editor');
+            if (!textarea) {
+                const orphanEditor = window.tinymce.get('repair-description-editor');
+                if (orphanEditor) {
+                    orphanEditor.remove();
+                }
+                return;
+            }
+
+            const existing = window.tinymce.get('repair-description-editor');
+            if (existing) return;
+
+            window.tinymce.init({
+                selector: '#repair-description-editor',
+                menubar: false,
+                height: 220,
+                plugins: 'lists link',
+                toolbar: 'undo redo | bold italic | bullist numlist | link removeformat',
+                setup: (editor) => {
+                    editor.on('init', () => {
+                        editor.setContent(@this.get('description') || '');
+                    });
+                    // Sync only on meaningful events to avoid Livewire refresh at each keystroke.
+                    editor.on('change blur', () => {
+                        @this.set('description', editor.getContent());
+                    });
+                },
+            });
+        };
+
+        document.addEventListener('livewire:init', () => {
+            initRepairDescriptionEditor();
+            Livewire.hook('morph.updated', () => initRepairDescriptionEditor());
+        });
+    </script>
+@endonce

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Mission extends Model
@@ -12,10 +13,26 @@ class Mission extends Model
     use Auditable;
 
     public const STATUS_PENDING = 'pending';
-    public const STATUS_APPROVED = 'approved';
+    public const STATUS_APPROVED = 'approved'; // legacy
+    public const STATUS_PROGRAMMED = 'programmed';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_POSTPONED = 'postponed';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
+
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_PENDING => 'En attente',
+            self::STATUS_PROGRAMMED => 'Programmée',
+            self::STATUS_IN_PROGRESS => 'En cours',
+            self::STATUS_POSTPONED => 'Reportée',
+            self::STATUS_COMPLETED => 'Terminée',
+            self::STATUS_REJECTED => 'Refusée',
+            self::STATUS_CANCELLED => 'Annulée',
+        ];
+    }
 
     protected $fillable = [
         'vehicle_id', 'driver_id', 'demandeur_id', 'city_id', 'date_start', 'date_end',
@@ -65,6 +82,11 @@ class Mission extends Model
         return $this->hasOne(Sinistre::class);
     }
 
+    public function technicians(): BelongsToMany
+    {
+        return $this->belongsToMany(Mechanic::class, 'mission_mechanic')->withTimestamps();
+    }
+
     public function photos()
     {
         return $this->hasMany(MissionPhoto::class);
@@ -101,9 +123,15 @@ class Mission extends Model
 
     public function getStatusLabelAttribute(): string
     {
+        if ($this->status === self::STATUS_APPROVED) {
+            return self::statusOptions()[self::STATUS_PROGRAMMED];
+        }
+
         return match ($this->status) {
             self::STATUS_PENDING => 'En attente',
-            self::STATUS_APPROVED => 'Approuvée',
+            self::STATUS_PROGRAMMED => 'Programmée',
+            self::STATUS_IN_PROGRESS => 'En cours',
+            self::STATUS_POSTPONED => 'Reportée',
             self::STATUS_REJECTED => 'Refusée',
             self::STATUS_COMPLETED => 'Terminée',
             self::STATUS_CANCELLED => 'Annulée',

@@ -60,6 +60,56 @@ class ReportExportController extends Controller
             ->values();
     }
 
+    private function getMissionAnalyticsData(Request $request): array
+    {
+        [$start, $end, $startDate, $endDate] = $this->getPeriod($request);
+        $driverId = (int) $request->query('driver_id', 0);
+        $directionId = (int) $request->query('direction_id', 0);
+        $status = trim((string) $request->query('status', ''));
+
+        $query = Mission::query()
+            ->whereBetween('date_start', [$start, $end])
+            ->with(['driver:id,first_name,last_name', 'demandeur:id,name,direction_id', 'demandeur.direction:id,name']);
+
+        if ($driverId > 0) {
+            $query->where('driver_id', $driverId);
+        }
+        if ($directionId > 0) {
+            $query->whereHas('demandeur', fn ($q) => $q->where('direction_id', $directionId));
+        }
+        if ($status !== '') {
+            if ($status === Mission::STATUS_PROGRAMMED) {
+                $query->whereIn('status', [Mission::STATUS_PROGRAMMED, Mission::STATUS_APPROVED]);
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        $missions = $query->orderByDesc('date_start')->get();
+
+        $rows = $missions->map(fn ($m) => [
+            optional($m->date_start)?->format('d/m/Y H:i'),
+            optional($m->date_end)?->format('d/m/Y H:i'),
+            trim(($m->driver?->first_name ?? '') . ' ' . ($m->driver?->last_name ?? '')) ?: 'Non affecté',
+            $m->demandeur?->direction?->name ?? 'Non renseignée',
+            $m->destination ?? '-',
+            (int) ($m->distance_km ?? 0),
+            $m->status_label,
+        ])->all();
+
+        $stats = [
+            'total' => $missions->count(),
+            'distance' => (int) $missions->sum('distance_km'),
+            'programmed' => $missions->whereIn('status', [Mission::STATUS_PROGRAMMED, Mission::STATUS_APPROVED])->count(),
+            'in_progress' => $missions->where('status', Mission::STATUS_IN_PROGRESS)->count(),
+            'postponed' => $missions->where('status', Mission::STATUS_POSTPONED)->count(),
+            'completed' => $missions->where('status', Mission::STATUS_COMPLETED)->count(),
+            'pending' => $missions->where('status', Mission::STATUS_PENDING)->count(),
+        ];
+
+        return [$rows, $stats, $startDate, $endDate];
+    }
+
     public function vehicleConsumptionExcel(Request $request)
     {
         $rows = $this->getTopParts($request)->map(fn ($r) => [
@@ -541,5 +591,33 @@ class ReportExportController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->download("rapport-sinistres-{$startDate}-{$endDate}.pdf");
+    }
+
+    public function missionsAnalyticsExcel(Request $request)
+    {
+        [$rows, $stats, $startDate, $endDate] = $this->getMissionAnalyticsData($request);
+
+        return Excel::download(
+            new TableExport(['Date départ', 'Date retour', 'Chauffeur', 'Direction', 'Destination', 'Distance (km)', 'Statut'], $rows),
+            "rapport-analyses-deplacements-{$startDate}-{$endDate}.xlsx"
+        );
+    }
+
+    public function missionsAnalyticsPdf(Request $request)
+    {
+        [$rows, $stats, $startDate, $endDate] = $this->getMissionAnalyticsData($request);
+
+        $title = 'Analyses des déplacements';
+        $headers = ['Date départ', 'Date retour', 'Chauffeur', 'Direction', 'Destination', 'Distance (km)', 'Statut'];
+        $pdf = Pdf::loadView('pdf.table-report', [
+            'title' => $title,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'generated_at' => now(),
+            'headers' => $headers,
+            'rows' => $rows,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download("rapport-analyses-deplacements-{$startDate}-{$endDate}.pdf");
     }
 }

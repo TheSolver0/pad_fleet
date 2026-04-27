@@ -53,6 +53,7 @@ class Index extends Component
     public string $priority = 'medium';
     public string $estimated_duration = '';
     public ?int $mechanic_id = null;
+    public bool $priority_auto_locked = false;
 
     protected $queryString = ['search' => ['except' => ''], 'type_filter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
@@ -115,7 +116,45 @@ class Index extends Component
         $this->priority = $r->priority ?? 'medium';
         $this->estimated_duration = $r->estimated_duration ?? '';
         $this->mechanic_id = $r->mechanic_id;
+        $this->priority_auto_locked = $this->isVipVehicle($r->vehicle_id);
         $this->showFormModal = true;
+    }
+
+    public function updatedVehicleId($value): void
+    {
+        if (! $value) {
+            $this->priority_auto_locked = false;
+            return;
+        }
+
+        if ($this->isVipVehicle((int) $value)) {
+            $this->priority = 'urgent';
+            $this->priority_auto_locked = true;
+        } else {
+            $this->priority_auto_locked = false;
+        }
+    }
+
+    private function isVipVehicle(?int $vehicleId): bool
+    {
+        if (! $vehicleId) {
+            return false;
+        }
+
+        $vehicle = Vehicle::with(['assignedPerson.direction'])->find($vehicleId);
+        if (! $vehicle) {
+            return false;
+        }
+
+        $personName = strtolower((string) ($vehicle->assignedPerson?->full_name ?? $vehicle->assignedPerson?->name ?? ''));
+        $directionName = strtolower((string) ($vehicle->assignedPerson?->direction?->name ?? ''));
+
+        return str_contains($personName, 'directeur general')
+            || str_contains($personName, 'directeur général')
+            || str_contains($personName, 'adjoint')
+            || str_contains($directionName, 'direction generale')
+            || str_contains($directionName, 'direction générale')
+            || str_contains($directionName, 'dg');
     }
 
     public function saveRepair(): void
@@ -240,6 +279,7 @@ class Index extends Component
         $this->priority = 'medium';
         $this->estimated_duration = '';
         $this->mechanic_id = null;
+        $this->priority_auto_locked = false;
         $this->resetValidation();
     }
 

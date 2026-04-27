@@ -196,8 +196,50 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Destination *</label>
-                                    <input type="text" class="form-control" wire:model="destination" required>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label mb-0">Destination *</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" wire:model.live="create_city" id="schedule_create_city">
+                                            <label class="form-check-label small" for="schedule_create_city">Nouvelle ville</label>
+                                        </div>
+                                    </div>
+
+                                    @if(!$create_city)
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" wire:model="destination" placeholder="Lieu précis (optionnel)">
+                                            <select class="form-select" style="max-width: 220px;" wire:model="city_id">
+                                                <option value="">Ville...</option>
+                                                @foreach($cities as $city)
+                                                    <option value="{{ $city->id }}">{{ $city->display_name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-text">Sélectionnez une ville existante. Si besoin, ajoutez un lieu précis.</div>
+                                    @else
+                                        <div class="border rounded p-2 bg-light">
+                                            <div class="row g-2">
+                                                <div class="col-12">
+                                                    <label class="form-label small">Nom de la ville <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control form-control-sm" wire:model="new_city_name" placeholder="ex: Douala">
+                                                    @error('new_city_name') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label small">Région <span class="text-danger">*</span></label>
+                                                    <select class="form-select form-select-sm" wire:model="new_region_id">
+                                                        <option value="">Sélectionner...</option>
+                                                        @foreach($regions as $region)
+                                                            <option value="{{ $region->id }}">{{ $region->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('new_region_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label small">Lieu précis (optionnel)</label>
+                                                    <input type="text" class="form-control form-control-sm" wire:model="destination" placeholder="ex: Site portuaire">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                     @error('destination') <span class="text-danger small">{{ $message }}</span> @enderror
                                 </div>
                             </div>

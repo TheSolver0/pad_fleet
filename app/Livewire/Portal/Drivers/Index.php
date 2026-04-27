@@ -21,6 +21,7 @@ class Index extends Component
 
     public string $search = '';
     public string $availability_filter = '';
+    public string $garage_driver_filter = '';
     public string $direction_filter = '';
     public string $person_filter = '';
     public string $license_status_filter = '';
@@ -36,6 +37,7 @@ class Index extends Component
     public ?int $direction_id = null;
     public ?int $resource_person_id = null;
     public bool $is_available = true;
+    public bool $is_garage_driver = false;
     public string $notes = '';
     public $id_document_recto_file = null;
     public $id_document_verso_file = null;
@@ -45,7 +47,7 @@ class Index extends Component
     public array $driving_licenses = [];
     public bool $showLicenseForm = false;
 
-    protected $queryString = ['search' => ['except' => ''], 'availability_filter' => ['except' => ''], 'direction_filter' => ['except' => ''], 'person_filter' => ['except' => ''], 'license_status_filter' => ['except' => '']];
+    protected $queryString = ['search' => ['except' => ''], 'availability_filter' => ['except' => ''], 'garage_driver_filter' => ['except' => ''], 'direction_filter' => ['except' => ''], 'person_filter' => ['except' => ''], 'license_status_filter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
 
     protected function rules(): array
@@ -59,6 +61,7 @@ class Index extends Component
             'direction_id' => 'nullable|exists:directions,id',
             'resource_person_id' => 'nullable|exists:persons,id',
             'is_available' => 'boolean',
+            'is_garage_driver' => 'boolean',
             'notes' => 'nullable|string',
             'id_document_recto_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'id_document_verso_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
@@ -89,6 +92,7 @@ class Index extends Component
         $this->direction_id = $d->direction_id;
         $this->resource_person_id = $d->resource_person_id;
         $this->is_available = $d->is_available;
+        $this->is_garage_driver = (bool) $d->is_garage_driver;
         $this->notes = $d->notes ?? '';
         $this->id_document_recto_file = null;
         $this->id_document_verso_file = null;
@@ -119,6 +123,7 @@ class Index extends Component
             'direction_id' => $this->direction_id,
             'resource_person_id' => $this->resource_person_id,
             'is_available' => $this->is_available,
+            'is_garage_driver' => $this->is_garage_driver,
             'notes' => $this->notes ?: null,
         ];
         if ($this->id_document_recto_file) {
@@ -197,6 +202,7 @@ class Index extends Component
         $this->direction_id = null;
         $this->resource_person_id = null;
         $this->is_available = true;
+        $this->is_garage_driver = false;
         $this->notes = '';
         $this->id_document_recto_file = null;
         $this->id_document_verso_file = null;
@@ -341,7 +347,7 @@ private function resetAssignmentForm(): void
 
     public function render(): View
     {
-        $query = Driver::query()->with(['direction:id,name', 'resourcePerson:id,name', 'drivingLicenses']);
+        $query = Driver::query()->with(['direction:id,name', 'resourcePerson:id,name', 'drivingLicenses', 'activeAssignment.vehicle'])->withCount('missions');
         $vehicles = \App\Models\Vehicle::orderBy('registration')->get();
         $missions = \App\Models\Mission::orderByDesc('date_start')->limit(100)->get();
         
@@ -384,6 +390,12 @@ private function resetAssignmentForm(): void
         } elseif ($this->availability_filter === '0') {
             $query->where('is_available', false);
         }
+
+        if ($this->garage_driver_filter === '1') {
+            $query->where('is_garage_driver', true);
+        } elseif ($this->garage_driver_filter === '0') {
+            $query->where('is_garage_driver', false);
+        }
         
         $drivers = $query->orderBy('last_name')->paginate(12);
         $directions = Direction::orderBy('name')->get(['id', 'name']);
@@ -400,6 +412,8 @@ private function resetAssignmentForm(): void
             })->count(),
             'no_licenses' => Driver::whereDoesntHave('drivingLicenses')->count(),
             'available' => Driver::where('is_available', true)->count(),
+            'garage_drivers' => Driver::where('is_garage_driver', true)->count(),
+            'garage_available' => Driver::where('is_garage_driver', true)->where('is_available', true)->count(),
         ];
 
         return view('livewire.portal.drivers.index', [

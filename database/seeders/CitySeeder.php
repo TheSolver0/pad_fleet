@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Region;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -24,6 +25,8 @@ class CitySeeder extends Seeder
             ['name' => 'Bertoua', 'code' => 'BERT', 'region' => 'Est', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['name' => 'Edea', 'code' => 'EDA', 'region' => 'Littoral', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['name' => 'Kribi', 'code' => 'KRI', 'region' => 'Sud', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['name' => 'Sangmélima', 'code' => 'SNG', 'region' => 'Sud', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['name' => 'Kribo', 'code' => 'KRB', 'region' => 'Sud', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['name' => 'Limbe', 'code' => 'LIM', 'region' => 'Sud-Ouest', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['name' => 'Buea', 'code' => 'BUE', 'region' => 'Sud-Ouest', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['name' => 'Kumba', 'code' => 'KUM', 'region' => 'Sud-Ouest', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
@@ -41,6 +44,16 @@ class CitySeeder extends Seeder
             ['name' => 'Abong-Mbang', 'code' => 'ABO', 'region' => 'Est', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
         ];
 
-        DB::table('cities')->insert($cities);
+        $regionsByName = Region::pluck('id', 'name');
+        foreach ($cities as &$city) {
+            $city['region_id'] = $regionsByName[$city['region']] ?? null;
+        }
+        unset($city);
+
+        DB::table('cities')->upsert(
+            $cities,
+            ['code'],
+            ['name', 'region', 'region_id', 'updated_at']
+        );
     }
 }

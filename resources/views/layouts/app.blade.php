@@ -337,6 +337,8 @@
     </main>
 </div>
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;" id="toast-container"></div>
+
+<script src="https://cdn.tiny.cloud/1/{{ config('services.tinymce.api_key') }}/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

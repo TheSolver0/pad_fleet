@@ -4,10 +4,12 @@ namespace App\Livewire\Portal\Missions;
 
 use App\Models\Demandeur;
 use App\Models\Driver;
+use App\Models\Mechanic;
 use App\Models\Mission;
 use App\Models\MissionDocument;
 use App\Models\MissionPhoto;
 use App\Models\Vehicle;
+use App\Models\Region;
 use App\Exports\MissionReportExport;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -42,6 +44,7 @@ class Index extends Component
     public string $destination = '';
     public string $raison = '';
     public string $notes = '';
+    public array $technician_ids = [];
     public bool $apply_approve = false;
     public bool $approve_reject = true; // true = approve, false = reject
     
@@ -63,8 +66,7 @@ class Index extends Component
     // New city creation
     public bool $create_city = false;
     public string $new_city_name = '';
-    public string $new_city_code = '';
-    public string $new_city_region = '';
+    public ?int $new_region_id = null;
 
     // Documents (modal séparé)
     public $documents = [];
@@ -114,13 +116,14 @@ class Index extends Component
             'destination' => 'nullable|string|max:255',
             'raison' => 'nullable|string|max:300',
             'notes' => 'nullable|string',
+            'technician_ids.*' => 'nullable|exists:mechanics,id',
             'new_demandeur_name' => 'required_if:create_demandeur,true|string|max:200',
             'new_demandeur_phone' => 'nullable|string|max:30',
             'new_demandeur_email' => 'nullable|email|max:150',
             'new_demandeur_service' => 'nullable|string|max:200',
             'city_id' => 'nullable|exists:cities,id',
             'new_city_name' => 'required_if:create_city,true|string|max:100',
-            'new_city_region' => 'required_if:create_city,true|string|max:100',
+            'new_region_id' => 'required_if:create_city,true|exists:regions,id',
             'form_doc_rows.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
@@ -146,6 +149,7 @@ class Index extends Component
         $this->destination = $m->destination ?? '';
         $this->raison = $m->raison ?? '';
         $this->notes = $m->notes ?? '';
+        $this->technician_ids = $m->technicians()->pluck('mechanics.id')->map(fn ($id) => (string) $id)->all();
         $this->showFormModal = true;
     }
 
@@ -166,8 +170,8 @@ class Index extends Component
         if ($this->create_city && $this->new_city_name) {
             $city = \App\Models\City::create([
                 'name' => $this->new_city_name,
-                'code' => $this->new_city_code ?: null,
-                'region' => $this->new_city_region,
+                'region_id' => $this->new_region_id,
+                'region' => Region::whereKey($this->new_region_id)->value('name'),
                 'is_active' => true,
             ]);
             $this->city_id = $city->id;
@@ -192,10 +196,12 @@ class Index extends Component
         if ($this->editingId) {
             $mission = Mission::findOrFail($this->editingId);
             $mission->update($data);
+            $mission->technicians()->sync(array_filter(array_map('intval', $this->technician_ids)));
             $mission->computeDistance();
             $this->dispatch('notify', type: 'success', message: 'Mission mise à jour.');
         } else {
             $mission = Mission::create(array_merge($data, ['status' => Mission::STATUS_PENDING]));
+            $mission->technicians()->sync(array_filter(array_map('intval', $this->technician_ids)));
             $mission->computeDistance();
             $this->dispatch('notify', type: 'success', message: 'Réservation créée.');
         }
@@ -225,13 +231,34 @@ class Index extends Component
         }
         $m = Mission::findOrFail($this->editingId);
         $m->update([
-            'status' => $this->approve_reject ? Mission::STATUS_APPROVED : Mission::STATUS_REJECTED,
+            'status' => $this->approve_reject ? Mission::STATUS_PROGRAMMED : Mission::STATUS_REJECTED,
             'approved_by' => Auth::user()->id,
             'approved_at' => now(),
         ]);
-        $this->dispatch('notify', type: 'success', message: $this->approve_reject ? 'Mission approuvée.' : 'Mission refusée.');
+        $this->dispatch('notify', type: 'success', message: $this->approve_reject ? 'Mission programmée.' : 'Mission refusée.');
         $this->showApproveModal = false;
         $this->editingId = null;
+    }
+
+    public function markInProgress(int $id): void
+    {
+        $m = Mission::findOrFail($id);
+        $m->update(['status' => Mission::STATUS_IN_PROGRESS]);
+        $this->dispatch('notify', type: 'success', message: 'Mission marquée en cours.');
+    }
+
+    public function markProgrammed(int $id): void
+    {
+        $m = Mission::findOrFail($id);
+        $m->update(['status' => Mission::STATUS_PROGRAMMED]);
+        $this->dispatch('notify', type: 'success', message: 'Mission programmée.');
+    }
+
+    public function markPostponed(int $id): void
+    {
+        $m = Mission::findOrFail($id);
+        $m->update(['status' => Mission::STATUS_POSTPONED]);
+        $this->dispatch('notify', type: 'success', message: 'Mission reportée.');
     }
 
     public function markCompleted(int $id): void
@@ -273,6 +300,7 @@ class Index extends Component
         $this->destination = '';
         $this->raison = '';
         $this->notes = '';
+        $this->technician_ids = [];
         $this->create_demandeur = false;
         $this->new_demandeur_name = '';
         $this->new_demandeur_phone = '';
@@ -283,8 +311,7 @@ class Index extends Component
         $this->after_photos = [];
         $this->create_city = false;
         $this->new_city_name = '';
-        $this->new_city_code = '';
-        $this->new_city_region = '';
+        $this->new_region_id = null;
         $this->documents = [];
         $this->form_doc_rows = [['file' => null, 'type' => 'ordre_mission', 'note' => '']];
         $this->resetValidation();
@@ -293,7 +320,7 @@ class Index extends Component
     public function updatedCreateCity(): void
     {
         if (!$this->create_city) {
-            $this->reset(['new_city_name', 'new_city_region']);
+            $this->reset(['new_city_name', 'new_region_id']);
             $this->city_id = null;
         } else {
             $this->city_id = null; // Désélectionner la ville existante
@@ -443,7 +470,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $query = Mission::query()->with(['vehicle:id,registration', 'driver:id,first_name,last_name', 'demandeur:id,name'])->withCount('controlSheets');
+        $query = Mission::query()->with(['vehicle:id,registration', 'driver:id,first_name,last_name', 'demandeur:id,name', 'technicians:id,first_name,last_name'])->withCount('controlSheets');
         if ($this->search !== '') {
             $query->where(function ($q) {
                 $q->whereHas('vehicle', fn ($q2) => $q2->where('registration', 'like', '%' . $this->search . '%'))
@@ -452,7 +479,11 @@ class Index extends Component
             });
         }
         if ($this->status_filter !== '') {
-            $query->where('status', $this->status_filter);
+            if ($this->status_filter === Mission::STATUS_PROGRAMMED) {
+                $query->whereIn('status', [Mission::STATUS_PROGRAMMED, Mission::STATUS_APPROVED]);
+            } else {
+                $query->where('status', $this->status_filter);
+            }
         }
         if ($this->filter_start !== '') {
             $query->where('date_start', '>=', $this->filter_start . ' 00:00:00');
@@ -470,14 +501,18 @@ class Index extends Component
             ->orderBy('last_name')
             ->get(['id', 'first_name', 'last_name']);
         $demandeurs = Demandeur::orderBy('name')->get(['id', 'name']);
+        $technicians = Mechanic::where('is_active', true)->orderBy('last_name')->get(['id', 'first_name', 'last_name']);
         $cities = \App\Models\City::active()->orderBy('name')->get(['id', 'name', 'region']);
+        $regions = Region::orderBy('name')->get(['id', 'name']);
 
         return view('livewire.portal.missions.index', [
             'missions' => $missions,
             'vehicles' => $vehicles,
             'drivers' => $drivers,
             'demandeurs' => $demandeurs,
+            'technicians' => $technicians,
             'cities' => $cities,
+            'regions' => $regions,
         ])->layout('layouts.app', ['title' => 'Planning missions']);
     }
 }

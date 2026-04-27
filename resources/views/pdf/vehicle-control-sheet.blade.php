@@ -199,13 +199,19 @@ $checkSections = [
 {{-- ══ SIGNATURES ══ --}}
 <div class="sig-table no-break">
     <div class="sig-cell">
-        <div class="sig-line">Chauffeur<br><small style="color:#777">Nom &amp; Signature</small></div>
+        @if($sheet->signature_depart_path)
+            <div><img src="{{ public_path('storage/' . $sheet->signature_depart_path) }}" alt="Signature depart" style="max-height:55pt;max-width:130pt;"></div>
+        @endif
+        <div class="sig-line">Signature départ<br><small style="color:#777">Chauffeur</small></div>
     </div>
     <div class="sig-cell">
         <div class="sig-line">Contrôleur départ<br><small style="color:#777">Nom &amp; Signature</small></div>
     </div>
     <div class="sig-cell">
-        <div class="sig-line">Contrôleur retour<br><small style="color:#777">Nom &amp; Signature</small></div>
+        @if($sheet->signature_retour_path)
+            <div><img src="{{ public_path('storage/' . $sheet->signature_retour_path) }}" alt="Signature retour" style="max-height:55pt;max-width:130pt;"></div>
+        @endif
+        <div class="sig-line">Signature retour<br><small style="color:#777">Chauffeur</small></div>
     </div>
 </div>
 

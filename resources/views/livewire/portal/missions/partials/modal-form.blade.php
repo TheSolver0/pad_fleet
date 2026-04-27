@@ -39,6 +39,15 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Techniciens du garage (rotation)</label>
+                            <select class="form-select" wire:model="technician_ids" multiple>
+                                @foreach($technicians as $tech)
+                                    <option value="{{ $tech->id }}">{{ $tech->last_name }} {{ $tech->first_name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Maintenez Ctrl/Cmd pour selection multiple.</div>
+                        </div>
                         <div class="col-md-6">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label">Demandeur <span class="text-danger">*</span></label>
@@ -116,14 +125,14 @@
                                             @error('new_city_name') <span class="invalid-feedback small">{{ $message }}</span> @enderror
                                         </div>
                                         <div class="col-12">
-                                            <label class="form-label small">Code (optionnel)</label>
-                                            <input type="text" class="form-control form-control-sm" wire:model="new_city_code" placeholder="ex: DLA" maxlength="5">
-                                            <div class="form-text small">Laissez vide pour générer automatiquement à partir du nom</div>
-                                        </div>
-                                        <div class="col-12">
                                             <label class="form-label small">Région <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" wire:model="new_city_region" placeholder="ex: Littoral">
-                                            @error('new_city_region') <span class="invalid-feedback small">{{ $message }}</span> @enderror
+                                            <select class="form-select form-select-sm" wire:model="new_region_id">
+                                                <option value="">Sélectionner...</option>
+                                                @foreach($regions as $region)
+                                                    <option value="{{ $region->id }}">{{ $region->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('new_region_id') <span class="invalid-feedback small">{{ $message }}</span> @enderror
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label small">Destination spécifique (optionnel)</label>
