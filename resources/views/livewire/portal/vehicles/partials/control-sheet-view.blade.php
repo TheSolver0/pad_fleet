@@ -86,23 +86,37 @@
 </div>
 @endif
 
-@if($sheet->signature_depart_path || $sheet->signature_retour_path)
+@if($sheet->signature_depart_path || $sheet->signature_retour_path || $sheet->signature_bureau_path)
 <hr>
 <div class="row g-3 mt-1">
     @if($sheet->signature_depart_path)
-    <div class="col-md-6">
-        <h6 class="fw-bold text-muted">Signature depart</h6>
-        <a href="{{ asset('storage/' . $sheet->signature_depart_path) }}" target="_blank">
-            <img src="{{ asset('storage/' . $sheet->signature_depart_path) }}" class="img-thumbnail" style="height:100px;object-fit:contain" alt="Signature depart">
-        </a>
+    <div class="col-md-4">
+        <div class="card border text-center">
+            <div class="card-header py-1 small fw-semibold" style="background:rgba(26,84,144,.07)">CHAUFFEUR — DÉPART</div>
+            <div class="card-body p-2">
+                <img src="{{ asset('storage/' . $sheet->signature_depart_path) }}" style="max-height:80px;max-width:100%;object-fit:contain" alt="Signature départ">
+            </div>
+        </div>
     </div>
     @endif
     @if($sheet->signature_retour_path)
-    <div class="col-md-6">
-        <h6 class="fw-bold text-muted">Signature retour</h6>
-        <a href="{{ asset('storage/' . $sheet->signature_retour_path) }}" target="_blank">
-            <img src="{{ asset('storage/' . $sheet->signature_retour_path) }}" class="img-thumbnail" style="height:100px;object-fit:contain" alt="Signature retour">
-        </a>
+    <div class="col-md-4">
+        <div class="card border text-center">
+            <div class="card-header py-1 small fw-semibold" style="background:rgba(26,84,144,.07)">CHAUFFEUR — RETOUR</div>
+            <div class="card-body p-2">
+                <img src="{{ asset('storage/' . $sheet->signature_retour_path) }}" style="max-height:80px;max-width:100%;object-fit:contain" alt="Signature retour">
+            </div>
+        </div>
+    </div>
+    @endif
+    @if($sheet->signature_bureau_path)
+    <div class="col-md-4">
+        <div class="card border text-center">
+            <div class="card-header py-1 small fw-semibold" style="background:rgba(26,84,144,.07)">BUREAU DE CONTRÔLE</div>
+            <div class="card-body p-2">
+                <img src="{{ asset('storage/' . $sheet->signature_bureau_path) }}" style="max-height:80px;max-width:100%;object-fit:contain" alt="Signature bureau">
+            </div>
+        </div>
     </div>
     @endif
 </div>
