@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Portal\Vehicles;
 
+use App\Models\Assureur;
 use App\Models\Brand;
+use App\Models\Direction;
 use App\Models\Garage;
 use App\Models\InsuranceContractGlobal;
 use App\Models\Vehicle;
@@ -68,8 +70,23 @@ class Index extends Component
     public string $quick_name = '';
     public string $quick_email = '';
     public string $quick_phone = '';
-    public string $quick_department = '';
+    public ?int $quick_direction_id = null;
     public ?int $quick_department_id = null;
+
+    public bool $showQuickAddDirection = false;
+    public string $quick_direction_name = '';
+    public string $quick_direction_code = '';
+
+    public bool $showQuickAddInsurance = false;
+    public string $insurance_mode = 'existing';
+    public string $ins_new_name = '';
+    public ?int $ins_new_assureur_id = null;
+    public string $ins_new_start_date = '';
+    public string $ins_new_end_date = '';
+    public string $ins_new_lot_description = '';
+    public string $ins_new_notes = '';
+    public $ins_doc_file = null;
+    public string $ins_doc_expires_at = '';
 
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
@@ -152,12 +169,23 @@ class Index extends Component
             'notes' => $this->notes ?: null,
         ];
         if ($this->editingId) {
-            Vehicle::findOrFail($this->editingId)->update($data);
+            $vehicle = Vehicle::findOrFail($this->editingId);
+            $vehicle->update($data);
             $this->dispatch('notify', type: 'success', message: 'Véhicule mis à jour.');
         } else {
-            Vehicle::create($data);
+            $vehicle = Vehicle::create($data);
             $this->dispatch('notify', type: 'success', message: 'Véhicule créé.');
         }
+
+        if ($this->ins_doc_file) {
+            VehicleDocument::storeUpload(
+                $vehicle,
+                $this->ins_doc_file,
+                VehicleDocument::TYPE_ASSURANCE,
+                $this->ins_doc_expires_at ?: null
+            );
+        }
+
         $this->showFormModal = false;
         $this->resetForm();
     }
@@ -317,14 +345,20 @@ class Index extends Component
         $this->quick_name = '';
         $this->quick_email = '';
         $this->quick_phone = '';
-        $this->quick_department = '';
+        $this->quick_direction_id = null;
+        $this->quick_department_id = null;
         $this->showQuickAddPerson = true;
     }
 
     public function closeQuickAddPerson(): void
     {
         $this->showQuickAddPerson = false;
-        $this->resetValidation(['quick_name', 'quick_email']);
+        $this->resetValidation(['quick_name', 'quick_email', 'quick_direction_id', 'quick_department_id']);
+    }
+
+    public function updatedQuickDirectionId(): void
+    {
+        $this->quick_department_id = null;
     }
 
     public function saveQuickPerson(): void
@@ -333,21 +367,144 @@ class Index extends Component
             'quick_name' => 'required|string|max:150',
             'quick_email' => 'nullable|email|max:150',
             'quick_phone' => 'nullable|string|max:30',
+            'quick_direction_id' => 'nullable|exists:directions,id',
             'quick_department_id' => 'nullable|exists:departments,id',
         ]);
+        $parts = preg_split('/\s+/', trim($this->quick_name)) ?: [];
         $person = Person::create([
             'name' => $this->quick_name,
+            'first_name' => $parts[0] ?? null,
+            'last_name' => count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : null,
             'email' => $this->quick_email ?: null,
             'phone' => $this->quick_phone ?: null,
+            'direction_id' => $this->quick_direction_id ?: null,
             'department_id' => $this->quick_department_id ?: null,
         ]);
-        $this->assignment_person_id = $person->id;
+        $this->assigned_person_id = $person->id;
         $this->showQuickAddPerson = false;
         $this->quick_name = '';
         $this->quick_email = '';
         $this->quick_phone = '';
+        $this->quick_direction_id = null;
         $this->quick_department_id = null;
         $this->dispatch('notify', type: 'success', message: 'Personne ajoutée et sélectionnée.');
+    }
+
+    public function openQuickAddDirection(): void
+    {
+        $this->quick_direction_name = '';
+        $this->quick_direction_code = '';
+        $this->showQuickAddDirection = true;
+    }
+
+    public function closeQuickAddDirection(): void
+    {
+        $this->showQuickAddDirection = false;
+        $this->resetValidation(['quick_direction_name', 'quick_direction_code']);
+    }
+
+    public function saveQuickDirection(): void
+    {
+        $this->validate([
+            'quick_direction_name' => 'required|string|max:150',
+            'quick_direction_code' => 'nullable|string|max:50',
+        ]);
+        $direction = Direction::create([
+            'name' => $this->quick_direction_name,
+            'code' => $this->quick_direction_code ?: null,
+        ]);
+        $this->quick_direction_id = $direction->id;
+        $this->quick_department_id = null;
+        $this->showQuickAddDirection = false;
+        $this->quick_direction_name = '';
+        $this->quick_direction_code = '';
+        $this->dispatch('notify', type: 'success', message: 'Direction ajoutée et sélectionnée.');
+    }
+
+    public function openQuickAddInsurance(): void
+    {
+        $this->insurance_mode = $this->insurance_contract_global_id ? 'existing' : 'existing';
+        $this->ins_new_name = '';
+        $this->ins_new_assureur_id = null;
+        $this->ins_new_start_date = '';
+        $this->ins_new_end_date = '';
+        $this->ins_new_lot_description = '';
+        $this->ins_new_notes = '';
+        $this->ins_doc_file = null;
+        $this->ins_doc_expires_at = '';
+        $this->showQuickAddInsurance = true;
+    }
+
+    public function closeQuickAddInsurance(): void
+    {
+        $this->showQuickAddInsurance = false;
+        $this->resetValidation([
+            'insurance_contract_global_id',
+            'ins_new_name',
+            'ins_new_assureur_id',
+            'ins_new_start_date',
+            'ins_new_end_date',
+            'ins_doc_file',
+            'ins_doc_expires_at',
+        ]);
+    }
+
+    public function saveQuickInsurance(): void
+    {
+        if ($this->insurance_mode === 'existing') {
+            $this->validate([
+                'insurance_contract_global_id' => 'required|exists:insurance_contract_globals,id',
+                'ins_doc_file' => 'nullable|file|max:10240',
+                'ins_doc_expires_at' => 'nullable|date',
+            ]);
+        } else {
+            $this->validate([
+                'ins_new_name' => 'required|string|max:255',
+                'ins_new_assureur_id' => 'required|exists:assureurs,id',
+                'ins_new_start_date' => 'required|date',
+                'ins_new_end_date' => 'required|date|after_or_equal:ins_new_start_date',
+                'ins_new_lot_description' => 'nullable|string',
+                'ins_new_notes' => 'nullable|string',
+                'ins_doc_file' => 'nullable|file|max:10240',
+                'ins_doc_expires_at' => 'nullable|date',
+            ]);
+            $assureurName = Assureur::whereKey($this->ins_new_assureur_id)->value('name');
+            $contract = InsuranceContractGlobal::create([
+                'name' => $this->ins_new_name,
+                'assureur_id' => $this->ins_new_assureur_id,
+                'insurer' => $assureurName ?? '',
+                'lot_description' => $this->ins_new_lot_description ?: null,
+                'start_date' => $this->ins_new_start_date,
+                'end_date' => $this->ins_new_end_date,
+                'notes' => $this->ins_new_notes ?: null,
+            ]);
+            $this->insurance_contract_global_id = $contract->id;
+        }
+
+        $this->showQuickAddInsurance = false;
+        $this->dispatch('notify', type: 'success', message: 'Assurance configurée pour ce véhicule.');
+    }
+
+    public function getInsuranceStatusPreviewProperty(): string
+    {
+        if ($this->insurance_mode !== 'new' || ! $this->ins_new_start_date || ! $this->ins_new_end_date) {
+            return '';
+        }
+        $end = \Carbon\Carbon::parse($this->ins_new_end_date);
+        $start = \Carbon\Carbon::parse($this->ins_new_start_date);
+        $now = now();
+
+        if ($end->isPast()) {
+            return 'Expiré';
+        }
+        if ($start->isFuture()) {
+            return 'À venir';
+        }
+        if ($end->diffInDays($now) <= 30) {
+            return 'Expire bientôt';
+        }
+
+        return 'En cours';
     }
 
     private function resetForm(): void
@@ -369,6 +526,17 @@ class Index extends Component
         $this->assignment_start_at = '';
         $this->assignment_end_at = '';
         $this->notes = '';
+        $this->insurance_mode = 'existing';
+        $this->ins_new_name = '';
+        $this->ins_new_assureur_id = null;
+        $this->ins_new_start_date = '';
+        $this->ins_new_end_date = '';
+        $this->ins_new_lot_description = '';
+        $this->ins_new_notes = '';
+        $this->ins_doc_file = null;
+        $this->ins_doc_expires_at = '';
+        $this->showQuickAddInsurance = false;
+        $this->showQuickAddDirection = false;
         $this->resetValidation();
     }
 
@@ -396,7 +564,14 @@ class Index extends Component
             : collect();
         $persons = Person::orderBy('name')->get(['id', 'name']);
         $docVehicle = $this->docVehicleId ? Vehicle::with(['documents', 'photos', 'carteGrises'])->find($this->docVehicleId) : null;
-        $departments = Department::orderBy('name')->get();
+        $directions = Direction::orderBy('name')->get(['id', 'name']);
+        $departments = Department::when($this->quick_direction_id, fn ($q) => $q->where('direction_id', $this->quick_direction_id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'direction_id']);
+        $assureurs = Assureur::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $selectedContract = $this->insurance_contract_global_id
+            ? InsuranceContractGlobal::with('assureur')->find($this->insurance_contract_global_id)
+            : null;
 
         return view('livewire.portal.vehicles.index', [
             'vehicles' => $vehicles,
@@ -406,7 +581,10 @@ class Index extends Component
             'vehicleModelsForBrand' => $vehicleModelsForBrand,
             'persons' => $persons,
             'docVehicle' => $docVehicle,
+            'directions' => $directions,
             'departments' => $departments,
+            'assureurs' => $assureurs,
+            'selectedContract' => $selectedContract,
         ])->layout('layouts.app', ['title' => 'Gestion des véhicules']);
     }
 }

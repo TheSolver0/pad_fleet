@@ -3,7 +3,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h6 class="modal-title">Ajouter une personne</h6>
+                    <h6 class="modal-title">Ajouter une personne ressource</h6>
                     <button type="button" class="btn-close btn-sm" wire:click="closeQuickAddPerson"></button>
                 </div>
                 <form wire:submit="saveQuickPerson">
@@ -18,6 +18,35 @@
                                 @enderror
                             </div>
                             <div class="col-12">
+                                <label class="form-label small">Direction</label>
+                                <div class="input-group input-group-sm">
+                                    <select class="form-select" wire:model.live="quick_direction_id">
+                                        <option value="">— Aucune direction —</option>
+                                        @foreach ($directions as $dir)
+                                            <option value="{{ $dir->id }}">{{ $dir->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary" wire:click="openQuickAddDirection" title="Ajouter une direction">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                                @error('quick_direction_id')
+                                    <span class="small text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small">Département</label>
+                                <select class="form-select form-select-sm" wire:model="quick_department_id" @disabled(!$quick_direction_id)>
+                                    <option value="">— Aucun département —</option>
+                                    @foreach ($departments as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                                @if(!$quick_direction_id)
+                                    <div class="form-text">Choisissez d'abord une direction.</div>
+                                @endif
+                            </div>
+                            <div class="col-12">
                                 <label class="form-label small">Email</label>
                                 <input type="email" class="form-control form-control-sm" wire:model="quick_email"
                                     placeholder="email@exemple.com">
@@ -25,21 +54,11 @@
                                     <span class="small text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-6">
+                            <div class="col-12">
                                 <label class="form-label small">Téléphone</label>
                                 <input type="text" class="form-control form-control-sm" wire:model="quick_phone"
                                     placeholder="+237...">
                             </div>
-                                <div class="col-6">
-                                    <label class="form-label small">Département</label>
-                                    <select class="form-control form-control-sm"  wire:model="quick_department_id">
-                                        <option value="">— Aucun département —</option>
-                                        @foreach ($departments as $dept)
-                                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            
                         </div>
                     </div>
                     <div class="modal-footer py-2">

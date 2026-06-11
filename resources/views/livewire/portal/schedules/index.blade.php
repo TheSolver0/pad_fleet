@@ -1,10 +1,10 @@
 <div>
-    <p class="section-label">Planning des déplacements</p>
+    <p class="section-label">Déplacements véhicules — Trajets planifiés, destinations, kilométrage et documents (distinct du Planning missions)</p>
 
     <div class="activity-card mb-4">
         <div class="activity-card-header">
             <div class="module-toolbar">
-                <span class="module-toolbar-title">Planning</span>
+                <span class="module-toolbar-title">Déplacements</span>
                 <div class="module-toolbar-filters">
                     <input type="text" class="form-control form-control-sm" style="width: 220px;" placeholder="Titre, destination, véhicule..." wire:model.live.debounce.300ms="search">
                     <input type="date" class="form-control form-control-sm" style="width: 140px;" wire:model.live="date_filter">

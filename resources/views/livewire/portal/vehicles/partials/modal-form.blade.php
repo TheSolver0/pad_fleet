@@ -88,13 +88,33 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Marché assurance</label>
-                            <select class="form-select" wire:model="insurance_contract_global_id">
-                                <option value="">—</option>
-                                @foreach($contracts as $c)
-                                    <option value="{{ $c->id }}">{{ $c->name }}</option>
-                                @endforeach
-                            </select>
+                            <label class="form-label">Assurance</label>
+                            <div class="input-group">
+                                <select class="form-select" wire:model="insurance_contract_global_id">
+                                    <option value="">— Aucune —</option>
+                                    @foreach($contracts as $c)
+                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-outline-primary" wire:click="openQuickAddInsurance" title="Configurer l'assurance">
+                                    <i class="bi bi-shield-plus"></i>
+                                </button>
+                            </div>
+                            @if($selectedContract)
+                                <div class="form-text small">
+                                    {{ $selectedContract->start_date->format('d/m/Y') }} → {{ $selectedContract->end_date->format('d/m/Y') }}
+                                    @if($selectedContract->isExpired())
+                                        <span class="badge bg-danger ms-1">Expiré</span>
+                                    @elseif($selectedContract->isExpiringSoon(30))
+                                        <span class="badge bg-warning text-dark ms-1">Expire bientôt</span>
+                                    @else
+                                        <span class="badge bg-success ms-1">En cours</span>
+                                    @endif
+                                    @if($ins_doc_file)
+                                        · Attestation jointe
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                         {{-- Ligne 5 : Affectation (personne + bouton +, type) --}}
                         <div class="col-md-4">

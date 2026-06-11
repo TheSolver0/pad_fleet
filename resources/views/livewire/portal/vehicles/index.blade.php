@@ -145,6 +145,8 @@
 
     @include('livewire.portal.vehicles.partials.modal-form')
     @include('livewire.portal.vehicles.partials.modal-quick-add-person')
+    @include('livewire.portal.vehicles.partials.modal-quick-add-direction')
+    @include('livewire.portal.vehicles.partials.modal-quick-add-insurance')
     @include('livewire.portal.vehicles.partials.modal-documents')
     @include('livewire.portal.vehicles.partials.modal-delete')
 </div>
