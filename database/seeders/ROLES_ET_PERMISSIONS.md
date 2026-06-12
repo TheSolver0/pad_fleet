@@ -4,8 +4,14 @@
 
 ```bash
 php artisan db:seed --class=RolesAndPermissionsSeeder
-# ou pour tout reseeder (utilisateur + rôles)
+# ou seed de production (référentiels + données PAD + admin)
 php artisan db:seed --force
+```
+
+En local uniquement, pour des données de démo (stock, mécaniciens, rapports fictifs) :
+
+```bash
+php artisan db:seed --class=DevelopmentSeeder
 ```
 
 ## Rôles et permissions associées

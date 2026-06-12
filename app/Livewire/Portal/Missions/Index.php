@@ -122,8 +122,8 @@ class Index extends Component
             'new_demandeur_email' => 'nullable|email|max:150',
             'new_demandeur_service' => 'nullable|string|max:200',
             'city_id' => 'nullable|exists:cities,id',
-            'new_city_name' => 'required_if:create_city,true|string|max:100',
-            'new_region_id' => 'required_if:create_city,true|exists:regions,id',
+            'new_city_name' => 'nullable|required_if:create_city,true|string|max:100',
+            'new_region_id' => 'nullable|required_if:create_city,true|exists:regions,id',
             'form_doc_rows.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
