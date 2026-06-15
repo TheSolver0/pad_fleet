@@ -44,9 +44,14 @@
     .obs-text  { font-size: 8.5pt; min-height: 30pt; }
 
     /* ── Signatures ── */
-    .sig-table { display: table; width: 100%; margin-top: 14pt; }
-    .sig-cell  { display: table-cell; width: 33%; padding: 4pt 8pt; text-align: center; vertical-align: bottom; }
-    .sig-line  { border-top: 1pt solid #555; margin-top: 22pt; padding-top: 3pt; font-size: 8pt; color: #444; }
+    .sig-outer  { display: table; width: 100%; margin-top: 14pt; border: 1pt solid #b0bec5; border-collapse: collapse; }
+    .sig-group  { display: table-cell; vertical-align: top; border: 1pt solid #b0bec5; }
+    .sig-group-title { background: #1a5490; color: #fff; font-size: 7.5pt; font-weight: bold; text-align: center; padding: 3pt; text-transform: uppercase; letter-spacing: 0.3pt; }
+    .sig-row    { display: table; width: 100%; border-collapse: collapse; }
+    .sig-cell   { display: table-cell; width: 50%; padding: 4pt 6pt; text-align: center; vertical-align: bottom; border: 0.5pt solid #b0bec5; }
+    .sig-cell-full { padding: 4pt 6pt; text-align: center; vertical-align: bottom; }
+    .sig-label  { font-size: 7pt; font-weight: bold; text-transform: uppercase; color: #444; margin-top: 2pt; border-top: 1pt solid #555; padding-top: 2pt; }
+    .sig-sublabel { font-size: 6.5pt; color: #777; }
 
     /* ── Footer ── */
     .footer { margin-top: 10pt; border-top: 0.5pt solid #b0bec5; padding-top: 4pt; font-size: 7pt; color: #888; text-align: center; }
@@ -197,21 +202,40 @@ $checkSections = [
 @endif
 
 {{-- ══ SIGNATURES ══ --}}
-<div class="sig-table no-break">
-    <div class="sig-cell">
-        @if($sheet->signature_depart_path)
-            <div><img src="{{ public_path('storage/' . $sheet->signature_depart_path) }}" alt="Signature depart" style="max-height:55pt;max-width:130pt;"></div>
-        @endif
-        <div class="sig-line">Signature départ<br><small style="color:#777">Chauffeur</small></div>
+<div class="sig-outer no-break">
+    {{-- Colonne CHAUFFEUR (2 sous-colonnes Départ / Retour) --}}
+    <div class="sig-group" style="width:66%">
+        <div class="sig-group-title">Chauffeur</div>
+        <div class="sig-row">
+            <div class="sig-cell">
+                @if($sheet->signature_depart_path)
+                    <img src="{{ public_path('storage/' . $sheet->signature_depart_path) }}" style="max-height:50pt;max-width:120pt;" alt="">
+                @else
+                    <div style="height:50pt;"></div>
+                @endif
+                <div class="sig-label">DÉPART</div>
+            </div>
+            <div class="sig-cell">
+                @if($sheet->signature_retour_path)
+                    <img src="{{ public_path('storage/' . $sheet->signature_retour_path) }}" style="max-height:50pt;max-width:120pt;" alt="">
+                @else
+                    <div style="height:50pt;"></div>
+                @endif
+                <div class="sig-label">RETOUR</div>
+            </div>
+        </div>
     </div>
-    <div class="sig-cell">
-        <div class="sig-line">Contrôleur départ<br><small style="color:#777">Nom &amp; Signature</small></div>
-    </div>
-    <div class="sig-cell">
-        @if($sheet->signature_retour_path)
-            <div><img src="{{ public_path('storage/' . $sheet->signature_retour_path) }}" alt="Signature retour" style="max-height:55pt;max-width:130pt;"></div>
-        @endif
-        <div class="sig-line">Signature retour<br><small style="color:#777">Chauffeur</small></div>
+    {{-- Colonne BUREAU DE CONTRÔLE --}}
+    <div class="sig-group" style="width:34%">
+        <div class="sig-group-title">Bureau de Contrôle &amp; Gestion du Parc</div>
+        <div class="sig-cell-full">
+            @if($sheet->signature_bureau_path)
+                <img src="{{ public_path('storage/' . $sheet->signature_bureau_path) }}" style="max-height:50pt;max-width:120pt;" alt="">
+            @else
+                <div style="height:50pt;"></div>
+            @endif
+            <div class="sig-label">Nom &amp; Signature</div>
+        </div>
     </div>
 </div>
 

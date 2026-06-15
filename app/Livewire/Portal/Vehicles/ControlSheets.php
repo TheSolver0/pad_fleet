@@ -42,10 +42,9 @@ class ControlSheets extends Component
     public array   $outillages              = [];
     public string  $observations_depart = '';
     public string  $observations_retour = '';
-    public $signature_depart_file = null;
-    public $signature_retour_file = null;
     public ?string $signature_depart_path = null;
     public ?string $signature_retour_path = null;
+    public ?string $signature_bureau_path = null;
 
     // Photos
     public bool  $showPhotoModal = false;
@@ -119,7 +118,7 @@ class ControlSheets extends Component
         $this->reset(['editingId', 'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id',
             'ordre_mission', 'lieu', 'date_depart', 'date_retour',
             'km_depart', 'km_retour', 'observations_depart', 'observations_retour',
-            'signature_depart_file', 'signature_retour_file', 'signature_depart_path', 'signature_retour_path']);
+            'signature_depart_path', 'signature_retour_path', 'signature_bureau_path']);
         $this->initChecks();
         $this->showFormModal = true;
     }
@@ -141,8 +140,7 @@ class ControlSheets extends Component
         $this->observations_retour = $sheet->observations_retour ?? '';
         $this->signature_depart_path = $sheet->signature_depart_path;
         $this->signature_retour_path = $sheet->signature_retour_path;
-        $this->signature_depart_file = null;
-        $this->signature_retour_file = null;
+        $this->signature_bureau_path = $sheet->signature_bureau_path;
 
         // Merge saved data with default structure (to handle new keys)
         $defaults = VehicleControlSheet::defaultStructure();
@@ -160,29 +158,27 @@ class ControlSheets extends Component
         $this->showViewModal = true;
     }
 
-    public function saveSheet(): void
+    public function saveSheet(string $sigDepart = '', string $sigRetour = '', string $sigBureau = ''): void
     {
         $this->validate([
             'vehicle_id'  => 'required|exists:vehicles,id',
             'date_depart' => 'required|date',
             'km_depart'   => 'nullable|integer|min:0',
             'km_retour'   => 'nullable|integer|min:0',
-            'signature_depart_file' => 'nullable|image|max:5120',
-            'signature_retour_file' => 'nullable|image|max:5120',
         ]);
 
         $data = [
-            'vehicle_id'     => $this->vehicle_id,
-            'mission_id'          => $this->mission_id ?: null,
-            'vehicle_schedule_id' => $this->vehicle_schedule_id ?: null,
-            'driver_id'           => $this->driver_id ?: null,
-            'created_by'     => auth()->id(),
-            'ordre_mission'  => $this->ordre_mission ?: null,
-            'lieu'           => $this->lieu ?: null,
-            'date_depart'    => $this->date_depart,
-            'date_retour'    => $this->date_retour ?: null,
-            'km_depart'      => $this->km_depart !== '' ? (int)$this->km_depart : null,
-            'km_retour'      => $this->km_retour !== '' ? (int)$this->km_retour : null,
+            'vehicle_id'               => $this->vehicle_id,
+            'mission_id'               => $this->mission_id ?: null,
+            'vehicle_schedule_id'      => $this->vehicle_schedule_id ?: null,
+            'driver_id'                => $this->driver_id ?: null,
+            'created_by'               => auth()->id(),
+            'ordre_mission'            => $this->ordre_mission ?: null,
+            'lieu'                     => $this->lieu ?: null,
+            'date_depart'              => $this->date_depart,
+            'date_retour'              => $this->date_retour ?: null,
+            'km_depart'                => $this->km_depart !== '' ? (int)$this->km_depart : null,
+            'km_retour'                => $this->km_retour !== '' ? (int)$this->km_retour : null,
             'docs_administratifs'      => $this->docs_administratifs,
             'controle_exterieur'       => $this->controle_exterieur,
             'compartiment_moteur'      => $this->compartiment_moteur,
@@ -192,13 +188,17 @@ class ControlSheets extends Component
             'observations_retour'      => $this->observations_retour ?: null,
             'signature_depart_path'    => $this->signature_depart_path,
             'signature_retour_path'    => $this->signature_retour_path,
+            'signature_bureau_path'    => $this->signature_bureau_path,
         ];
 
-        if ($this->signature_depart_file) {
-            $data['signature_depart_path'] = $this->signature_depart_file->store('control-sheets/signatures', 'public');
+        if ($sigDepart) {
+            $data['signature_depart_path'] = $this->storeBase64Signature($sigDepart);
         }
-        if ($this->signature_retour_file) {
-            $data['signature_retour_path'] = $this->signature_retour_file->store('control-sheets/signatures', 'public');
+        if ($sigRetour) {
+            $data['signature_retour_path'] = $this->storeBase64Signature($sigRetour);
+        }
+        if ($sigBureau) {
+            $data['signature_bureau_path'] = $this->storeBase64Signature($sigBureau);
         }
 
         if ($this->editingId) {
@@ -211,6 +211,15 @@ class ControlSheets extends Component
 
         $this->showFormModal = false;
         $this->resetPage();
+    }
+
+    private function storeBase64Signature(string $base64): string
+    {
+        $raw = preg_replace('#^data:image/\w+;base64,#i', '', $base64);
+        $decoded = base64_decode($raw, true);
+        $path = 'control-sheets/signatures/' . uniqid('sig_') . '.png';
+        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $decoded);
+        return $path;
     }
 
     public function confirmDelete(int $id): void

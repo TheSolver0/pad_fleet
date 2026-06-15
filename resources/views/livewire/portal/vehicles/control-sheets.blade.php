@@ -92,7 +92,7 @@
                     </h5>
                     <button type="button" class="btn-close" wire:click="$set('showFormModal', false)"></button>
                 </div>
-                <form wire:submit="saveSheet">
+                <form x-data="sigPads()" x-init="init()" @submit.prevent>
                     <div class="modal-body">
                         @if($errors->any())
                         <div class="alert alert-danger">
@@ -227,25 +227,87 @@
                                 <label class="form-label">Observations retour</label>
                                 <textarea class="form-control" rows="2" wire:model="observations_retour"></textarea>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Signature départ (image)</label>
-                                <input type="file" class="form-control" wire:model="signature_depart_file" accept="image/*">
-                                @if($signature_depart_path)
-                                    <a href="{{ asset('storage/' . $signature_depart_path) }}" target="_blank" class="small">Voir signature actuelle</a>
-                                @endif
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Signature retour (image)</label>
-                                <input type="file" class="form-control" wire:model="signature_retour_file" accept="image/*">
-                                @if($signature_retour_path)
-                                    <a href="{{ asset('storage/' . $signature_retour_path) }}" target="_blank" class="small">Voir signature actuelle</a>
-                                @endif
+                        </div>
+
+                        {{-- Signatures numériques --}}
+                        <div class="mt-4">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-pen me-1"></i>Signatures</h6>
+                            <div class="row g-3">
+                                {{-- Chauffeur Départ --}}
+                                <div class="col-md-4">
+                                    <div class="card border">
+                                        <div class="card-header py-2 text-center fw-semibold small" style="background:rgba(26,84,144,.08)">
+                                            CHAUFFEUR — DÉPART
+                                        </div>
+                                        <div class="card-body p-2">
+                                            @if($signature_depart_path)
+                                                <div class="text-center mb-2">
+                                                    <img src="{{ asset('storage/' . $signature_depart_path) }}" style="max-height:55px;max-width:100%" alt="">
+                                                    <div class="small text-muted">Signature actuelle</div>
+                                                </div>
+                                            @endif
+                                            <canvas id="sig-depart" style="width:100%;height:100px;display:block;touch-action:none;cursor:crosshair;border:1px dashed #adb5bd;border-radius:4px;background:#fff;"></canvas>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">Signer dans le cadre</small>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary py-0" @click="clearPad('depart')">
+                                                    <i class="bi bi-eraser"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- Chauffeur Retour --}}
+                                <div class="col-md-4">
+                                    <div class="card border">
+                                        <div class="card-header py-2 text-center fw-semibold small" style="background:rgba(26,84,144,.08)">
+                                            CHAUFFEUR — RETOUR
+                                        </div>
+                                        <div class="card-body p-2">
+                                            @if($signature_retour_path)
+                                                <div class="text-center mb-2">
+                                                    <img src="{{ asset('storage/' . $signature_retour_path) }}" style="max-height:55px;max-width:100%" alt="">
+                                                    <div class="small text-muted">Signature actuelle</div>
+                                                </div>
+                                            @endif
+                                            <canvas id="sig-retour" style="width:100%;height:100px;display:block;touch-action:none;cursor:crosshair;border:1px dashed #adb5bd;border-radius:4px;background:#fff;"></canvas>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">Signer dans le cadre</small>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary py-0" @click="clearPad('retour')">
+                                                    <i class="bi bi-eraser"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- Bureau de Contrôle --}}
+                                <div class="col-md-4">
+                                    <div class="card border">
+                                        <div class="card-header py-2 text-center fw-semibold small" style="background:rgba(26,84,144,.08)">
+                                            BUREAU DE CONTRÔLE
+                                        </div>
+                                        <div class="card-body p-2">
+                                            @if($signature_bureau_path)
+                                                <div class="text-center mb-2">
+                                                    <img src="{{ asset('storage/' . $signature_bureau_path) }}" style="max-height:55px;max-width:100%" alt="">
+                                                    <div class="small text-muted">Signature actuelle</div>
+                                                </div>
+                                            @endif
+                                            <canvas id="sig-bureau" style="width:100%;height:100px;display:block;touch-action:none;cursor:crosshair;border:1px dashed #adb5bd;border-radius:4px;background:#fff;"></canvas>
+                                            <div class="mt-1 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">Signer dans le cadre</small>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary py-0" @click="clearPad('bureau')">
+                                                    <i class="bi bi-eraser"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" wire:click="$set('showFormModal', false)">Annuler</button>
-                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                        <button type="button" class="btn btn-primary" @click="handleSubmit($wire)" wire:loading.attr="disabled">
                             <span wire:loading.remove>{{ $editingId ? 'Enregistrer' : 'Créer la fiche' }}</span>
                             <span wire:loading><i class="bi bi-hourglass-split me-1"></i>Traitement…</span>
                         </button>
@@ -356,6 +418,42 @@
         </div>
     </div>
     @endif
+
+    {{-- ── SCRIPT SIGNATURE PAD ── --}}
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script>
+    function sigPads() {
+        return {
+            pads: {},
+            init() {
+                this.$nextTick(() => {
+                    ['depart', 'retour', 'bureau'].forEach(name => {
+                        const canvas = document.getElementById('sig-' + name);
+                        if (!canvas) return;
+                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                        canvas.width  = canvas.offsetWidth  * ratio;
+                        canvas.height = canvas.offsetHeight * ratio;
+                        canvas.getContext('2d').scale(ratio, ratio);
+                        this.pads[name] = new SignaturePad(canvas, {
+                            penColor: '#003366',
+                            backgroundColor: 'rgba(255,255,255,0)'
+                        });
+                    });
+                });
+            },
+            clearPad(name) {
+                this.pads[name]?.clear();
+            },
+            async handleSubmit(wire) {
+                const get = (name) => {
+                    const p = this.pads[name];
+                    return (p && !p.isEmpty()) ? p.toDataURL('image/png') : '';
+                };
+                await wire.saveSheet(get('depart'), get('retour'), get('bureau'));
+            }
+        };
+    }
+    </script>
 
     {{-- ── MODAL SUPPRESSION ── --}}
     @if($showDeleteModal)
