@@ -23,15 +23,15 @@
 
             <form wire:submit="login">
                 <div class="mb-3">
-                    <label class="form-label" for="matricule">Matricule</label>
+                    <label class="form-label" for="identifier">Matricule ou Email</label>
                     <input type="text"
-                           class="form-control @error('matricule') is-invalid @enderror"
-                           id="matricule"
-                           wire:model="matricule"
-                           placeholder="Votre matricule"
+                           class="form-control @error('identifier') is-invalid @enderror"
+                           id="identifier"
+                           wire:model="identifier"
+                           placeholder="Matricule ou adresse email"
                            autocomplete="username"
                            autofocus>
-                    @error('matricule')
+                    @error('identifier')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>

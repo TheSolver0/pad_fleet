@@ -12,6 +12,7 @@ class DevelopmentSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(UsersPerRoleSeeder::class);
         $this->call(AssureursSeeder::class);
         $this->call(PersonSeeder::class);
         $this->call(ArticleCategorySeeder::class);
