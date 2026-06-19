@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -27,11 +28,6 @@ class InsuranceContractGlobal extends Model
         ];
     }
 
-    public function vehicles(): HasMany
-    {
-        return $this->hasMany(Vehicle::class, 'insurance_contract_global_id');
-    }
-
     public function documents(): HasMany
     {
         return $this->hasMany(InsuranceContractGlobalDocument::class, 'insurance_contract_global_id');
@@ -42,6 +38,13 @@ class InsuranceContractGlobal extends Model
         return $this->belongsTo(Assureur::class);
     }
 
+    public function isActive(): bool
+    {
+        return $this->start_date->isPast() || $this->start_date->isToday()
+            ? ($this->end_date->isFuture() || $this->end_date->isToday())
+            : false;
+    }
+
     public function isExpiringSoon(int $days = 30): bool
     {
         return $this->end_date->isFuture() && $this->end_date->diffInDays(now(), false) <= $days;
@@ -50,6 +53,12 @@ class InsuranceContractGlobal extends Model
     public function isExpired(): bool
     {
         return $this->end_date->isPast();
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereDate('start_date', '<=', now())
+                     ->whereDate('end_date', '>=', now());
     }
 
     protected static function booted(): void

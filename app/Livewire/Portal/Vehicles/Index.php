@@ -2,11 +2,9 @@
 
 namespace App\Livewire\Portal\Vehicles;
 
-use App\Models\Assureur;
 use App\Models\Brand;
 use App\Models\Direction;
 use App\Models\Garage;
-use App\Models\InsuranceContractGlobal;
 use App\Models\Vehicle;
 use App\Models\VehicleCarteGrise;
 use App\Models\VehicleDocument;
@@ -44,7 +42,6 @@ class Index extends Component
     public string $power = '';
     public string $status = Vehicle::STATUS_AVAILABLE;
     public ?int $garage_id = null;
-    public ?int $insurance_contract_global_id = null;
     public ?int $assigned_person_id = null;
     public string $assignment_type = '';
     public bool $assignment_period_indefinite = true;
@@ -77,17 +74,6 @@ class Index extends Component
     public string $quick_direction_name = '';
     public string $quick_direction_code = '';
 
-    public bool $showQuickAddInsurance = false;
-    public string $insurance_mode = 'existing';
-    public string $ins_new_name = '';
-    public ?int $ins_new_assureur_id = null;
-    public string $ins_new_start_date = '';
-    public string $ins_new_end_date = '';
-    public string $ins_new_lot_description = '';
-    public string $ins_new_notes = '';
-    public $ins_doc_file = null;
-    public string $ins_doc_expires_at = '';
-
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
     protected $paginationTheme = 'bootstrap'; 
@@ -107,7 +93,6 @@ class Index extends Component
             'power' => 'nullable|integer|min:0',
             'status' => 'required|in:available,in_use,repair,out_of_service',
             'garage_id' => 'nullable|exists:garages,id',
-            'insurance_contract_global_id' => 'nullable|exists:insurance_contract_globals,id',
             'assigned_person_id' => 'nullable|exists:persons,id',
             'assignment_type' => 'nullable|string|in:dotation,affectation,liaison,lucatelli,sec_surete,travaux,missions,transport_vip',
             'assignment_start_at' => 'nullable|date',
@@ -137,7 +122,6 @@ class Index extends Component
         $this->power = $v->power !== null ? (string) $v->power : '';
         $this->status = $v->status;
         $this->garage_id = $v->garage_id;
-        $this->insurance_contract_global_id = $v->insurance_contract_global_id;
         $this->assigned_person_id = $v->assigned_person_id;
         $this->assignment_type = $v->assignment_type ?? '';
         $this->assignment_period_indefinite = $v->assignment_end_at === null;
@@ -161,7 +145,6 @@ class Index extends Component
             'power' => $this->power !== '' ? (int) $this->power : null,
             'status' => $this->status,
             'garage_id' => $this->garage_id,
-            'insurance_contract_global_id' => $this->insurance_contract_global_id,
             'assigned_person_id' => $this->assigned_person_id,
             'assignment_type' => $this->assignment_type ?: null,
             'assignment_start_at' => $this->assignment_start_at ?: null,
@@ -175,15 +158,6 @@ class Index extends Component
         } else {
             $vehicle = Vehicle::create($data);
             $this->dispatch('notify', type: 'success', message: 'Véhicule créé.');
-        }
-
-        if ($this->ins_doc_file) {
-            VehicleDocument::storeUpload(
-                $vehicle,
-                $this->ins_doc_file,
-                VehicleDocument::TYPE_ASSURANCE,
-                $this->ins_doc_expires_at ?: null
-            );
         }
 
         $this->showFormModal = false;
@@ -421,92 +395,6 @@ class Index extends Component
         $this->dispatch('notify', type: 'success', message: 'Direction ajoutée et sélectionnée.');
     }
 
-    public function openQuickAddInsurance(): void
-    {
-        $this->insurance_mode = $this->insurance_contract_global_id ? 'existing' : 'existing';
-        $this->ins_new_name = '';
-        $this->ins_new_assureur_id = null;
-        $this->ins_new_start_date = '';
-        $this->ins_new_end_date = '';
-        $this->ins_new_lot_description = '';
-        $this->ins_new_notes = '';
-        $this->ins_doc_file = null;
-        $this->ins_doc_expires_at = '';
-        $this->showQuickAddInsurance = true;
-    }
-
-    public function closeQuickAddInsurance(): void
-    {
-        $this->showQuickAddInsurance = false;
-        $this->resetValidation([
-            'insurance_contract_global_id',
-            'ins_new_name',
-            'ins_new_assureur_id',
-            'ins_new_start_date',
-            'ins_new_end_date',
-            'ins_doc_file',
-            'ins_doc_expires_at',
-        ]);
-    }
-
-    public function saveQuickInsurance(): void
-    {
-        if ($this->insurance_mode === 'existing') {
-            $this->validate([
-                'insurance_contract_global_id' => 'required|exists:insurance_contract_globals,id',
-                'ins_doc_file' => 'nullable|file|max:10240',
-                'ins_doc_expires_at' => 'nullable|date',
-            ]);
-        } else {
-            $this->validate([
-                'ins_new_name' => 'required|string|max:255',
-                'ins_new_assureur_id' => 'required|exists:assureurs,id',
-                'ins_new_start_date' => 'required|date',
-                'ins_new_end_date' => 'required|date|after_or_equal:ins_new_start_date',
-                'ins_new_lot_description' => 'nullable|string',
-                'ins_new_notes' => 'nullable|string',
-                'ins_doc_file' => 'nullable|file|max:10240',
-                'ins_doc_expires_at' => 'nullable|date',
-            ]);
-            $assureurName = Assureur::whereKey($this->ins_new_assureur_id)->value('name');
-            $contract = InsuranceContractGlobal::create([
-                'name' => $this->ins_new_name,
-                'assureur_id' => $this->ins_new_assureur_id,
-                'insurer' => $assureurName ?? '',
-                'lot_description' => $this->ins_new_lot_description ?: null,
-                'start_date' => $this->ins_new_start_date,
-                'end_date' => $this->ins_new_end_date,
-                'notes' => $this->ins_new_notes ?: null,
-            ]);
-            $this->insurance_contract_global_id = $contract->id;
-        }
-
-        $this->showQuickAddInsurance = false;
-        $this->dispatch('notify', type: 'success', message: 'Assurance configurée pour ce véhicule.');
-    }
-
-    public function getInsuranceStatusPreviewProperty(): string
-    {
-        if ($this->insurance_mode !== 'new' || ! $this->ins_new_start_date || ! $this->ins_new_end_date) {
-            return '';
-        }
-        $end = \Carbon\Carbon::parse($this->ins_new_end_date);
-        $start = \Carbon\Carbon::parse($this->ins_new_start_date);
-        $now = now();
-
-        if ($end->isPast()) {
-            return 'Expiré';
-        }
-        if ($start->isFuture()) {
-            return 'À venir';
-        }
-        if ($end->diffInDays($now) <= 30) {
-            return 'Expire bientôt';
-        }
-
-        return 'En cours';
-    }
-
     private function resetForm(): void
     {
         $this->registration = '';
@@ -519,30 +407,19 @@ class Index extends Component
         $this->power = '';
         $this->status = Vehicle::STATUS_AVAILABLE;
         $this->garage_id = null;
-        $this->insurance_contract_global_id = null;
         $this->assigned_person_id = null;
         $this->assignment_type = '';
         $this->assignment_period_indefinite = true;
         $this->assignment_start_at = '';
         $this->assignment_end_at = '';
         $this->notes = '';
-        $this->insurance_mode = 'existing';
-        $this->ins_new_name = '';
-        $this->ins_new_assureur_id = null;
-        $this->ins_new_start_date = '';
-        $this->ins_new_end_date = '';
-        $this->ins_new_lot_description = '';
-        $this->ins_new_notes = '';
-        $this->ins_doc_file = null;
-        $this->ins_doc_expires_at = '';
-        $this->showQuickAddInsurance = false;
         $this->showQuickAddDirection = false;
         $this->resetValidation();
     }
 
     public function render(): View
     {
-        $query = Vehicle::query()->with(['vehicleModel.brand:id,name', 'garage:id,name', 'insuranceContractGlobal:id,name', 'assignedPerson:id,name']);
+        $query = Vehicle::query()->with(['vehicleModel.brand:id,name', 'garage:id,name', 'assignedPerson:id,name']);
         if ($this->search !== '') {
             $query->where(function ($q) {
                 $q->where('registration', 'like', '%' . $this->search . '%')
@@ -557,7 +434,6 @@ class Index extends Component
         }
         $vehicles = $query->with(['photos'])->orderBy('registration')->paginate(12);
         $garages = Garage::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $contracts = InsuranceContractGlobal::orderBy('name')->get(['id', 'name']);
         $brands = Brand::orderBy('name')->get(['id', 'name']);
         $vehicleModelsForBrand = $this->brand_id
             ? VehicleModel::where('brand_id', $this->brand_id)->orderBy('name')->get(['id', 'name', 'brand_id'])
@@ -568,23 +444,16 @@ class Index extends Component
         $departments = Department::when($this->quick_direction_id, fn ($q) => $q->where('direction_id', $this->quick_direction_id))
             ->orderBy('name')
             ->get(['id', 'name', 'direction_id']);
-        $assureurs = Assureur::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $selectedContract = $this->insurance_contract_global_id
-            ? InsuranceContractGlobal::with('assureur')->find($this->insurance_contract_global_id)
-            : null;
 
         return view('livewire.portal.vehicles.index', [
             'vehicles' => $vehicles,
             'garages' => $garages,
-            'contracts' => $contracts,
             'brands' => $brands,
             'vehicleModelsForBrand' => $vehicleModelsForBrand,
             'persons' => $persons,
             'docVehicle' => $docVehicle,
             'directions' => $directions,
             'departments' => $departments,
-            'assureurs' => $assureurs,
-            'selectedContract' => $selectedContract,
         ])->layout('layouts.app', ['title' => 'Gestion des véhicules']);
     }
 }

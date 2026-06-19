@@ -301,13 +301,13 @@ class Index extends Component
             ];
         }
 
-        $vehiclesWithoutInsurance = Vehicle::where('category', '!=', Vehicle::CATEGORY_MOTO)->whereNull('insurance_contract_global_id')->count();
-        if ($vehiclesWithoutInsurance > 0) {
+        $hasActiveInsurance = InsuranceContractGlobal::active()->exists();
+        if (! $hasActiveInsurance) {
             $list[] = [
                 'type' => 'danger',
                 'icon' => 'bi bi-shield-x',
-                'title' => 'Véhicules sans assurance',
-                'text' => $vehiclesWithoutInsurance . ' véhicule(s) sans contrat d\'assurance renseigné.',
+                'title' => 'Aucune assurance active',
+                'text' => 'Aucun marché d\'assurance en cours de validité. Tous les véhicules sont potentiellement non couverts.',
             ];
         }
 

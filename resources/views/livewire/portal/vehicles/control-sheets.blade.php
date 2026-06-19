@@ -136,13 +136,17 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Lieu de départ</label>
-                                <input type="text" class="form-control" wire:model="lieu" placeholder="ex: Kribi">
+                                <input type="text" class="form-control" wire:model="lieu" placeholder="ex: Yaoundé">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Destination</label>
+                                <input type="text" class="form-control" wire:model="destination" placeholder="ex: Kribi">
+                            </div>
+                            <div class="col-md-3">
                                 <label class="form-label">Date départ <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control @error('date_depart') is-invalid @enderror" wire:model="date_depart">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <label class="form-label">Date retour</label>
                                 <input type="date" class="form-control" wire:model="date_retour">
                             </div>

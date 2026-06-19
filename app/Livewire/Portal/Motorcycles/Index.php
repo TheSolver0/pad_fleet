@@ -4,7 +4,6 @@ namespace App\Livewire\Portal\Motorcycles;
 
 use App\Models\Brand;
 use App\Models\Garage;
-use App\Models\InsuranceContractGlobal;
 use App\Models\Vehicle;
 use App\Models\VehicleCarteGrise;
 use App\Models\VehicleDocument;
@@ -41,7 +40,6 @@ class Index extends Component
     public string $power = '';
     public string $status = Vehicle::STATUS_AVAILABLE;
     public ?int $garage_id = null;
-    public ?int $insurance_contract_global_id = null;
     public ?int $assigned_person_id = null;
     public string $assignment_type = '';
     public bool $assignment_period_indefinite = true;
@@ -87,7 +85,6 @@ class Index extends Component
             'power' => 'nullable|integer|min:0',
             'status' => 'required|in:available,in_use,repair,out_of_service',
             'garage_id' => 'nullable|exists:garages,id',
-            'insurance_contract_global_id' => 'nullable|exists:insurance_contract_globals,id',
             'assigned_person_id' => 'nullable|exists:persons,id',
             'assignment_type' => 'nullable|string|in:dotation,affectation,liaison,lucatelli,sec_surete,travaux,missions,transport_vip',
             'assignment_start_at' => 'nullable|date',
@@ -116,7 +113,6 @@ class Index extends Component
         $this->power = $v->power !== null ? (string) $v->power : '';
         $this->status = $v->status;
         $this->garage_id = $v->garage_id;
-        $this->insurance_contract_global_id = $v->insurance_contract_global_id;
         $this->assigned_person_id = $v->assigned_person_id;
         $this->assignment_type = $v->assignment_type ?? '';
         $this->assignment_period_indefinite = $v->assignment_end_at === null;
@@ -140,7 +136,6 @@ class Index extends Component
             'power' => $this->power !== '' ? (int) $this->power : null,
             'status' => $this->status,
             'garage_id' => $this->garage_id,
-            'insurance_contract_global_id' => $this->insurance_contract_global_id,
             'assigned_person_id' => $this->assigned_person_id,
             'assignment_type' => $this->assignment_type ?: null,
             'assignment_start_at' => $this->assignment_start_at ?: null,
@@ -357,7 +352,6 @@ class Index extends Component
         $this->power = '';
         $this->status = Vehicle::STATUS_AVAILABLE;
         $this->garage_id = null;
-        $this->insurance_contract_global_id = null;
         $this->assigned_person_id = null;
         $this->assignment_type = '';
         $this->assignment_period_indefinite = true;
@@ -371,7 +365,7 @@ class Index extends Component
     {
         $query = Vehicle::query()
             ->where('category', Vehicle::CATEGORY_MOTO)
-            ->with(['vehicleModel.brand:id,name', 'garage:id,name', 'insuranceContractGlobal:id,name', 'assignedPerson:id,name']);
+            ->with(['vehicleModel.brand:id,name', 'garage:id,name', 'assignedPerson:id,name']);
 
         if ($this->search !== '') {
             $query->where(function ($q) {
@@ -387,7 +381,6 @@ class Index extends Component
         }
         $motos = $query->with(['photos'])->orderBy('registration')->paginate(12);
         $garages = Garage::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $contracts = InsuranceContractGlobal::orderBy('name')->get(['id', 'name']);
         $brands = Brand::orderBy('name')->get(['id', 'name']);
         $vehicleModelsForBrand = $this->brand_id
             ? VehicleModel::where('brand_id', $this->brand_id)->orderBy('name')->get(['id', 'name', 'brand_id'])
@@ -399,7 +392,6 @@ class Index extends Component
         return view('livewire.portal.motorcycles.index', [
             'motos' => $motos,
             'garages' => $garages,
-            'contracts' => $contracts,
             'brands' => $brands,
             'vehicleModelsForBrand' => $vehicleModelsForBrand,
             'persons' => $persons,

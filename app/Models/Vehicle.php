@@ -126,7 +126,7 @@ class Vehicle extends Model
 
     protected $fillable = [
         'registration', 'vehicle_model_id', 'category', 'purchase_date', 'purchase_price',
-        'venal_value', 'mileage', 'power', 'status', 'garage_id', 'insurance_contract_global_id',
+        'venal_value', 'mileage', 'power', 'status', 'garage_id',
         'assigned_person_id', 'assignment_type', 'assignment_start_at', 'assignment_end_at', 'notes',
     ];
 
@@ -151,11 +151,6 @@ class Vehicle extends Model
     public function garage(): BelongsTo
     {
         return $this->belongsTo(Garage::class);
-    }
-
-    public function insuranceContractGlobal(): BelongsTo
-    {
-        return $this->belongsTo(InsuranceContractGlobal::class, 'insurance_contract_global_id');
     }
 
     public function assignedPerson(): BelongsTo

@@ -31,6 +31,7 @@ class ControlSheets extends Component
     public ?int    $driver_id           = null;
     public string  $ordre_mission = '';
     public string  $lieu          = '';
+    public string  $destination   = '';
     public string  $date_depart   = '';
     public string  $date_retour   = '';
     public string  $km_depart     = '';
@@ -73,7 +74,7 @@ class ControlSheets extends Component
                 $this->date_retour = $mission->date_end->format('Y-m-d');
                 $this->km_depart   = $mission->km_departure !== null ? (string) $mission->km_departure : '';
                 $this->km_retour   = $mission->km_return !== null ? (string) $mission->km_return : '';
-                $this->lieu        = $mission->destination ?? '';
+                $this->destination = $mission->destination ?? '';
                 $this->showFormModal = true;
             }
         } elseif ($scheduleId) {
@@ -85,7 +86,7 @@ class ControlSheets extends Component
                 $this->date_depart         = $schedule->start_datetime->format('Y-m-d');
                 $this->date_retour         = $schedule->end_datetime->format('Y-m-d');
                 $this->km_depart           = $schedule->mileage_start !== null ? (string) $schedule->mileage_start : '';
-                $this->lieu                = $schedule->destination ?? '';
+                $this->destination         = $schedule->destination ?? '';
                 $this->showFormModal = true;
             }
         }
@@ -116,7 +117,7 @@ class ControlSheets extends Component
     public function openCreate(): void
     {
         $this->reset(['editingId', 'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id',
-            'ordre_mission', 'lieu', 'date_depart', 'date_retour',
+            'ordre_mission', 'lieu', 'destination', 'date_depart', 'date_retour',
             'km_depart', 'km_retour', 'observations_depart', 'observations_retour',
             'signature_depart_path', 'signature_retour_path', 'signature_bureau_path']);
         $this->initChecks();
@@ -132,6 +133,7 @@ class ControlSheets extends Component
         $this->driver_id   = $sheet->driver_id;
         $this->ordre_mission = $sheet->ordre_mission ?? '';
         $this->lieu          = $sheet->lieu ?? '';
+        $this->destination   = $sheet->destination ?? '';
         $this->date_depart   = $sheet->date_depart?->format('Y-m-d') ?? '';
         $this->date_retour   = $sheet->date_retour?->format('Y-m-d') ?? '';
         $this->km_depart     = $sheet->km_depart !== null ? (string)$sheet->km_depart : '';
@@ -175,6 +177,7 @@ class ControlSheets extends Component
             'created_by'               => auth()->id(),
             'ordre_mission'            => $this->ordre_mission ?: null,
             'lieu'                     => $this->lieu ?: null,
+            'destination'              => $this->destination ?: null,
             'date_depart'              => $this->date_depart,
             'date_retour'              => $this->date_retour ?: null,
             'km_depart'                => $this->km_depart !== '' ? (int)$this->km_depart : null,

@@ -13,7 +13,7 @@ class VehicleControlSheet extends Model
 
     protected $fillable = [
         'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id', 'created_by',
-        'ordre_mission', 'lieu', 'date_depart', 'date_retour',
+        'ordre_mission', 'lieu', 'destination', 'date_depart', 'date_retour',
         'km_depart', 'km_retour',
         'docs_administratifs', 'controle_exterieur',
         'compartiment_moteur', 'controle_fonctionnalites', 'outillages',

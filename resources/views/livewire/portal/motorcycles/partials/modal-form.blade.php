@@ -1,7 +1,7 @@
 @if($showFormModal)
-<div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4); height: 120%; margin-top:-25px; overflow-y: scroll !important;" >
+<div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4);">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content" style="overflow-y: scroll">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{{ $editingId ? 'Modifier la moto' : 'Nouvelle moto' }}</h5>
                 <button type="button" class="btn-close" wire:click="closeFormModal"></button>
@@ -58,8 +58,8 @@
                             <input type="number" min="0" class="form-control @error('power') is-invalid @enderror" wire:model="power" placeholder="ex. 15">
                             @error('power') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
-                        {{-- Ligne 4 : Statut, Garage, Assurance --}}
-                        <div class="col-md-4">
+                        {{-- Ligne 4 : Statut, Garage --}}
+                        <div class="col-md-6">
                             <label class="form-label">Statut</label>
                             <select class="form-select @error('status') is-invalid @enderror" wire:model="status">
                                 <option value="available">Disponible</option>
@@ -69,21 +69,12 @@
                             </select>
                             @error('status') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label">Garage (si en réparation)</label>
                             <select class="form-select" wire:model="garage_id">
                                 <option value="">—</option>
                                 @foreach($garages as $g)
                                     <option value="{{ $g->id }}">{{ $g->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Marché assurance</label>
-                            <select class="form-select" wire:model="insurance_contract_global_id">
-                                <option value="">—</option>
-                                @foreach($contracts as $c)
-                                    <option value="{{ $c->id }}">{{ $c->name }}</option>
                                 @endforeach
                             </select>
                         </div>
