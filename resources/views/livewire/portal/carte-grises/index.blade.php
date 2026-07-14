@@ -36,7 +36,7 @@
                 </thead>
                 <tbody>
                     @forelse($cartesGrises as $cg)
-                        <tr>
+                        <tr wire:key="carte-grise-{{ $cg->id }}">
                             <td><span class="fw-medium">{{ $cg->vehicle->registration ?? '—' }}</span></td>
                             <td>{{ $cg->reference_number ?? '—' }}</td>
                             <td>{{ $cg->issued_at?->format('d/m/Y') ?? '—' }}</td>

@@ -181,7 +181,7 @@
                         @if($docContract->documents->count() > 0)
                             <div class="list-group">
                                 @foreach($docContract->documents as $doc)
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div wire:key="assurance-doc-{{ $doc->id }}" class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
                                             <i class="bi bi-file-earmark-text me-2"></i>
                                             {{ $doc->original_name }}

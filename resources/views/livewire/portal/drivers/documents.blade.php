@@ -6,7 +6,7 @@
     @endif
 
     @forelse($vehicles as $vehicle)
-        <div class="activity-card mb-3">
+        <div class="activity-card mb-3" wire:key="driver-doc-vehicle-{{ $vehicle->id }}">
             <div class="activity-card-header">
                 <div class="module-toolbar">
                     <span class="module-toolbar-title">Véhicule {{ $vehicle->registration }}</span>
@@ -16,7 +16,7 @@
                 <h6>Documents d'assurance / carte grise</h6>
                 <ul class="list-group list-group-flush mb-3">
                     @forelse($vehicle->documents as $doc)
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <li wire:key="driver-doc-{{ $doc->id }}" class="list-group-item d-flex justify-content-between align-items-center">
                             <span>
                                 <span class="badge bg-light text-dark me-2">{{ $doc->type_label }}</span>
                                 {{ $doc->original_name ?: basename($doc->file_path) }}
@@ -36,7 +36,7 @@
                 <h6>Historique cartes grises</h6>
                 <ul class="list-group list-group-flush">
                     @forelse($vehicle->carteGrises as $cg)
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <li wire:key="driver-cg-{{ $cg->id }}" class="list-group-item d-flex justify-content-between align-items-center">
                             <span>
                                 {{ $cg->reference_number ?? '—' }}
                                 <small class="text-muted"> — Délivrance {{ $cg->issued_at?->format('d/m/Y') ?? '—' }}, expiration {{ $cg->expires_at?->format('d/m/Y') ?? '—' }}</small>

@@ -18,6 +18,8 @@ class Index extends Component
 {
     use WithPagination, WithFileUploads;
 
+    private const KNOWN_PURPOSES = ['transport_personnel', 'livraison', 'mission', 'maintenance'];
+
     public string $search = '';
     public string $status_filter = '';
     public string $date_filter = '';
@@ -39,6 +41,7 @@ class Index extends Component
     public string $end_datetime = '';
     public string $estimated_distance = '';
     public string $purpose = '';
+    public string $purpose_other = '';
     public string $status = VehicleSchedule::STATUS_PLANNED;
     public string $mileage_start = '';
     public string $mileage_end = '';
@@ -76,6 +79,7 @@ class Index extends Component
             'end_datetime' => 'required|date|after:start_datetime',
             'estimated_distance' => 'nullable|numeric|min:0',
             'purpose' => 'nullable|string|max:100',
+            'purpose_other' => 'nullable|required_if:purpose,autre|string|max:150',
             'status' => 'required|in:planned,in_progress,completed,cancelled',
             'mileage_start' => 'nullable|integer|min:0',
             'mileage_end' => 'nullable|integer|min:0',
@@ -105,7 +109,13 @@ class Index extends Component
         $this->start_datetime = $schedule->start_datetime->format('Y-m-d\TH:i');
         $this->end_datetime = $schedule->end_datetime->format('Y-m-d\TH:i');
         $this->estimated_distance = $schedule->estimated_distance ? number_format($schedule->estimated_distance, 2, ',', ' ') : '';
-        $this->purpose = $schedule->purpose ?? '';
+        if ($schedule->purpose && !in_array($schedule->purpose, self::KNOWN_PURPOSES, true)) {
+            $this->purpose = 'autre';
+            $this->purpose_other = $schedule->purpose;
+        } else {
+            $this->purpose = $schedule->purpose ?? '';
+            $this->purpose_other = '';
+        }
         $this->status = $schedule->status;
         $this->mileage_start = $schedule->mileage_start ? (string) $schedule->mileage_start : '';
         $this->mileage_end = $schedule->mileage_end ? (string) $schedule->mileage_end : '';
@@ -154,7 +164,7 @@ class Index extends Component
             'start_datetime' => $this->start_datetime,
             'end_datetime' => $this->end_datetime,
             'estimated_distance' => $this->estimated_distance ?: null,
-            'purpose' => $this->purpose ?: null,
+            'purpose' => $this->purpose === 'autre' ? trim($this->purpose_other) : ($this->purpose ?: null),
             'status' => $this->status,
             'mileage_start' => $this->mileage_start ?: null,
             'mileage_end' => $this->mileage_end ?: null,
@@ -220,6 +230,7 @@ class Index extends Component
         $this->end_datetime = '';
         $this->estimated_distance = '';
         $this->purpose = '';
+        $this->purpose_other = '';
         $this->status = VehicleSchedule::STATUS_PLANNED;
         $this->mileage_start = '';
         $this->mileage_end = '';

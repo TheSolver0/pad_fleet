@@ -159,6 +159,7 @@
         }
         .nav-group-trigger.open .nav-group-chevron { transform: rotate(180deg); }
         .nav-group-collapse { overflow: hidden; }
+        .nav-group-collapse:not(.show) { display: none; }
         .nav-group-sub {
             padding: 0.25rem 0 0.35rem 0.75rem;
             border-left: 2px solid var(--border);

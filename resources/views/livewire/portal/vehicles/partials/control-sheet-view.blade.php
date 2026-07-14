@@ -25,6 +25,7 @@
 <div class="card mb-2 border">
     <div class="card-header py-1 fw-bold" style="background:rgba(26,84,144,.07);font-size:.85rem">{{ $section['title'] }}</div>
     <div class="card-body p-0">
+        <div class="table-responsive">
         <table class="table table-sm table-bordered mb-0" style="font-size:.78rem">
             <thead class="text-center" style="background:#f8f9fa">
                 <tr>
@@ -65,6 +66,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 @endforeach

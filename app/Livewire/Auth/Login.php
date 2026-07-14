@@ -63,6 +63,11 @@ class Login extends Component
             return null;
         }
 
+        if ($user && !$user->is_active) {
+            $this->addError('identifier', 'Ce compte est désactivé. Contactez l\'administrateur.');
+            return null;
+        }
+
         if (!$user || !Hash::check($this->password, $user->password)) {
             $limiter->recordFailedAttempt();
             AuditLogger::logLoginFailed($this->identifier, 'Matricule/email ou mot de passe incorrect.');

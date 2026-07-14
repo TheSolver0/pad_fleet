@@ -26,6 +26,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Administrateur
             'parametrage-systeme',
             'gestion-utilisateurs',
+            'gestion-roles',
             'exports-massifs',
             'archives',
             // Chef Garage

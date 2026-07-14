@@ -26,6 +26,8 @@ class User extends Authenticatable
         'phone',
         'occupation',
         'password',
+        'is_active',
+        'locked_until',
     ];
 
     /**
@@ -49,6 +51,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'locked_until' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 

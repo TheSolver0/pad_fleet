@@ -18,7 +18,7 @@
                             <h6>Documents existants</h6>
                             <div class="row g-2">
                                 @foreach($existingDocuments as $document)
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" wire:key="mission-doc-{{ $document->id }}">
                                         <div class="card">
                                             <div class="card-body p-2">
                                                 <div class="d-flex align-items-center">
@@ -94,7 +94,7 @@
                             <h6>Fichiers à uploader</h6>
                             <div class="row g-2">
                                 @foreach($documents as $index => $document)
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" wire:key="mission-doc-pending-{{ $index }}">
                                         <div class="card">
                                             <div class="card-body p-2">
                                                 <div class="d-flex align-items-center">

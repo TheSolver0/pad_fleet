@@ -34,6 +34,16 @@ class Documents extends Component
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     protected function rules(): array
     {
         return [

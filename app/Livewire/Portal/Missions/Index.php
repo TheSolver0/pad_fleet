@@ -45,6 +45,8 @@ class Index extends Component
     public string $raison = '';
     public string $notes = '';
     public array $technician_ids = [];
+    public bool $create_technician = false;
+    public string $new_technician_name = '';
     public bool $apply_approve = false;
     public bool $approve_reject = true; // true = approve, false = reject
     
@@ -117,6 +119,7 @@ class Index extends Component
             'raison' => 'nullable|string|max:300',
             'notes' => 'nullable|string',
             'technician_ids.*' => 'nullable|exists:mechanics,id',
+            'new_technician_name' => 'required_if:create_technician,true|string|max:200',
             'new_demandeur_name' => 'required_if:create_demandeur,true|string|max:200',
             'new_demandeur_phone' => 'nullable|string|max:30',
             'new_demandeur_email' => 'nullable|email|max:150',
@@ -177,6 +180,17 @@ class Index extends Component
             $this->city_id = $city->id;
         }
         
+        // Créer le technicien AVANT validation si nécessaire (technicien non répertorié)
+        if ($this->create_technician && $this->new_technician_name) {
+            $parts = preg_split('/\s+/', trim($this->new_technician_name), 2);
+            $technician = Mechanic::create([
+                'first_name' => $parts[0],
+                'last_name' => $parts[1] ?? '',
+                'is_active' => true,
+            ]);
+            $this->technician_ids[] = (string) $technician->id;
+        }
+
         // Maintenant valider après création
         $this->validate();
 
@@ -301,6 +315,8 @@ class Index extends Component
         $this->raison = '';
         $this->notes = '';
         $this->technician_ids = [];
+        $this->create_technician = false;
+        $this->new_technician_name = '';
         $this->create_demandeur = false;
         $this->new_demandeur_name = '';
         $this->new_demandeur_phone = '';

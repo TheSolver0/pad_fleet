@@ -34,12 +34,13 @@
                         <th>Destination</th>
                         <th>Distance (km)</th>
                         <th>Statut</th>
+                        <th>Notes</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($schedules as $schedule)
-                        <tr>
+                        <tr wire:key="schedule-{{ $schedule->id }}">
                             <td>
                                 <div class="fw-semibold">{{ $schedule->start_datetime->format('d/m/Y') }}</div>
                                 <small class="text-muted">{{ $schedule->start_datetime->format('H:i') }} - {{ $schedule->end_datetime->format('H:i') }}</small>
@@ -78,6 +79,15 @@
                                     {{ $schedule->status_label }}
                                 </span>
                             </td>
+                            <td style="max-width: 220px;">
+                                @if($schedule->notes)
+                                    <span class="small text-truncate d-inline-block" style="max-width: 220px;" title="{{ $schedule->notes }}">
+                                        <i class="bi bi-chat-left-text me-1 text-muted"></i>{{ $schedule->notes }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-outline-primary" wire:click="openEdit({{ $schedule->id }})" title="Modifier">
@@ -103,7 +113,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-calendar-range fs-1 d-block mb-2"></i>
                                 Aucun déplacement trouvé
                             </td>
@@ -297,7 +307,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Objectif</label>
-                                    <select class="form-select" wire:model="purpose">
+                                    <select class="form-select" wire:model.live="purpose">
                                         <option value="">Sélectionner...</option>
                                         <option value="transport_personnel">Transport personnel</option>
                                         <option value="livraison">Livraison</option>
@@ -306,6 +316,10 @@
                                         <option value="autre">Autre</option>
                                     </select>
                                     @error('purpose') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    @if($purpose === 'autre')
+                                        <input type="text" class="form-control mt-2 @error('purpose_other') is-invalid @enderror" wire:model="purpose_other" placeholder="Précisez l'objectif...">
+                                        @error('purpose_other') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    @endif
                                 </div>
                             </div>
                         </div>

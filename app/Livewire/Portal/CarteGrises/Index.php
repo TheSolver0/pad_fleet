@@ -29,8 +29,17 @@ class Index extends Component
     public $cg_file = null;
 
     protected $queryString = ['search' => ['except' => ''], 'vehicle_filter' => ['except' => '']];
-    protected $paginationTheme = 'bootstrap'; 
+    protected $paginationTheme = 'bootstrap';
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingVehicleFilter(): void
+    {
+        $this->resetPage();
+    }
 
     protected function rules(): array
     {

@@ -3,7 +3,26 @@
     "allow": [
       "Bash(php artisan:*)",
       "Bash(composer show *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(disown)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8123/)",
+      "Bash(php -l app/Livewire/Portal/Users/Index.php)",
+      "Bash(php -l app/Livewire/Auth/Login.php)",
+      "Bash(php -l app/Models/User.php)",
+      "Bash(php -l routes/web.php)",
+      "Bash(pkill -f \"php artisan serve --port=8123\")",
+      "Bash(php -l app/Livewire/Portal/Roles/Index.php)",
+      "Bash(php -l resources/views/layouts/components/navigation/sidebar.blade.php)",
+      "Bash(php -r \"echo php_sapi_name\\(\\);\")",
+      "Bash(php -i)",
+      "Bash(php --ini)",
+      "Bash(grep -n \"garage_id\\\\|queryString\\\\|public \\\\$\\\\|public string \\\\$\\\\|public ?int \\\\$\" app/Livewire/Portal/Vehicles/Index.php)",
+      "Bash(grep -n 'resetForm\\\\|technicians = Mechanic\\\\|$technicians\\\\b' app/Livewire/Portal/Missions/Index.php)",
+      "Bash(grep -n \"fillable\\\\|protected \\\\$\" app/Models/Mechanic.php)",
+      "Bash(php -r \"json_decode\\(file_get_contents\\('composer.json'\\)\\); echo json_last_error\\(\\) === JSON_ERROR_NONE ? 'composer.json OK' : 'INVALID JSON';\")",
+      "Bash(grep -v \"index.blade.php$\")",
+      "Bash(curl -s -o /dev/null -w \"responsive.css HTTP status: %{http_code}\\\\n\" http://127.0.0.1:8123/css/responsive.css)",
+      "Bash(php -l resources/views/livewire/portal/vehicles/partials/control-sheet-view.blade.php)"
     ]
   }
 }

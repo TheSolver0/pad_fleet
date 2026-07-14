@@ -100,6 +100,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/sinistres/export/excel', [\App\Http\Controllers\ReportExportController::class, 'sinistresExcel'])->name('reports.sinistres.export.excel');
     Route::get('/reports/sinistres/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'sinistresPdf'])->name('reports.sinistres.export.pdf');
     Route::get('/audit', \App\Livewire\Portal\Audit\Index::class)->name('audit.index')->middleware('permission:audits');
+    Route::get('/users', \App\Livewire\Portal\Users\Index::class)->name('users.index')->middleware('permission:gestion-utilisateurs');
+    Route::get('/roles', \App\Livewire\Portal\Roles\Index::class)->name('roles.index')->middleware('permission:gestion-roles');
     Route::get('/dashboard/trip-stats', [App\Http\Controllers\DashboardController::class, 'tripStats'])
     ->middleware(['auth'])
     ->name('dashboard.trip-stats');

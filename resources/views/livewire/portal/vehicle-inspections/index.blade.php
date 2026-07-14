@@ -151,7 +151,8 @@
                                 $expired      = $i->isExpired();
                                 $expiringSoon = $i->isExpiringSoon();
                             @endphp
-                            <tr class="{{ $expired ? 'table-danger' : ($expiringSoon ? 'table-warning' : '') }}"
+                            <tr wire:key="inspection-{{ $i->id }}"
+                                class="{{ $expired ? 'table-danger' : ($expiringSoon ? 'table-warning' : '') }}"
                                 style="--bs-table-bg-type: transparent">
                                 <td class="fw-medium">{{ $i->vehicle?->registration ?? '—' }}</td>
                                 <td style="font-size:.85rem">{{ $i->inspected_at->format('d/m/Y') }}</td>

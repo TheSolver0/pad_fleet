@@ -119,7 +119,7 @@ class Index extends Component
             ->withAvg('evaluations', 'quality_score')
             ->withAvg('evaluations', 'delivery_score')
             ->withAvg('evaluations', 'reputation_score')
-            ->withCount('evaluations');
+            ->withCount(['evaluations', 'vehicles']);
         if ($this->search !== '') {
             $query->where('name', 'like', '%' . $this->search . '%');
         }

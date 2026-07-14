@@ -40,7 +40,7 @@
                 </thead>
                 <tbody>
                     @forelse($licenses as $license)
-                        <tr>
+                        <tr wire:key="license-{{ $license->id }}">
                             <td>
                                 <div class="fw-semibold">{{ $license->driver->full_name }}</div>
                                 <small class="text-muted">{{ $license->driver->matricule }}</small>

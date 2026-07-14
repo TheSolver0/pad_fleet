@@ -34,7 +34,7 @@
                     </form>
                     <ul class="list-group list-group-flush small">
                         @forelse($docVehicle->documents as $doc)
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <li wire:key="moto-doc-{{ $doc->id }}" class="list-group-item d-flex justify-content-between align-items-center py-2">
                                 <span><span class="badge bg-light text-dark me-2">{{ $doc->type_label }}</span> {{ $doc->original_name ?: basename($doc->file_path) }} @if($doc->expires_at)<span class="text-muted">— Expire {{ $doc->expires_at->format('d/m/Y') }}</span>@endif</span>
                                 <span>
                                     <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i></a>
@@ -70,7 +70,7 @@
                     </form>
                     <div class="row g-2">
                         @foreach($docVehicle->photos as $photo)
-                            <div class="col-6 col-md-4 col-lg-3">
+                            <div class="col-6 col-md-4 col-lg-3" wire:key="moto-photo-{{ $photo->id }}">
                                 <div class="position-relative border rounded overflow-hidden bg-light" style="height: 120px;">
                                     <img src="{{ asset('storage/' . $photo->file_path) }}" alt="{{ $photo->caption }}" class="w-100 h-100 object-fit-cover">
                                     @if($photo->caption || $photo->taken_at)
@@ -129,7 +129,7 @@
                             </thead>
                             <tbody>
                                 @forelse($docVehicle->carteGrises as $cg)
-                                    <tr>
+                                    <tr wire:key="moto-cg-{{ $cg->id }}">
                                         <td>{{ $cg->reference_number ?? '—' }}</td>
                                         <td>{{ $cg->issued_at?->format('d/m/Y') ?? '—' }}</td>
                                         <td>{{ $cg->expires_at?->format('d/m/Y') ?? '—' }}</td>

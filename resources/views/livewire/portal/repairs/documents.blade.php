@@ -39,7 +39,7 @@
                 </thead>
                 <tbody>
                     @forelse($documents as $doc)
-                    <tr>
+                    <tr wire:key="repair-doc-{{ $doc->id }}">
                         <td class="fw-semibold">{{ $doc->repair?->vehicle?->registration ?? '—' }}</td>
                         <td><small class="text-muted">#{{ $doc->repair_id }}</small></td>
                         <td>

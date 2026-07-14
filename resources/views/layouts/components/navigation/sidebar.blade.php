@@ -105,11 +105,13 @@
             'id'     => 'admin',
             'label'  => 'Administration',
             'icon'   => 'bi bi-gear-fill',
-            'routes' => ['audit.index'],
+            'routes' => ['audit.index', 'users.index', 'roles.index'],
             'items'  => [
-                ['route' => 'audit.index', 'label' => 'Journal d\'audit', 'icon' => 'bi bi-journal-text'],
+                ['route' => 'audit.index', 'label' => 'Journal d\'audit', 'icon' => 'bi bi-journal-text', 'can' => 'audits'],
+                ['route' => 'users.index', 'label' => 'Utilisateurs',    'icon' => 'bi bi-people-fill',  'can' => 'gestion-utilisateurs'],
+                ['route' => 'roles.index', 'label' => 'Rôles & permissions', 'icon' => 'bi bi-shield-lock-fill', 'can' => 'gestion-roles'],
             ],
-            'can'    => 'audits',
+            'can'    => ['audits', 'gestion-utilisateurs', 'gestion-roles'],
         ],
     ];
 @endphp
@@ -132,7 +134,7 @@
 
         {{-- Groupes --}}
         @foreach ($groups as $group)
-            @if (isset($group['can']) && !Gate::allows($group['can']))
+            @if (isset($group['can']) && !Gate::any((array) $group['can']))
                 @continue
             @endif
 
@@ -145,8 +147,6 @@
                 <button
                     type="button"
                     class="nav-group-trigger {{ $isOpen ? 'open' : '' }}"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#{{ $collapseId }}"
                     aria-expanded="{{ $isOpen ? 'true' : 'false' }}"
                     aria-controls="{{ $collapseId }}"
                 >
@@ -155,10 +155,10 @@
                     <i class="bi bi-chevron-down nav-group-chevron"></i>
                 </button>
 
-                <div class="collapse nav-group-collapse {{ $isOpen ? 'show' : '' }}" id="{{ $collapseId }}">
+                <div class="nav-group-collapse {{ $isOpen ? 'show' : '' }}" id="{{ $collapseId }}">
                     <div class="nav-group-sub">
                         @foreach ($group['items'] as $item)
-                            @if (isset($item['can']) && !Gate::allows($item['can']))
+                            @if (isset($item['can']) && !Gate::any((array) $item['can']))
                                 @continue
                             @endif
                             <a
@@ -195,6 +195,23 @@
 
 (function () {
     'use strict';
+
+    // ── Groupes de menu (dropdowns) ─────────────────────────────────
+    // Toggle géré ici explicitement (état + rendu synchronisés ensemble)
+    // plutôt que via Bootstrap collapse, pour éviter tout désync entre
+    // la classe "open" du bouton et la classe "show" du panneau.
+    document.querySelectorAll('.nav-group-trigger').forEach(function (trigger) {
+        const panelId = trigger.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+        if (!panel) return;
+
+        trigger.addEventListener('click', function () {
+            const willOpen = !panel.classList.contains('show');
+            panel.classList.toggle('show', willOpen);
+            trigger.classList.toggle('open', willOpen);
+            trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        });
+    });
 
     // ── Éléments ──────────────────────────────────────────────────
     const sidebar    = document.getElementById('sidebar');

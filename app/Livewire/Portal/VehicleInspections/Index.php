@@ -37,7 +37,22 @@ class Index extends Component
         'result_filter' => ['except' => ''],
         'status_filter' => ['except' => ''],
     ];
-    protected $paginationTheme = 'bootstrap'; 
+    protected $paginationTheme = 'bootstrap';
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingResultFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
 
     protected function rules(): array
     {

@@ -40,13 +40,28 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Techniciens du garage (rotation)</label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">Techniciens du garage (rotation)</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" wire:model.live="create_technician" id="create_technician">
+                                    <label class="form-check-label" for="create_technician">
+                                        Technicien non répertorié
+                                    </label>
+                                </div>
+                            </div>
                             <select class="form-select" wire:model="technician_ids" multiple>
                                 @foreach($technicians as $tech)
                                     <option value="{{ $tech->id }}">{{ $tech->last_name }} {{ $tech->first_name }}</option>
                                 @endforeach
                             </select>
                             <div class="form-text">Maintenez Ctrl/Cmd pour selection multiple.</div>
+                            @if($create_technician)
+                                <div class="mt-2">
+                                    <input type="text" class="form-control @error('new_technician_name') is-invalid @enderror" wire:model="new_technician_name" placeholder="Nom complet du technicien">
+                                    @error('new_technician_name') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                                    <div class="form-text">Sera ajouté à la rotation et enregistré comme mécanicien.</div>
+                                </div>
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <div class="d-flex justify-content-between align-items-center mb-2">

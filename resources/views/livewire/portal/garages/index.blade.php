@@ -28,6 +28,7 @@
                         <th>Type</th>
                         <th>Qualité / Délais / Réputation</th>
                         <th>Coordonnées</th>
+                        <th>Véhicules</th>
                         <th>Actif</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -52,6 +53,7 @@
                                 @endif
                             </td>
                             <td class="small">{{ $g->phone ?? '—' }} @if($g->email) / {{ $g->email }} @endif</td>
+                            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $g->vehicles_count }}</span></td>
                             <td>@if($g->is_active) <span class="badge bg-success">Oui</span> @else <span class="badge bg-secondary">Non</span> @endif</td>
                             <td class="text-end">
                                 <a href="{{ route('prestataire-evaluations.index', ['evaluable_type' => 'Garage', 'evaluable_id' => $g->id]) }}" class="btn btn-sm btn-outline-success" title="Évaluer"><i class="bi bi-star"></i></a>
@@ -61,7 +63,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">Aucun garage.</td>
+                            <td colspan="7" class="text-center text-muted py-4">Aucun garage.</td>
                         </tr>
                     @endforelse
                 </tbody>

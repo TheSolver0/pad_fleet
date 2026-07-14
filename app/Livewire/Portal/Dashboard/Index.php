@@ -77,7 +77,10 @@ class Index extends Component
 
     public function getVehiclesByStatusChart(): array
     {
-        $data = Vehicle::selectRaw('status, count(*) as total')
+        // Aligné sur "Total parc" (getKpis) : les motos ont leur propre section KPI,
+        // elles ne doivent pas être comptées ici pour que les deux totaux concordent.
+        $data = Vehicle::where('category', '!=', Vehicle::CATEGORY_MOTO)
+            ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status')
             ->toArray();
