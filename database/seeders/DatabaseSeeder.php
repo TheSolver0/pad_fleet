@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
         $this->call(GarageStockSeeder::class);
 
         $this->call(AdminUserSeeder::class);
+        $this->call(MoussimaUserSeeder::class);
         $this->call(UsersPerRoleSeeder::class);
     }
 }
