@@ -2,10 +2,8 @@
 
 namespace App\Livewire\Portal\Stock;
 
-use App\Models\Article;
 use App\Models\ArticleCategory;
 use App\Models\Stock;
-use App\Models\StockMovement;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,10 +13,14 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $category_filter = '';
+
     public string $location_filter = '';
+
     public string $stock_status = 'all'; // 'all', 'low', 'out'
-    protected $paginationTheme = 'bootstrap'; 
+
+    protected $paginationTheme = 'bootstrap';
 
     public function render(): View
     {
@@ -29,9 +31,9 @@ class Index extends Component
 
         if ($this->search !== '') {
             $query->where(function ($q) {
-                $q->where('articles.reference', 'like', '%' . $this->search . '%')
-                    ->orWhere('articles.name', 'like', '%' . $this->search . '%')
-                    ->orWhere('articles.brand', 'like', '%' . $this->search . '%');
+                $q->where('articles.reference', 'like', '%'.$this->search.'%')
+                    ->orWhere('articles.name', 'like', '%'.$this->search.'%')
+                    ->orWhere('articles.brand', 'like', '%'.$this->search.'%');
             });
         }
 
@@ -60,13 +62,18 @@ class Index extends Component
         return view('livewire.portal.stock.index', [
             'stocks' => $stocks,
             'categories' => $categories,
-            'getStockStatusLabel' => fn(Stock $s) => $this->getStockStatusLabel($s),
+            'getStockStatusLabel' => fn (Stock $s) => $this->getStockStatusLabel($s),
         ]);
     }
 
     public function getLocationLabel(string $location): string
     {
         return $location === 'main' ? 'Magasin principal' : 'Magasin garage';
+    }
+
+    public function formatQuantity(int|float|string|null $quantity): string
+    {
+        return rtrim(rtrim(number_format((float) $quantity, 2, ',', ' '), '0'), ',');
     }
 
     public function getStockStatusLabel(Stock $stock): string

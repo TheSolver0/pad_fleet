@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,16 +13,29 @@ class Stock extends Model
     use Auditable;
 
     protected $fillable = [
-        'article_id', 'location', 'quantity', 'reserved_quantity'
+        'article_id', 'location', 'quantity', 'reserved_quantity',
     ];
 
-    protected function casts(): array
+    protected function quantity(): Attribute
     {
-        return [
-            'quantity' => 'integer',
-            'reserved_quantity' => 'integer',
-            'available_quantity' => 'integer',
-        ];
+        return Attribute::get(fn (mixed $value): int|float => $this->normaliseQuantity($value));
+    }
+
+    protected function reservedQuantity(): Attribute
+    {
+        return Attribute::get(fn (mixed $value): int|float => $this->normaliseQuantity($value));
+    }
+
+    protected function availableQuantity(): Attribute
+    {
+        return Attribute::get(fn (mixed $value): int|float => $this->normaliseQuantity($value));
+    }
+
+    private function normaliseQuantity(mixed $value): int|float
+    {
+        $quantity = (float) $value;
+
+        return floor($quantity) === $quantity ? (int) $quantity : $quantity;
     }
 
     public function article(): BelongsTo

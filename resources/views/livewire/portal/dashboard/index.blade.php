@@ -231,14 +231,14 @@
                 <div class="db-kpi-ico green"><i class="bi bi-check-circle"></i></div>
             </div>
         </div>
-        <div class="db-kpi c-cyan">
+        <div class="db-kpi c-indigo">
             <div class="db-kpi-inner">
                 <div>
-                    <div class="db-kpi-lbl">En réparation</div>
-                    <div class="db-kpi-val cyan">{{ number_format($kpis['repair']) }}</div>
-                    <div class="db-kpi-sub">{{ $kpis['repairs_ongoing'] }} non clôturée(s)</div>
+                    <div class="db-kpi-lbl">En mission</div>
+                    <div class="db-kpi-val indigo">{{ number_format($kpis['in_use']) }}</div>
+                    <div class="db-kpi-sub">Actuellement utilisés</div>
                 </div>
-                <div class="db-kpi-ico cyan"><i class="bi bi-wrench"></i></div>
+                <div class="db-kpi-ico indigo"><i class="bi bi-signpost-2"></i></div>
             </div>
         </div>
         <div class="db-kpi c-red">
@@ -304,6 +304,96 @@
                 </div>
                 <div class="db-kpi-ico red"><i class="bi bi-gear"></i></div>
             </div>
+        </div>
+    </div>
+
+    {{-- ══ GARAGE / ATELIER — séparé du parc ══ --}}
+    <div class="db-sec" style="margin-top:.9rem"><i class="bi bi-tools"></i> Véhicules gérés au garage</div>
+    <div class="db-kpi-grid db-kpi-grid-4">
+        <div class="db-kpi c-cyan">
+            <div class="db-kpi-inner">
+                <div>
+                    <div class="db-kpi-lbl">Pris en charge</div>
+                    <div class="db-kpi-val cyan">{{ number_format($garageOverview['total']) }}</div>
+                    <div class="db-kpi-sub">Véhicules distincts</div>
+                </div>
+                <div class="db-kpi-ico cyan"><i class="bi bi-wrench-adjustable"></i></div>
+            </div>
+        </div>
+        <div class="db-kpi c-blue">
+            <div class="db-kpi-inner">
+                <div>
+                    <div class="db-kpi-lbl">Garage interne</div>
+                    <div class="db-kpi-val blue">{{ number_format($garageOverview['internal']) }}</div>
+                    <div class="db-kpi-sub">Pris en charge au PAD</div>
+                </div>
+                <div class="db-kpi-ico blue"><i class="bi bi-building-gear"></i></div>
+            </div>
+        </div>
+        <div class="db-kpi c-orange">
+            <div class="db-kpi-inner">
+                <div>
+                    <div class="db-kpi-lbl">Garages externes</div>
+                    <div class="db-kpi-val orange">{{ number_format($garageOverview['external']) }}</div>
+                    <div class="db-kpi-sub">Chez des prestataires</div>
+                </div>
+                <div class="db-kpi-ico orange"><i class="bi bi-box-arrow-up-right"></i></div>
+            </div>
+        </div>
+        <div class="db-kpi c-red">
+            <div class="db-kpi-inner">
+                <div>
+                    <div class="db-kpi-lbl">En retard</div>
+                    <div class="db-kpi-val red">{{ number_format($garageOverview['overdue']) }}</div>
+                    <div class="db-kpi-sub">Échéance dépassée</div>
+                </div>
+                <div class="db-kpi-ico red"><i class="bi bi-clock-history"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="db-card" style="margin-top:.6rem">
+        <div class="db-card-head">
+            <i class="bi bi-car-front-fill" style="color:var(--pad-cyan)"></i>
+            Véhicules actuellement au garage
+            <span class="spacer"></span>
+            <a href="{{ route('repairs.index') }}" class="btn btn-sm btn-outline-primary py-1">Voir les réparations</a>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="db-tbl">
+                <thead><tr>
+                    <th>Immatriculation</th>
+                    <th>Véhicule</th>
+                    <th>Garage</th>
+                    <th>Prise en charge</th>
+                    <th>Priorité</th>
+                    <th>Entrée</th>
+                    <th>Échéance</th>
+                    <th>Travaux</th>
+                </tr></thead>
+                <tbody>
+                    @forelse($garageOverview['rows'] as $vehicle)
+                        <tr>
+                            <td style="font-weight:700">{{ $vehicle['registration'] }}</td>
+                            <td>{{ $vehicle['model'] }}</td>
+                            <td>{{ $vehicle['garage'] }}</td>
+                            <td><span class="db-badge {{ $vehicle['type'] === 'Interne' ? 'blue' : 'orange' }}">{{ $vehicle['type'] }}</span></td>
+                            <td><span class="badge text-bg-{{ $vehicle['priority_color'] }}">{{ $vehicle['priority'] }}</span></td>
+                            <td>{{ $vehicle['started_at'] }}</td>
+                            <td>
+                                @if($vehicle['expected_at'])
+                                    <span class="{{ $vehicle['is_overdue'] ? 'text-danger fw-semibold' : '' }}">{{ $vehicle['expected_at'] }}</span>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td style="max-width:260px" class="text-truncate" title="{{ $vehicle['description'] }}">{{ $vehicle['description'] }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="8" class="text-center text-muted py-4">Aucun véhicule actuellement pris en charge au garage.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 

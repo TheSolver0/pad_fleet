@@ -73,9 +73,9 @@
                             </td>
                             <td>{{ $stock->article->category->name }}</td>
                             <td>{{ $stock->location_label }}</td>
-                            <td>{{ $stock->quantity }}</td>
-                            <td>{{ $stock->reserved_quantity }}</td>
-                            <td class="fw-semibold">{{ $stock->available_quantity }}</td>
+                            <td>{{ $this->formatQuantity($stock->quantity) }}</td>
+                            <td>{{ $this->formatQuantity($stock->reserved_quantity) }}</td>
+                            <td class="fw-semibold">{{ $this->formatQuantity($stock->available_quantity) }}</td>
                             <td>{{ $stock->article->min_stock_level }}</td>
                             <td>{!! $getStockStatusLabel($stock) !!}</td>
                         </tr>

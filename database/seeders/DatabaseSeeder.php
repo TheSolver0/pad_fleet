@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
         $this->call(DrivingLicenseSeeder::class);
         $this->call(VehicleSeeder::class);
 
+        // Inventaire du magasin garage (snapshot du 23/07/2026).
+        // Le seeder est idempotent et ne remplace jamais un stock déjà ajusté.
+        $this->call(GarageStockSeeder::class);
+
         $this->call(AdminUserSeeder::class);
         $this->call(UsersPerRoleSeeder::class);
     }
