@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(AdminUserSeeder::class);
         $this->call(MoussimaUserSeeder::class);
+        $this->call(AnicetUserSeeder::class);
         $this->call(UsersPerRoleSeeder::class);
     }
 }
