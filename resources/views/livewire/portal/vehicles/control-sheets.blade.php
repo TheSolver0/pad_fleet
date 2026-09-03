@@ -114,21 +114,30 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Chauffeur</label>
-                                <select class="form-select" wire:model="driver_id">
-                                    <option value="">—</option>
-                                    @foreach($drivers as $d)
-                                    <option value="{{ $d->id }}">{{ $d->last_name }} {{ $d->first_name }}</option>
-                                    @endforeach
-                                </select>
+                                <div wire:ignore x-data="searchSelect({
+                                        options: [@foreach($drivers as $d){value:'{{ $d->id }}', label:@js($d->last_name.' '.$d->first_name)},@endforeach],
+                                        selected: @entangle('driver_id'),
+                                    })">
+                                    @include('livewire.portal.vehicles.partials.search-select', ['placeholder' => 'Rechercher un chauffeur…'])
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Mission liée (optionnel)</label>
-                                <select class="form-select" wire:model="mission_id">
-                                    <option value="">—</option>
-                                    @foreach($missions as $m)
-                                    <option value="{{ $m->id }}">#{{ $m->id }} — {{ Str::limit($m->destination, 30) }}</option>
-                                    @endforeach
-                                </select>
+                                <div wire:ignore x-data="searchSelect({
+                                        options: [@foreach($missions as $m){value:'{{ $m->id }}', label:@js('#'.$m->id.' — '.Str::limit($m->destination, 30))},@endforeach],
+                                        selected: @entangle('mission_id'),
+                                    })">
+                                    @include('livewire.portal.vehicles.partials.search-select', ['placeholder' => 'Rechercher une mission…'])
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Déplacement lié (optionnel)</label>
+                                <div wire:ignore x-data="searchSelect({
+                                        options: [@foreach($schedules as $sch){value:'{{ $sch->id }}', label:@js('#'.$sch->id.' — '.Str::limit($sch->destination, 30))},@endforeach],
+                                        selected: @entangle('vehicle_schedule_id'),
+                                    })">
+                                    @include('livewire.portal.vehicles.partials.search-select', ['placeholder' => 'Rechercher un déplacement…'])
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">N° Ordre de Mission</label>
@@ -430,20 +439,43 @@
         return {
             pads: {},
             init() {
-                this.$nextTick(() => {
-                    ['depart', 'retour', 'bureau'].forEach(name => {
-                        const canvas = document.getElementById('sig-' + name);
-                        if (!canvas) return;
-                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                        canvas.width  = canvas.offsetWidth  * ratio;
-                        canvas.height = canvas.offsetHeight * ratio;
-                        canvas.getContext('2d').scale(ratio, ratio);
-                        this.pads[name] = new SignaturePad(canvas, {
-                            penColor: '#003366',
-                            backgroundColor: 'rgba(255,255,255,0)'
-                        });
-                    });
+                // Deux rAF au lieu d'un simple $nextTick : on attend que le
+                // modal ait vraiment fini de se peindre (taille finale) avant
+                // de lire offsetWidth/offsetHeight, sinon le canvas peut être
+                // initialisé avec une résolution 0 ou incorrecte sur mobile.
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    ['depart', 'retour', 'bureau'].forEach(name => this.setupPad(name));
+                }));
+            },
+            setupPad(name) {
+                const canvas = document.getElementById('sig-' + name);
+                if (!canvas || canvas.offsetWidth === 0) return;
+                this.fitCanvas(canvas);
+                this.pads[name] = new SignaturePad(canvas, {
+                    penColor: '#003366',
+                    backgroundColor: 'rgba(255,255,255,0)'
                 });
+                // Si le cadre change de taille CSS après coup (rotation, clavier
+                // mobile qui s'ouvre, images qui finissent de charger…), la
+                // résolution interne du canvas doit être recalculée, sinon le
+                // trait dessiné se décale par rapport au doigt/stylet.
+                const observer = new ResizeObserver(() => this.resizePad(name));
+                observer.observe(canvas);
+            },
+            fitCanvas(canvas) {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width  = canvas.offsetWidth  * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+            },
+            resizePad(name) {
+                const pad = this.pads[name];
+                const canvas = document.getElementById('sig-' + name);
+                if (!pad || !canvas || canvas.offsetWidth === 0) return;
+                const data = pad.toData();
+                this.fitCanvas(canvas);
+                pad.clear();
+                pad.fromData(data);
             },
             clearPad(name) {
                 this.pads[name]?.clear();
@@ -454,6 +486,31 @@
                     return (p && !p.isEmpty()) ? p.toDataURL('image/png') : '';
                 };
                 await wire.saveSheet(get('depart'), get('retour'), get('bureau'));
+            }
+        };
+    }
+
+    // Combobox "recherche rapide" réutilisable (Chauffeur / Mission liée /
+    // Déplacement lié…) — évite les longs <select> natifs illisibles sur mobile.
+    function searchSelect({ options, selected }) {
+        return {
+            options,
+            selected,
+            query: '',
+            open: false,
+            get selectedLabel() {
+                const o = this.options.find(o => String(o.value) === String(this.selected));
+                return o ? o.label : '';
+            },
+            get filtered() {
+                const q = this.query.trim().toLowerCase();
+                if (!q) return this.options;
+                return this.options.filter(o => o.label.toLowerCase().includes(q));
+            },
+            choose(value) {
+                this.selected = value;
+                this.query = '';
+                this.open = false;
             }
         };
     }

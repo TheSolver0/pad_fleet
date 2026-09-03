@@ -114,6 +114,54 @@ class ControlSheets extends Component
         $this->$section = $arr;
     }
 
+    /**
+     * Pré-remplit la fiche depuis la mission choisie dans le formulaire
+     * (en plus du pré-remplissage via ?mission_id= géré dans mount()).
+     */
+    public function updatedMissionId($value): void
+    {
+        if (!$value) {
+            return;
+        }
+        $mission = Mission::find($value);
+        if (!$mission) {
+            return;
+        }
+        $this->vehicle_schedule_id = null;
+        $this->vehicle_id  = $this->vehicle_id ?: $mission->vehicle_id;
+        $this->driver_id   = $this->driver_id ?: $mission->driver_id;
+        $this->destination = $this->destination !== '' ? $this->destination : ($mission->destination ?? '');
+        $this->date_depart = $this->date_depart !== '' ? $this->date_depart : ($mission->date_start?->format('Y-m-d') ?? '');
+        $this->date_retour = $this->date_retour !== '' ? $this->date_retour : ($mission->date_end?->format('Y-m-d') ?? '');
+        $this->km_depart   = $this->km_depart !== '' ? $this->km_depart : ($mission->km_departure !== null ? (string) $mission->km_departure : '');
+        $this->km_retour   = $this->km_retour !== '' ? $this->km_retour : ($mission->km_return !== null ? (string) $mission->km_return : '');
+    }
+
+    /**
+     * Pré-remplit la fiche depuis le déplacement (VehicleSchedule) choisi
+     * dans le formulaire — c'est l'équivalent de "Mission liée" pour les
+     * déplacements créés via Planning / Déplacements véhicules.
+     */
+    public function updatedVehicleScheduleId($value): void
+    {
+        if (!$value) {
+            return;
+        }
+        $schedule = VehicleSchedule::find($value);
+        if (!$schedule) {
+            return;
+        }
+        $this->mission_id  = null;
+        $this->vehicle_id  = $this->vehicle_id ?: $schedule->vehicle_id;
+        $this->driver_id   = $this->driver_id ?: $schedule->driver_id;
+        $this->destination = $this->destination !== '' ? $this->destination : ($schedule->destination ?? '');
+        $this->lieu         = $this->lieu !== '' ? $this->lieu : ($schedule->departure_location ?? '');
+        $this->date_depart = $this->date_depart !== '' ? $this->date_depart : ($schedule->start_datetime?->format('Y-m-d') ?? '');
+        $this->date_retour = $this->date_retour !== '' ? $this->date_retour : ($schedule->end_datetime?->format('Y-m-d') ?? '');
+        $this->km_depart   = $this->km_depart !== '' ? $this->km_depart : ($schedule->mileage_start !== null ? (string) $schedule->mileage_start : '');
+        $this->km_retour   = $this->km_retour !== '' ? $this->km_retour : ($schedule->mileage_end !== null ? (string) $schedule->mileage_end : '');
+    }
+
     public function openCreate(): void
     {
         $this->reset(['editingId', 'vehicle_id', 'mission_id', 'vehicle_schedule_id', 'driver_id',
@@ -130,6 +178,7 @@ class ControlSheets extends Component
         $this->editingId   = $id;
         $this->vehicle_id  = $sheet->vehicle_id;
         $this->mission_id  = $sheet->mission_id;
+        $this->vehicle_schedule_id = $sheet->vehicle_schedule_id;
         $this->driver_id   = $sheet->driver_id;
         $this->ordre_mission = $sheet->ordre_mission ?? '';
         $this->lieu          = $sheet->lieu ?? '';
@@ -295,11 +344,17 @@ class ControlSheets extends Component
         $sheets   = $query->orderByDesc('date_depart')->paginate(15);
         $vehicles = Vehicle::orderBy('registration')->get(['id', 'registration']);
         $drivers  = Driver::orderBy('last_name')->get(['id', 'first_name', 'last_name']);
-        $missions = Mission::whereIn('status', ['approved', 'completed'])
+        // Missions "actives" : on inclut aussi programmée/en cours, sinon une mission
+        // fraîchement créée (pas encore "approved"/"completed") ne peut jamais être liée.
+        $missions = Mission::whereIn('status', ['approved', 'programmed', 'in_progress', 'completed'])
             ->orderByDesc('date_start')->limit(100)->get(['id', 'destination', 'date_start']);
+        // Déplacements (VehicleSchedule) liables — équivalent de "Mission liée" pour
+        // les trajets créés depuis Planning / Déplacements véhicules.
+        $schedules = VehicleSchedule::orderByDesc('start_datetime')->limit(100)
+            ->get(['id', 'vehicle_id', 'destination', 'start_datetime']);
 
         $viewingSheet = $this->viewingId
-            ? VehicleControlSheet::with(['vehicle', 'driver', 'mission', 'photos'])->find($this->viewingId)
+            ? VehicleControlSheet::with(['vehicle', 'driver', 'mission', 'vehicleSchedule', 'photos'])->find($this->viewingId)
             : null;
 
         return view('livewire.portal.vehicles.control-sheets', [
@@ -307,6 +362,7 @@ class ControlSheets extends Component
             'vehicles'     => $vehicles,
             'drivers'      => $drivers,
             'missions'     => $missions,
+            'schedules'    => $schedules,
             'viewingSheet' => $viewingSheet,
             'labels'       => VehicleControlSheet::labels(),
         ])->layout('layouts.app', ['title' => 'Fiches de contrôle véhicules']);
