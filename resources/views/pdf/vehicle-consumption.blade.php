@@ -14,16 +14,12 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>PORT AUTONOME DE DOUALA</h2>
-        <h3>DIRECTION DES AFFAIRES GENERALES</h3>
-        <p>Rapport de consommation des vehicules</p>
-    </div>
+    @include('pdf.partials.header', ['headerTitle' => 'Rapport de consommation des véhicules'])
 
     <div class="meta">
-        <strong>Periode :</strong> {{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}<br>
-        <strong>Categorie :</strong> {{ $vehicle_category !== '' ? $vehicle_category : 'Toutes' }}<br>
-        <strong>Genere le :</strong> {{ $generated_at->format('d/m/Y H:i') }}
+        <strong>Période :</strong> {{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}<br>
+        <strong>Catégorie :</strong> {{ $vehicle_category !== '' ? $vehicle_category : 'Toutes' }}<br>
+        <strong>Généré le :</strong> {{ $generated_at->format('d/m/Y H:i') }}
     </div>
 
     <table>

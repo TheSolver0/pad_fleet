@@ -31,6 +31,8 @@ class DrivingLicenses extends Component
     public bool $is_active = true;
     public string $notes = '';
     public $license_file = null;
+    /** Chemin du fichier déjà enregistré (affichage aperçu/téléchargement en édition). */
+    public ?string $existing_file_path = null;
 
     protected $queryString = ['search' => ['except' => ''], 'status_filter' => ['except' => '']];
 
@@ -82,6 +84,8 @@ class DrivingLicenses extends Component
         $this->issuing_country = $license->issuing_country;
         $this->is_active = $license->is_active;
         $this->notes = $license->notes ?? '';
+        $this->existing_file_path = $license->file_path;
+        $this->license_file = null;
         $this->showFormModal = true;
     }
 
@@ -185,6 +189,7 @@ class DrivingLicenses extends Component
         $this->is_active = true;
         $this->notes = '';
         $this->license_file = null;
+        $this->existing_file_path = null;
         $this->resetValidation();
     }
 

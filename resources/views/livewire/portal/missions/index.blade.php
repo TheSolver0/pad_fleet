@@ -44,9 +44,11 @@
                     <button type="button" class="btn btn-sm btn-info me-2" wire:click="openReportModal">
                         <i class="bi bi-file-earmark-spreadsheet me-1"></i> Rapport
                     </button>
+                    @can('planning-missions')
                     <button type="button" class="btn btn-sm btn-primary" wire:click="openCreate">
                         <i class="bi bi-plus-lg me-1"></i> Nouvelle réservation
                     </button>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -98,10 +100,18 @@
                                     <span class="badge {{ $badge }}">{{ $m->status_label }}</span>
                                 </td>
                                 <td class="text-end">
+                                    @can('planning-missions')
                                     <button type="button" class="btn btn-sm btn-outline-primary" wire:click="openEdit({{ $m->id }})"><i class="bi bi-pencil"></i></button>
                                     @if($m->status === 'pending')
                                         <button type="button" class="btn btn-sm btn-outline-success" wire:click="openApproveModal({{ $m->id }})"><i class="bi bi-check-lg"></i></button>
                                     @endif
+                                    @endcan
+                                    @can('comptes-rendus')
+                                    <button type="button" class="btn btn-sm btn-outline-info" wire:click="openCompteRenduModal({{ $m->id }})" title="Compte-rendu de mission">
+                                        <i class="bi bi-journal-text"></i>
+                                        @if($m->compte_rendu)<span class="badge bg-success ms-1">✓</span>@endif
+                                    </button>
+                                    @endcan
                                     @if(in_array($m->status, ['approved', 'programmed', 'postponed']))
                                         <button type="button" class="btn btn-sm btn-outline-info" wire:click="markInProgress({{ $m->id }})">Démarrer</button>
                                     @endif
@@ -131,7 +141,9 @@
                                             @endif
                                         </a>
                                     </div>
+                                    @can('planning-missions')
                                     <button type="button" class="btn btn-sm btn-outline-danger" wire:click="confirmDelete({{ $m->id }})"><i class="bi bi-trash"></i></button>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
@@ -192,4 +204,5 @@
     @include('livewire.portal.missions.partials.modal-photos')
     @include('livewire.portal.missions.partials.modal-documents')
     @include('livewire.portal.missions.partials.modal-report')
+    @include('livewire.portal.missions.partials.modal-compte-rendu')
 </div>

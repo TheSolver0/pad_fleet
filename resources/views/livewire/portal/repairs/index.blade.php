@@ -24,6 +24,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
+                        <th>Référence</th>
                         <th>Véhicule</th>
                         <th>Garage</th>
                         <th>Type</th>
@@ -39,6 +40,7 @@
                 <tbody>
                     @forelse($repairs as $r)
                         <tr>
+                            <td><small class="text-muted">{{ $r->reference ?? '—' }}</small></td>
                             <td>{{ $r->vehicle?->registration ?? '—' }}</td>
                             <td>{{ $r->garage?->name ?? '—' }}</td>
                             <td><span class="badge {{ $r->type === 'internal' ? 'bg-primary' : 'bg-secondary' }}">{{ $r->type_label }}</span></td>
@@ -82,7 +84,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-4">Aucune réparation.</td>
+                            <td colspan="11" class="text-center text-muted py-4">Aucune réparation.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -13,7 +13,8 @@
     <div class="col-md-3"><strong>Véhicule :</strong> {{ $sheet->vehicle?->registration ?? '—' }}</div>
     <div class="col-md-3"><strong>Chauffeur :</strong> {{ $sheet->driver?->full_name ?? '—' }}</div>
     <div class="col-md-3"><strong>N° OM :</strong> {{ $sheet->ordre_mission ?? '—' }}</div>
-    <div class="col-md-3"><strong>Lieu :</strong> {{ $sheet->lieu ?? '—' }}</div>
+    <div class="col-md-3"><strong>Lieu de départ :</strong> {{ $sheet->lieu ?? '—' }}</div>
+    <div class="col-md-3"><strong>Destination :</strong> {{ $sheet->destination ?? ($sheet->mission?->destination ?? '—') }}</div>
     <div class="col-md-3"><strong>Départ :</strong> {{ $sheet->date_depart?->format('d/m/Y') ?? '—' }}</div>
     <div class="col-md-3"><strong>Retour :</strong> {{ $sheet->date_retour?->format('d/m/Y') ?? '—' }}</div>
     <div class="col-md-3"><strong>KM départ :</strong> {{ number_format($sheet->km_depart ?? 0) }}</div>

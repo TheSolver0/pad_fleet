@@ -18,10 +18,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>FICHE DE PRÉ-DIAGNOSTIC</h1>
-        <h2>PORT AUTONOME DE DOUALA - DIRECTION DES AFFAIRES GÉNÉRALES</h2>
-        <h3>DÉPARTEMENT DE GESTION DU PATRIMOINE</h3>
+    @include('pdf.partials.header', ['headerTitle' => 'Fiche de Pré-diagnostic'])
+    <div class="header" style="margin-bottom:15px;">
+        <h3 style="margin:0;color:#555;">Département de Gestion du Patrimoine</h3>
     </div>
 
     <div class="info-grid">

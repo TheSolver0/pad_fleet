@@ -65,6 +65,19 @@
                             <span class="badge bg-dark">Reportée: {{ $stats['by_status']['postponed'] }}</span>
                             <span class="badge bg-success">Terminée: {{ $stats['by_status']['completed'] }}</span>
                             <span class="badge bg-warning text-dark">En attente: {{ $stats['by_status']['pending'] }}</span>
+                            <span class="badge bg-secondary">Refusée: {{ $stats['by_status']['rejected'] }}</span>
+                            <span class="badge bg-danger">Annulée: {{ $stats['by_status']['cancelled'] }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <div class="card h-100">
+                        <div class="card-header">Véhicules les plus utilisés (missions &amp; km parcourus)</div>
+                        <div class="card-body" style="height:260px;position:relative">
+                            <canvas id="chartTopVehicles"></canvas>
                         </div>
                     </div>
                 </div>
@@ -154,4 +167,42 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const TOP_VEHICLES = @json($stats['top_vehicles']);
+    let chartTopVehicles = null;
+
+    function initChart() {
+        const el = document.getElementById('chartTopVehicles');
+        if (!el || typeof Chart === 'undefined') return;
+        if (chartTopVehicles) { chartTopVehicles.destroy(); chartTopVehicles = null; }
+        if (!TOP_VEHICLES.length) return;
+        chartTopVehicles = new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: TOP_VEHICLES.map(r => r.name),
+                datasets: [
+                    { label: 'Missions', data: TOP_VEHICLES.map(r => r.missions), backgroundColor: 'rgba(26,84,144,.75)', borderRadius: 4, yAxisID: 'y' },
+                    { label: 'Distance (km)', data: TOP_VEHICLES.map(r => r.distance), backgroundColor: 'rgba(0,184,212,.55)', borderRadius: 4, yAxisID: 'y1' },
+                ],
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 9, font: { size: 10 } } } },
+                scales: {
+                    y:  { beginAtZero: true, position: 'left',  ticks: { font: { size: 10 } } },
+                    y1: { beginAtZero: true, position: 'right', ticks: { font: { size: 10 } }, grid: { drawOnChartArea: false } },
+                },
+            },
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initChart);
+    else initChart();
+    document.addEventListener('livewire:navigated', initChart);
+    document.addEventListener('livewire:updated', initChart);
+})();
+</script>
 

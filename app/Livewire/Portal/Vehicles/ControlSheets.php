@@ -254,11 +254,22 @@ class ControlSheets extends Component
         }
 
         if ($this->editingId) {
-            VehicleControlSheet::findOrFail($this->editingId)->update($data);
+            $sheet = VehicleControlSheet::findOrFail($this->editingId);
+            $sheet->update($data);
             $this->dispatch('notify', type: 'success', message: 'Fiche mise à jour.');
         } else {
-            VehicleControlSheet::create($data);
+            $sheet = VehicleControlSheet::create($data);
             $this->dispatch('notify', type: 'success', message: 'Fiche de contrôle créée.');
+        }
+
+        if ($sheet->vehicle_id && $data['km_retour'] !== null) {
+            \App\Models\Vehicle::find($sheet->vehicle_id)?->logMileage(
+                $data['km_retour'],
+                \App\Models\VehicleMileageLog::SOURCE_CONTROL_SHEET,
+                $sheet->id,
+                auth()->id(),
+                $sheet->date_retour
+            );
         }
 
         $this->showFormModal = false;

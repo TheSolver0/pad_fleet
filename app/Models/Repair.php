@@ -20,7 +20,7 @@ class Repair extends Model
     public const PRIORITY_URGENT = 'urgent';
 
     protected $fillable = [
-        'vehicle_id', 'garage_id', 'mechanic_id', 'type', 'transfer_sheet_path',
+        'reference', 'vehicle_id', 'garage_id', 'mechanic_id', 'type', 'transfer_sheet_path',
         'description', 'cost', 'started_at', 'completed_at', 'expected_completed_at',
         'quality_rating', 'delay_rating', 'evaluation_comment', 'evaluated_at',
         'notes', 'repair_type', 'priority', 'estimated_duration',
@@ -172,8 +172,28 @@ class Repair extends Model
         return $this->evaluated_at !== null;
     }
 
+    /**
+     * Génère une référence unique pour la fiche d'intervention (ex. FI-2026-0001).
+     */
+    public static function generateReference(): string
+    {
+        $prefix = 'FI-'.date('Y').'-';
+        $lastNumber = self::where('reference', 'like', $prefix.'%')
+            ->orderByRaw('CAST(SUBSTRING(reference, '.(strlen($prefix) + 1).') AS UNSIGNED) DESC')
+            ->value('reference');
+
+        $number = $lastNumber ? ((int) substr($lastNumber, strlen($prefix)) + 1) : 1;
+
+        return $prefix.str_pad((string) $number, 4, '0', STR_PAD_LEFT);
+    }
+
     protected static function booted(): void
     {
         static::bootAuditable();
+        static::creating(function (self $repair) {
+            if (! $repair->reference) {
+                $repair->reference = self::generateReference();
+            }
+        });
     }
 }

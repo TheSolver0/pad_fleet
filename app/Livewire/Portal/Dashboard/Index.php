@@ -74,6 +74,72 @@ class Index extends Component
         ];
     }
 
+    /**
+     * Situation du Parc — vue consolidée véhicules + motos : disponible / en mission /
+     * en réparation / hors service, avec le détail par catégorie (exportable, cf. ReportExportController::fleetSituation*).
+     */
+    public function getFleetSituation(): array
+    {
+        $vehicles = $this->getKpis();
+        $motos = $this->getMotoKpis();
+
+        $rows = [
+            [
+                'label' => 'Véhicules',
+                'available' => $vehicles['available'],
+                'in_use' => $vehicles['in_use'],
+                'repair' => $vehicles['repair'],
+                'out_of_service' => $vehicles['out_of_service'],
+                'total' => $vehicles['total_vehicles'],
+            ],
+            [
+                'label' => 'Motos',
+                'available' => $motos['available'],
+                'in_use' => $motos['in_use'],
+                'repair' => $motos['repair'],
+                'out_of_service' => $motos['out_of_service'],
+                'total' => $motos['total'],
+            ],
+        ];
+
+        $total = [
+            'available' => $vehicles['available'] + $motos['available'],
+            'in_use' => $vehicles['in_use'] + $motos['in_use'],
+            'repair' => $vehicles['repair'] + $motos['repair'],
+            'out_of_service' => $vehicles['out_of_service'] + $motos['out_of_service'],
+            'total' => $vehicles['total_vehicles'] + $motos['total'],
+        ];
+
+        return ['rows' => $rows, 'total' => $total];
+    }
+
+    /** Alerte véhicules ayant déjà dépassé 5 ans d'ancienneté (achat). */
+    public function getOldVehiclesAlert(): array
+    {
+        $query = Vehicle::whereNotNull('purchase_date')
+            ->where('purchase_date', '<=', now()->subYears(5));
+
+        return [
+            'count' => (clone $query)->count(),
+            'vehicles' => (clone $query)->orderBy('purchase_date')->limit(10)->get(['id', 'registration', 'purchase_date']),
+        ];
+    }
+
+    /** Chauffeurs affectés au garage, avec le garage de leur véhicule actif s'il est connu. */
+    public function getGarageDrivers(): \Illuminate\Support\Collection
+    {
+        return Driver::where('is_garage_driver', true)
+            ->with(['activeAssignment.vehicle.garage'])
+            ->orderBy('last_name')
+            ->get()
+            ->map(fn (Driver $d) => [
+                'name' => $d->full_name,
+                'garage' => $d->activeAssignment?->vehicle?->garage?->name ?? 'Non précisé',
+                'is_available' => $d->is_available,
+            ])
+            ->groupBy('garage');
+    }
+
     public function getVehiclesByStatusChart(): array
     {
         // Aligné sur "Total parc" (getKpis) : les motos ont leur propre section KPI,
@@ -291,6 +357,16 @@ class Index extends Component
                 'icon' => 'bi bi-exclamation-triangle',
                 'title' => 'Sinistres en cours',
                 'text' => $kpis['sinistres_open'].' sinistre(s) à traiter ou en réparation.',
+            ];
+        }
+
+        $oldVehicles = $this->getOldVehiclesAlert();
+        if ($oldVehicles['count'] > 0) {
+            $list[] = [
+                'type' => 'warning',
+                'icon' => 'bi bi-hourglass-split',
+                'title' => 'Véhicules de plus de 5 ans',
+                'text' => $oldVehicles['count'].' véhicule(s) ont dépassé 5 ans d\'ancienneté.',
             ];
         }
 
@@ -596,6 +672,9 @@ class Index extends Component
         $repairsByCategory = $this->getRepairsByVehicleCategory();
         $partsConsumption = $this->getPartsConsumptionStats();
         $garageOverview = $this->getGarageOverview();
+        $fleetSituation = $this->getFleetSituation();
+        $garageDrivers = $this->getGarageDrivers();
+        $oldVehicles = $this->getOldVehiclesAlert();
 
         return view('livewire.portal.dashboard.index', [
             'kpis' => $kpis,
@@ -613,6 +692,9 @@ class Index extends Component
             'repairsByCategory' => $repairsByCategory,
             'partsConsumption' => $partsConsumption,
             'garageOverview' => $garageOverview,
+            'fleetSituation' => $fleetSituation,
+            'garageDrivers' => $garageDrivers,
+            'oldVehicles' => $oldVehicles,
         ])->layout('layouts.app', ['title' => 'Tableau de bord']);
     }
 }

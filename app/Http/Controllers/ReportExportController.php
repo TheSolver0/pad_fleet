@@ -187,6 +187,60 @@ class ReportExportController extends Controller
         return $pdf->download("synthese-executive-{$startDate}-{$endDate}.pdf");
     }
 
+    /** Situation du Parc — disponible / en mission / en réparation / hors service (véhicules + motos). */
+    private function fleetSituationRows(): array
+    {
+        $categories = [
+            'Véhicules' => \App\Models\Vehicle::where('category', '!=', \App\Models\Vehicle::CATEGORY_MOTO),
+            'Motos' => \App\Models\Vehicle::where('category', \App\Models\Vehicle::CATEGORY_MOTO),
+        ];
+
+        $rows = [];
+        $totals = ['available' => 0, 'in_use' => 0, 'repair' => 0, 'out_of_service' => 0, 'total' => 0];
+
+        foreach ($categories as $label => $base) {
+            $available = (clone $base)->where('status', \App\Models\Vehicle::STATUS_AVAILABLE)->count();
+            $inUse = (clone $base)->where('status', \App\Models\Vehicle::STATUS_IN_USE)->count();
+            $repair = (clone $base)->where('status', \App\Models\Vehicle::STATUS_REPAIR)->count();
+            $outOfService = (clone $base)->where('status', \App\Models\Vehicle::STATUS_OUT_OF_SERVICE)->count();
+            $total = $available + $inUse + $repair + $outOfService;
+
+            $rows[] = [$label, $available, $inUse, $repair, $outOfService, $total];
+
+            $totals['available'] += $available;
+            $totals['in_use'] += $inUse;
+            $totals['repair'] += $repair;
+            $totals['out_of_service'] += $outOfService;
+            $totals['total'] += $total;
+        }
+
+        $rows[] = ['Total général', $totals['available'], $totals['in_use'], $totals['repair'], $totals['out_of_service'], $totals['total']];
+
+        return $rows;
+    }
+
+    public function fleetSituationPdf(Request $request)
+    {
+        $pdf = Pdf::loadView('pdf.table-report', [
+            'title' => 'Situation du Parc',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'generated_at' => now(),
+            'headers' => ['Catégorie', 'Disponible', 'En mission', 'En réparation', 'Hors service', 'Total'],
+            'rows' => $this->fleetSituationRows(),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('situation-du-parc-' . now()->format('Ymd') . '.pdf');
+    }
+
+    public function fleetSituationExcel(Request $request)
+    {
+        return Excel::download(
+            new TableExport(['Categorie', 'Disponible', 'En mission', 'En reparation', 'Hors service', 'Total'], $this->fleetSituationRows(), 'Situation du Parc'),
+            'situation-du-parc-' . now()->format('Ymd') . '.xlsx'
+        );
+    }
+
     public function stockMovementsExcel(Request $request)
     {
         [$start, $end, $startDate, $endDate] = $this->getPeriod($request);
@@ -211,7 +265,7 @@ class ReportExportController extends Controller
         ])->all();
 
         return Excel::download(
-            new TableExport(['Date', 'Type', 'Magasin', 'Article', 'Ref', 'Qte', 'PU (F)', 'Total (F)', 'Reference', 'Motif'], $rows),
+            new TableExport(['Date', 'Type', 'Magasin', 'Article', 'Ref', 'Qte', 'PU (F)', 'Total (F)', 'Reference', 'Motif'], $rows, 'Mouvements de stock'),
             "rapport-stock-entrees-sorties-{$startDate}-{$endDate}.xlsx"
         );
     }
@@ -281,7 +335,7 @@ class ReportExportController extends Controller
         ])->all();
 
         return Excel::download(
-            new TableExport(['Vehicule', 'Categorie', 'Piece', 'Reference', 'Quantite consommee', 'Cout total (F)'], $rows),
+            new TableExport(['Vehicule', 'Categorie', 'Piece', 'Reference', 'Quantite consommee', 'Cout total (F)'], $rows, 'Stock par véhicule'),
             "rapport-consommation-par-vehicule-{$startDate}-{$endDate}.xlsx"
         );
     }
@@ -362,7 +416,7 @@ class ReportExportController extends Controller
         })->all();
 
         return Excel::download(
-            new TableExport(['Matricule', 'Chauffeur', 'Telephone', 'Email', 'Missions terminees', 'Distance (km)', 'Sinistres', 'Disponibilite'], $rows),
+            new TableExport(['Matricule', 'Chauffeur', 'Telephone', 'Email', 'Missions terminees', 'Distance (km)', 'Sinistres', 'Disponibilite'], $rows, 'Rapport gestion des chauffeurs'),
             "rapport-chauffeurs-{$startDate}-{$endDate}.xlsx"
         );
     }
@@ -424,6 +478,7 @@ class ReportExportController extends Controller
             ->get();
 
         $rows = $repairs->map(fn ($r) => [
+            $r->reference ?? '-',
             optional($r->created_at)?->format('d/m/Y H:i'),
             $r->vehicle?->registration ?? '-',
             trim(($r->mechanic?->first_name ?? '') . ' ' . ($r->mechanic?->last_name ?? '')),
@@ -435,7 +490,7 @@ class ReportExportController extends Controller
         ])->all();
 
         return Excel::download(
-            new TableExport(['Date', 'Vehicule', 'Mecanicien', 'Type', 'Priorite', 'Cout (F)', 'Qualite', 'Delai'], $rows),
+            new TableExport(['Reference', 'Date', 'Vehicule', 'Mecanicien', 'Type', 'Priorite', 'Cout (F)', 'Qualite', 'Delai'], $rows, 'Rapport réparations véhicules'),
             "rapport-reparations-{$startDate}-{$endDate}.xlsx"
         );
     }
@@ -452,8 +507,9 @@ class ReportExportController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $headers = ['Date', 'Véhicule', 'Mécanicien', 'Type', 'Priorité', 'Coût (F)', 'Qualité', 'Délai'];
+        $headers = ['Référence', 'Date', 'Véhicule', 'Mécanicien', 'Type', 'Priorité', 'Coût (F)', 'Qualité', 'Délai'];
         $rows = $repairs->map(fn ($r) => [
+            $r->reference ?? '-',
             optional($r->created_at)?->format('d/m/Y H:i'),
             $r->vehicle?->registration ?? '-',
             trim(($r->mechanic?->first_name ?? '') . ' ' . ($r->mechanic?->last_name ?? '')),
@@ -498,7 +554,7 @@ class ReportExportController extends Controller
         ])->all();
 
         return Excel::download(
-            new TableExport(['Date depart', 'Date retour', 'Vehicule', 'Chauffeur', 'Destination', 'Distance (km)', 'Statut'], $rows),
+            new TableExport(['Date depart', 'Date retour', 'Vehicule', 'Chauffeur', 'Destination', 'Distance (km)', 'Statut'], $rows, 'Rapport missions / déplacements'),
             "rapport-missions-deplacements-{$startDate}-{$endDate}.xlsx"
         );
     }
@@ -556,7 +612,7 @@ class ReportExportController extends Controller
         ])->all();
 
         return Excel::download(
-            new TableExport(['Date declaration', 'Vehicule', 'Lieu', 'Cout estime (F)', 'Statut', 'Responsabilite'], $rows),
+            new TableExport(['Date declaration', 'Vehicule', 'Lieu', 'Cout estime (F)', 'Statut', 'Responsabilite'], $rows, 'Rapport sinistres'),
             "rapport-sinistres-{$startDate}-{$endDate}.xlsx"
         );
     }
@@ -598,7 +654,7 @@ class ReportExportController extends Controller
         [$rows, $stats, $startDate, $endDate] = $this->getMissionAnalyticsData($request);
 
         return Excel::download(
-            new TableExport(['Date départ', 'Date retour', 'Chauffeur', 'Direction', 'Destination', 'Distance (km)', 'Statut'], $rows),
+            new TableExport(['Date départ', 'Date retour', 'Chauffeur', 'Direction', 'Destination', 'Distance (km)', 'Statut'], $rows, 'Analyses des déplacements'),
             "rapport-analyses-deplacements-{$startDate}-{$endDate}.xlsx"
         );
     }

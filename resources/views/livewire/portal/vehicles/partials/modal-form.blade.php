@@ -141,6 +141,48 @@
                             <label class="form-label">Notes</label>
                             <textarea class="form-control" rows="2" wire:model="notes"></textarea>
                         </div>
+
+                        {{-- Photos et documents (optionnel) --}}
+                        <div class="col-12"><hr class="my-1"></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Photos du véhicule (optionnel)</label>
+                            <input type="file" class="form-control @error('new_photos.*') is-invalid @enderror" wire:model="new_photos" multiple accept="image/*">
+                            @error('new_photos.*') <span class="invalid-feedback d-block">{{ $message }}</span> @enderror
+                            <div wire:loading wire:target="new_photos" class="small text-muted mt-1">Téléversement…</div>
+                            @if(!empty($new_photos))
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    @foreach($new_photos as $i => $p)
+                                        @if($p)
+                                        <div class="position-relative">
+                                            <img src="{{ $p->temporaryUrl() }}" class="img-thumbnail" style="width:70px;height:70px;object-fit:cover">
+                                        </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Documents (carte grise, assurance, autres — optionnel)</label>
+                            <div class="input-group mb-1">
+                                <select class="form-select" wire:model="new_document_type" style="max-width:160px">
+                                    <option value="assurance">Assurance</option>
+                                    <option value="carte_grise">Carte grise</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                                <input type="file" class="form-control @error('new_documents.*') is-invalid @enderror" wire:model="new_documents" multiple>
+                            </div>
+                            @error('new_documents.*') <span class="invalid-feedback d-block">{{ $message }}</span> @enderror
+                            <div wire:loading wire:target="new_documents" class="small text-muted mt-1">Téléversement…</div>
+                            @if(!empty($new_documents))
+                                <ul class="small mb-0 mt-1">
+                                    @foreach($new_documents as $d)
+                                        @if($d)
+                                        <li><i class="bi bi-file-earmark me-1"></i>{{ $d->getClientOriginalName() }}</li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

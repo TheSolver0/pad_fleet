@@ -19,12 +19,13 @@ php artisan db:seed --class=DevelopmentSeeder
 | Acteur | Rôle (name) | Permissions (slugs) |
 |--------|-------------|----------------------|
 | **Administrateur** | `Administrateur` | Toutes les permissions |
-| **Chef Garage** | `Chef Garage` | `planification-maintenance`, `affectation-mecaniciens`, `validation-bons-sortie`, `ordres-travail` |
+| **Chef Service** (ex Chef Garage) | `Chef Service` | `planification-maintenance`, `affectation-mecaniciens`, `validation-bons-sortie`, `ordres-travail` |
 | **Mécanicien** | `Mécanicien` | `enregistrement-interventions`, `demande-pieces`, `comptes-rendus`, `photos-avant-apres` |
 | **Magasinier** | `Magasinier` | `gestion-stock`, `reception-commandes`, `sorties-pieces`, `inventaires`, `alertes-stock` |
 | **Gestionnaire Flotte** | `Gestionnaire Flotte` | `planning-missions`, `affectations-vehicules-chauffeurs`, `suivi-assurances`, `sinistres`, `rapports-flotte` |
 | **Chauffeur** | `Chauffeur` | `consultation-missions`, `saisie-km`, `signalement-anomalies`, `carnets-bord` |
-| **Directeur / Chef Service** | `Directeur / Chef Service` | `demandes-reservation`, `consultation-disponibilites`, `approbations`, `suivi-budget` |
+| **Chef Bureau Chauffeurs** | `Chef Bureau Chauffeurs` | `consultation-missions`, `comptes-rendus`, `gestion-chauffeurs-bureau` — accès restreint : consultation du planning, saisie du compte-rendu de mission, gestion de la liste des chauffeurs uniquement |
+| **Chef Département** (ex Directeur / Chef Service) | `Chef Département` | `demandes-reservation`, `consultation-disponibilites`, `approbations`, `suivi-budget` |
 | **Contrôleur Financier** | `Contrôleur Financier` | `rapports-financiers`, `tco`, `budgets`, `factures`, `analyses-couts`, `ecarts` |
 | **Direction** | `Direction` | `tableaux-bord-strategiques`, `kpis`, `aide-decision`, `audits` |
 
@@ -33,7 +34,7 @@ php artisan db:seed --class=DevelopmentSeeder
 ```php
 // Vérifier un rôle
 $user->hasRole('Administrateur');
-$user->hasRole(['Chef Garage', 'Mécanicien']);
+$user->hasRole(['Chef Service', 'Mécanicien']);
 
 // Vérifier une permission
 $user->can('gestion-stock');
@@ -52,6 +53,7 @@ $user->hasPermissionTo('validation-bons-sortie');
 - gestion-stock, reception-commandes, sorties-pieces, inventaires, alertes-stock
 - planning-missions, affectations-vehicules-chauffeurs, suivi-assurances, sinistres, rapports-flotte
 - consultation-missions, saisie-km, signalement-anomalies, carnets-bord
+- gestion-chauffeurs-bureau
 - demandes-reservation, consultation-disponibilites, approbations, suivi-budget
 - rapports-financiers, tco, budgets, factures, analyses-couts, ecarts
 - tableaux-bord-strategiques, kpis, aide-decision, audits

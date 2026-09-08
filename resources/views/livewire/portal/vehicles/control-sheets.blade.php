@@ -24,7 +24,8 @@
                         <th>Véhicule</th>
                         <th>Chauffeur</th>
                         <th>N° OM</th>
-                        <th>Lieu / Mission</th>
+                        <th>Lieu de départ</th>
+                        <th>Destination</th>
                         <th>Départ</th>
                         <th>Retour</th>
                         <th class="text-center">KM</th>
@@ -38,7 +39,8 @@
                         <td class="fw-semibold">{{ $s->vehicle?->registration ?? '—' }}</td>
                         <td>{{ $s->driver ? $s->driver->full_name : '—' }}</td>
                         <td><small class="text-muted">{{ $s->ordre_mission ?? '—' }}</small></td>
-                        <td>{{ $s->lieu ?? ($s->mission?->destination ?? '—') }}</td>
+                        <td>{{ $s->lieu ?? '—' }}</td>
+                        <td>{{ $s->destination ?? ($s->mission?->destination ?? '—') }}</td>
                         <td>{{ $s->date_depart?->format('d/m/Y') ?? '—' }}</td>
                         <td>{{ $s->date_retour?->format('d/m/Y') ?? '—' }}</td>
                         <td class="text-center small">

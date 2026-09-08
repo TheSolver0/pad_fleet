@@ -2,19 +2,25 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\WithPadLetterhead;
 use App\Models\Mission;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class MissionReportExport implements FromQuery, WithHeadings, WithMapping
+class MissionReportExport implements FromQuery, WithHeadings, WithMapping, WithEvents
 {
+    use WithPadLetterhead;
+
     public function __construct(
         private ?string $startDate = null,
         private ?string $endDate = null,
         private ?string $status = null,
         private ?int $demandeurId = null
-    ) {}
+    ) {
+        $this->letterheadTitle = 'Rapport des missions';
+    }
 
     public function query()
     {
@@ -89,5 +95,15 @@ class MissionReportExport implements FromQuery, WithHeadings, WithMapping
             $mission->notes ?? '',
             $mission->created_at?->format('d/m/Y H:i'),
         ];
+    }
+
+    protected function letterheadColumnCount(): int
+    {
+        return count($this->headings());
+    }
+
+    public function registerEvents(): array
+    {
+        return $this->letterheadEvents();
     }
 }

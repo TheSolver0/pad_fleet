@@ -36,8 +36,9 @@ class Mission extends Model
 
     protected $fillable = [
         'vehicle_id', 'driver_id', 'demandeur_id', 'city_id', 'date_start', 'date_end',
-        'km_departure', 'km_return', 'distance_km', 'destination', 'raison', 'status',
+        'km_departure', 'km_return', 'distance_km', 'estimated_distance_km', 'destination', 'raison', 'status',
         'approved_by', 'approved_at', 'notes',
+        'compte_rendu', 'compte_rendu_by', 'compte_rendu_at',
     ];
 
     protected function casts(): array
@@ -49,6 +50,8 @@ class Mission extends Model
             'km_departure' => 'integer',
             'km_return' => 'integer',
             'distance_km' => 'integer',
+            'estimated_distance_km' => 'integer',
+            'compte_rendu_at' => 'datetime',
         ];
     }
 
@@ -75,6 +78,11 @@ class Mission extends Model
     public function approvedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function compteRenduByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'compte_rendu_by');
     }
 
     public function sinistre(): HasOne

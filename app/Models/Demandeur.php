@@ -13,6 +13,7 @@ class Demandeur extends Model
 
     public const TYPE_PERSON = 'person';
     public const TYPE_DIRECTION = 'direction';
+    public const TYPE_PARTICULIER = 'particulier';
 
     protected $fillable = [
         'matricule', 'name', 'demandeur_type', 'service_id', 'person_id', 'direction_id', 'contact_phone', 'contact_email', 'notes',
@@ -40,7 +41,11 @@ class Demandeur extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return $this->demandeur_type === self::TYPE_DIRECTION ? 'Direction' : 'Personne';
+        return match ($this->demandeur_type) {
+            self::TYPE_DIRECTION => 'Direction',
+            self::TYPE_PARTICULIER => 'Particulier',
+            default => 'Agent PAD',
+        };
     }
 
     protected static function booted(): void

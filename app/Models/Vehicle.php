@@ -193,6 +193,30 @@ class Vehicle extends Model
         return $this->hasMany(VehicleSchedule::class);
     }
 
+    public function mileageLogs(): HasMany
+    {
+        return $this->hasMany(VehicleMileageLog::class)->orderByDesc('recorded_at');
+    }
+
+    /**
+     * Enregistre un relevé de kilométrage dans la fiche de vie du véhicule.
+     * Met à jour le kilométrage courant du véhicule uniquement s'il progresse.
+     */
+    public function logMileage(int $mileage, string $source, ?int $sourceId = null, ?int $recordedBy = null, ?\Carbon\Carbon $recordedAt = null): void
+    {
+        $this->mileageLogs()->create([
+            'mileage' => $mileage,
+            'source' => $source,
+            'source_id' => $sourceId,
+            'recorded_at' => $recordedAt ?? now(),
+            'recorded_by' => $recordedBy,
+        ]);
+
+        if ($this->mileage === null || $mileage > $this->mileage) {
+            $this->update(['mileage' => $mileage]);
+        }
+    }
+
     /** Calcule la valeur vénale par amortissement linéaire (sur 8 ans par défaut). */
     public function computeVenalValue(): ?float
     {

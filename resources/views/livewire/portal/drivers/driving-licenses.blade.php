@@ -221,8 +221,35 @@
                                     <label class="form-label">Scan du permis</label>
                                     <input type="file" class="form-control" wire:model="license_file" accept=".pdf,.jpg,.jpeg,.png">
                                     @error('license_file') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    <div wire:loading wire:target="license_file" class="small text-muted mt-1">Téléversement…</div>
+
                                     @if($license_file)
-                                        <small class="text-muted">Fichier sélectionné : {{ $license_file->getClientOriginalName() }}</small>
+                                        {{-- Aperçu du fichier nouvellement sélectionné --}}
+                                        <div class="mt-2">
+                                            @if(in_array(strtolower($license_file->getClientOriginalExtension()), ['jpg','jpeg','png']))
+                                                <img src="{{ $license_file->temporaryUrl() }}" class="img-thumbnail" style="max-height:120px">
+                                            @else
+                                                <div class="small"><i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ $license_file->getClientOriginalName() }}</div>
+                                            @endif
+                                        </div>
+                                    @elseif($existing_file_path)
+                                        {{-- Fichier déjà enregistré : aperçu + téléchargement --}}
+                                        <div class="mt-2">
+                                            @if(preg_match('/\.(jpe?g|png)$/i', $existing_file_path))
+                                                <a href="{{ asset('storage/' . $existing_file_path) }}" target="_blank">
+                                                    <img src="{{ asset('storage/' . $existing_file_path) }}" class="img-thumbnail" style="max-height:120px">
+                                                </a>
+                                            @else
+                                                <div class="small"><i class="bi bi-file-earmark-pdf text-danger me-1"></i>Fichier déjà enregistré</div>
+                                            @endif
+                                            <div>
+                                                <a href="{{ asset('storage/' . $existing_file_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
+                                                    <i class="bi bi-download me-1"></i>Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <small class="text-muted d-block mt-1">Aucun fichier enregistré.</small>
                                     @endif
                                 </div>
                             </div>

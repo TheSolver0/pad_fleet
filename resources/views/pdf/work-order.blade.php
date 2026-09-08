@@ -209,10 +209,9 @@
 </head>
 <body>
     <!-- HEADER -->
-    <div class="header">
-        <h1>BON DE TRAVAIL</h1>
-        <h2>PORT AUTONOME DE DOUALA</h2>
-        <h3>DIRECTION DES AFFAIRES GÉNÉRALES - DÉPARTEMENT DE GESTION DU PATRIMOINE</h3>
+    @include('pdf.partials.header', ['headerTitle' => 'Bon de Travail'])
+    <div class="header" style="margin-bottom:15px;">
+        <h3 style="margin:0;color:#555;">Département de Gestion du Patrimoine</h3>
     </div>
 
     <!-- INFORMATIONS GÉNÉRALES -->

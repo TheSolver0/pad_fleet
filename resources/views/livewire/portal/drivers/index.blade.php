@@ -113,7 +113,7 @@
                     <tr>
                         <th>Matricule</th>
                         <th>Nom complet</th>
-                        <th>Direction</th>
+                        <th>Affectation</th>
                         <th>Personne ressource</th>
                         <th>Permis de conduire</th>
                         <th>Statut</th>
@@ -127,7 +127,14 @@
                         <tr>
                             <td>{{ $d->matricule ?? '—' }}</td>
                             <td><span class="fw-medium">{{ $d->full_name }}</span></td>
-                            <td>{{ $d->direction?->name ?? '—' }}</td>
+                            <td>
+                                @if($d->is_garage_driver)
+                                    <span class="badge bg-dark">Garage</span>
+                                @elseif($d->isAtDag())
+                                    <span class="badge bg-info text-dark">DAG</span>
+                                @endif
+                                <div class="small text-muted">{{ $d->assignment_label }}</div>
+                            </td>
                             <td>{{ $d->resourcePerson?->full_name ?? '—' }}</td>
                             <td>
                                 @if($d->active_licenses_count > 0)
@@ -252,13 +259,37 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Direction</label>
-                                    <select class="form-select" wire:model="direction_id">
+                                    <select class="form-select" wire:model.live="direction_id">
                                         <option value="">Sélectionner...</option>
                                         @foreach($directions as $direction)
                                             <option value="{{ $direction->id }}">{{ $direction->name }}</option>
                                         @endforeach
                                     </select>
                                     @error('direction_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Département</label>
+                                    <select class="form-select" wire:model.live="department_id" @if(!$direction_id) disabled @endif>
+                                        <option value="">Sélectionner...</option>
+                                        @foreach($departmentsForDirection as $dept)
+                                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('department_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Service</label>
+                                    <select class="form-select" wire:model="org_service_id" @if(!$department_id) disabled @endif>
+                                        <option value="">Sélectionner...</option>
+                                        @foreach($orgServicesForDepartment as $svc)
+                                            <option value="{{ $svc->id }}">{{ $svc->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('org_service_id') <span class="text-danger small">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -308,20 +339,49 @@
                         </div>
 
                         <div class="row border-top pt-3">
+                            @php
+                                $idDocs = [
+                                    ['file' => $id_document_recto_file, 'existing' => $existing_id_document_recto_path, 'label' => 'Pièce d\'identité — Recto', 'field' => 'id_document_recto_file'],
+                                    ['file' => $id_document_verso_file, 'existing' => $existing_id_document_verso_path, 'label' => 'Pièce d\'identité — Verso', 'field' => 'id_document_verso_file'],
+                                ];
+                            @endphp
+                            @foreach($idDocs as $doc)
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Pièce d'identité — Recto</label>
-                                    <input type="file" class="form-control" wire:model="id_document_recto_file" accept="image/*,.pdf">
-                                    @error('id_document_recto_file') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    <label class="form-label">{{ $doc['label'] }}</label>
+                                    <input type="file" class="form-control" wire:model="{{ $doc['field'] }}" accept="image/*,.pdf">
+                                    @error($doc['field']) <span class="text-danger small">{{ $message }}</span> @enderror
+                                    <div wire:loading wire:target="{{ $doc['field'] }}" class="small text-muted mt-1">Téléversement…</div>
+
+                                    @if($doc['file'])
+                                        <div class="mt-2">
+                                            @if(in_array(strtolower($doc['file']->getClientOriginalExtension()), ['jpg','jpeg','png']))
+                                                <img src="{{ $doc['file']->temporaryUrl() }}" class="img-thumbnail" style="max-height:120px">
+                                            @else
+                                                <div class="small"><i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ $doc['file']->getClientOriginalName() }}</div>
+                                            @endif
+                                        </div>
+                                    @elseif($doc['existing'])
+                                        <div class="mt-2">
+                                            @if(preg_match('/\.(jpe?g|png)$/i', $doc['existing']))
+                                                <a href="{{ asset('storage/' . $doc['existing']) }}" target="_blank">
+                                                    <img src="{{ asset('storage/' . $doc['existing']) }}" class="img-thumbnail" style="max-height:120px">
+                                                </a>
+                                            @else
+                                                <div class="small"><i class="bi bi-file-earmark-pdf text-danger me-1"></i>Fichier déjà enregistré</div>
+                                            @endif
+                                            <div>
+                                                <a href="{{ asset('storage/' . $doc['existing']) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
+                                                    <i class="bi bi-download me-1"></i>Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <small class="text-muted d-block mt-1">Aucun fichier enregistré.</small>
+                                    @endif
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Pièce d'identité — Verso</label>
-                                    <input type="file" class="form-control" wire:model="id_document_verso_file" accept="image/*,.pdf">
-                                    @error('id_document_verso_file') <span class="text-danger small">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
+                            @endforeach
                         </div>
 
                         <!-- Permis de conduire -->

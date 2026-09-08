@@ -38,7 +38,7 @@ class Index extends Component
         return [
             'name' => 'required|string|max:255',
             'matricule' => 'nullable|string|max:50',
-            'demandeur_type' => 'required|in:person,direction',
+            'demandeur_type' => 'required|in:person,direction,particulier',
             'service_id' => 'nullable|exists:services,id',
             'person_id' => 'nullable|required_if:demandeur_type,person|exists:persons,id',
             'direction_id' => 'nullable|required_if:demandeur_type,direction|exists:directions,id',
@@ -128,10 +128,11 @@ class Index extends Component
 
     public function updatedDemandeurType(): void
     {
-        if ($this->demandeur_type === Demandeur::TYPE_PERSON) {
-            $this->direction_id = null;
-        } else {
+        if ($this->demandeur_type !== Demandeur::TYPE_PERSON) {
             $this->person_id = null;
+        }
+        if ($this->demandeur_type !== Demandeur::TYPE_DIRECTION) {
+            $this->direction_id = null;
         }
     }
 

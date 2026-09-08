@@ -46,7 +46,7 @@ class Synthesis extends Component
     {
         $q = Mission::query()
             ->with(['vehicle:id,registration', 'driver:id,first_name,last_name', 'demandeur:id,name', 'city:id,name,region'])
-            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED, Mission::STATUS_PENDING]);
+            ->whereNotIn('status', [Mission::STATUS_REJECTED, Mission::STATUS_CANCELLED]);
 
         if ($this->period_start) {
             $q->where('date_start', '>=', $this->period_start . ' 00:00:00');

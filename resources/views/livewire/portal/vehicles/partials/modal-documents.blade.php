@@ -152,6 +152,36 @@
                         </table>
                     </div>
                 </section>
+
+                {{-- Fiche de vie — historique kilométrage --}}
+                <section class="mt-4">
+                    <h6 class="fw-600 text-muted mb-2"><i class="bi bi-speedometer2 me-1"></i> Fiche de vie — historique kilométrage</h6>
+                    <p class="small text-muted">Kilométrage actuel : <strong>{{ number_format($docVehicle->mileage ?? 0, 0, ',', ' ') }} km</strong></p>
+                    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Kilométrage</th>
+                                    <th>Origine</th>
+                                    <th>Saisi par</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($docVehicle->mileageLogs as $log)
+                                    <tr wire:key="vehicle-mileage-{{ $log->id }}">
+                                        <td>{{ $log->recorded_at?->format('d/m/Y H:i') }}</td>
+                                        <td>{{ number_format($log->mileage, 0, ',', ' ') }} km</td>
+                                        <td><span class="badge bg-light text-dark">{{ $log->source_label }}</span></td>
+                                        <td class="small text-muted">{{ $log->recordedByUser?->name ?? '—' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="4" class="text-muted text-center py-3">Aucun relevé enregistré pour l'instant.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" wire:click="closeDocModal">Fermer</button>

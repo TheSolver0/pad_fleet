@@ -21,8 +21,9 @@
                         <div class="col-md-6">
                             <label class="form-label">Type de demandeur <span class="text-danger">*</span></label>
                             <select class="form-select @error('demandeur_type') is-invalid @enderror" wire:model.live="demandeur_type">
-                                <option value="person">Personne</option>
+                                <option value="person">Agent PAD</option>
                                 <option value="direction">Direction</option>
+                                <option value="particulier">Particulier (personne externe)</option>
                             </select>
                             @error('demandeur_type') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
@@ -37,7 +38,7 @@
                                 </select>
                                 @error('person_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
-                        @else
+                        @elseif($demandeur_type === 'direction')
                             <div class="col-md-6">
                                 <label class="form-label">Direction liée <span class="text-danger">*</span></label>
                                 <select class="form-select @error('direction_id') is-invalid @enderror" wire:model="direction_id">
@@ -47,6 +48,10 @@
                                     @endforeach
                                 </select>
                                 @error('direction_id') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            </div>
+                        @else
+                            <div class="col-md-6">
+                                <p class="small text-muted mb-0 mt-4">Personne externe au PAD — renseignez simplement son nom et ses coordonnées ci-dessous.</p>
                             </div>
                         @endif
                         <div class="col-md-6">

@@ -15,11 +15,7 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>PORT AUTONOME DE DOUALA</h2>
-        <h3>DIRECTION DES AFFAIRES GENERALES</h3>
-        <p>{{ $title ?? 'Rapport' }}</p>
-    </div>
+    @include('pdf.partials.header', ['headerTitle' => $title ?? 'Rapport'])
 
     <div class="meta">
         <strong>Période :</strong>

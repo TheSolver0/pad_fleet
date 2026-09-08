@@ -56,7 +56,11 @@ class Index extends Component
     public string $new_demandeur_phone = '';
     public string $new_demandeur_email = '';
     public string $new_demandeur_service = '';
+    /** 'particulier' (personne externe, sans lien avec un agent PAD) ou 'person' (agent PAD, sans fiche encore créée). */
+    public string $new_demandeur_type = 'particulier';
     public ?int $city_id = null;
+    /** Estimation automatique (table de distances villes) — éditable, non bloquante si absente. */
+    public string $estimated_distance_km = '';
 
     // Photos
     public $before_photos = [];
@@ -81,6 +85,12 @@ class Index extends Component
     public array $form_doc_rows = [
         ['file' => null, 'type' => 'ordre_mission', 'note' => '']
     ];
+
+    // Compte-rendu de mission (accessible avec la seule permission "comptes-rendus",
+    // ex. rôle Chef Bureau Chauffeurs — ne permet de modifier que ce champ)
+    public bool $showCompteRenduModal = false;
+    public ?int $compteRenduMissionId = null;
+    public string $compte_rendu = '';
 
     // Rapport
     public bool $showReportModal = false;
@@ -125,14 +135,30 @@ class Index extends Component
             'new_demandeur_email' => 'nullable|email|max:150',
             'new_demandeur_service' => 'nullable|string|max:200',
             'city_id' => 'nullable|exists:cities,id',
+            'estimated_distance_km' => 'nullable|integer|min:0',
             'new_city_name' => 'nullable|required_if:create_city,true|string|max:100',
             'new_region_id' => 'nullable|required_if:create_city,true|exists:regions,id',
             'form_doc_rows.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 
+    /**
+     * Le rôle "Chef Bureau Chauffeurs" peut consulter le planning mais ne peut ni créer,
+     * modifier, approuver ni supprimer une mission — seulement ajouter le compte-rendu
+     * (cf. openCompteRenduModal/saveCompteRendu ci-dessous). Les autres rôles/comptes
+     * conservent le comportement existant (pas de restriction supplémentaire).
+     */
+    private function authorizeManage(): void
+    {
+        $user = auth()->user();
+        if ($user && $user->hasRole('Chef Bureau Chauffeurs') && ! $user->can('planning-missions')) {
+            abort(403, "Ce compte ne peut que consulter le planning et ajouter le compte-rendu de mission.");
+        }
+    }
+
     public function openCreate(): void
     {
+        $this->authorizeManage();
         $this->resetForm();
         $this->editingId = null;
         $this->showFormModal = true;
@@ -140,6 +166,7 @@ class Index extends Component
 
     public function openEdit(int $id): void
     {
+        $this->authorizeManage();
         $m = Mission::findOrFail($id);
         $this->editingId = $m->id;
         $this->vehicle_id = $m->vehicle_id;
@@ -152,19 +179,24 @@ class Index extends Component
         $this->destination = $m->destination ?? '';
         $this->raison = $m->raison ?? '';
         $this->notes = $m->notes ?? '';
+        $this->city_id = $m->city_id;
+        $this->estimated_distance_km = $m->estimated_distance_km !== null ? (string) $m->estimated_distance_km : '';
         $this->technician_ids = $m->technicians()->pluck('mechanics.id')->map(fn ($id) => (string) $id)->all();
         $this->showFormModal = true;
     }
 
     public function saveMission(): void
     {
+        $this->authorizeManage();
         // Créer le demandeur AVANT validation si nécessaire
         if ($this->create_demandeur && $this->new_demandeur_name) {
             $demandeur = Demandeur::create([
                 'name' => $this->new_demandeur_name,
                 'contact_phone' => $this->new_demandeur_phone ?: null,
                 'contact_email' => $this->new_demandeur_email ?: null,
-                'demandeur_type' => 'person', // default type
+                'demandeur_type' => in_array($this->new_demandeur_type, [Demandeur::TYPE_PERSON, Demandeur::TYPE_PARTICULIER], true)
+                    ? $this->new_demandeur_type
+                    : Demandeur::TYPE_PARTICULIER,
             ]);
             $this->demandeur_id = $demandeur->id;
         }
@@ -205,6 +237,7 @@ class Index extends Component
             'destination' => $this->destination ?: null,
             'raison' => $this->raison ?: null,
             'city_id' => $this->city_id ?: null,
+            'estimated_distance_km' => $this->estimated_distance_km !== '' ? (int) $this->estimated_distance_km : null,
             'notes' => $this->notes ?: null,
         ];
         if ($this->editingId) {
@@ -233,6 +266,7 @@ class Index extends Component
 
     public function openApproveModal(int $id): void
     {
+        $this->authorizeManage();
         $this->editingId = $id;
         $this->approve_reject = true;
         $this->showApproveModal = true;
@@ -240,6 +274,7 @@ class Index extends Component
 
     public function approveOrReject(): void
     {
+        $this->authorizeManage();
         if (!$this->editingId) {
             return;
         }
@@ -280,20 +315,59 @@ class Index extends Component
         $m = Mission::findOrFail($id);
         $m->update(['status' => Mission::STATUS_COMPLETED]);
         $m->computeDistance();
-        if ($m->vehicle) {
-            $m->vehicle->update(['mileage' => $m->km_return ?? $m->vehicle->mileage]);
+        if ($m->vehicle && $m->km_return !== null) {
+            $m->vehicle->logMileage($m->km_return, \App\Models\VehicleMileageLog::SOURCE_MISSION, $m->id, auth()->id(), $m->date_end);
         }
         $this->dispatch('notify', type: 'success', message: 'Mission marquée terminée.');
     }
 
+    /**
+     * Ajout/édition du compte-rendu de mission — accessible avec la seule permission
+     * "comptes-rendus" (ex. rôle Chef Bureau Chauffeurs), sans droits sur le reste de la mission.
+     */
+    public function openCompteRenduModal(int $missionId): void
+    {
+        abort_unless(auth()->user()?->can('comptes-rendus') || auth()->user()?->can('planning-missions'), 403);
+        $m = Mission::findOrFail($missionId);
+        $this->compteRenduMissionId = $m->id;
+        $this->compte_rendu = $m->compte_rendu ?? '';
+        $this->showCompteRenduModal = true;
+    }
+
+    public function saveCompteRendu(): void
+    {
+        abort_unless(auth()->user()?->can('comptes-rendus') || auth()->user()?->can('planning-missions'), 403);
+        $this->validate(['compte_rendu' => 'nullable|string']);
+        if ($this->compteRenduMissionId) {
+            Mission::whereKey($this->compteRenduMissionId)->update([
+                'compte_rendu' => $this->compte_rendu ?: null,
+                'compte_rendu_by' => auth()->id(),
+                'compte_rendu_at' => now(),
+            ]);
+            $this->dispatch('notify', type: 'success', message: 'Compte-rendu enregistré.');
+        }
+        $this->showCompteRenduModal = false;
+        $this->compteRenduMissionId = null;
+        $this->compte_rendu = '';
+    }
+
+    public function closeCompteRenduModal(): void
+    {
+        $this->showCompteRenduModal = false;
+        $this->compteRenduMissionId = null;
+        $this->compte_rendu = '';
+    }
+
     public function confirmDelete(int $id): void
     {
+        $this->authorizeManage();
         $this->editingId = $id;
         $this->showDeleteModal = true;
     }
 
     public function deleteMission(): void
     {
+        $this->authorizeManage();
         if ($this->editingId) {
             Mission::findOrFail($this->editingId)->delete();
             $this->dispatch('notify', type: 'success', message: 'Mission supprimée.');
@@ -322,7 +396,9 @@ class Index extends Component
         $this->new_demandeur_phone = '';
         $this->new_demandeur_email = '';
         $this->new_demandeur_service = '';
+        $this->new_demandeur_type = 'particulier';
         $this->city_id = null;
+        $this->estimated_distance_km = '';
         $this->before_photos = [];
         $this->after_photos = [];
         $this->create_city = false;
@@ -340,6 +416,23 @@ class Index extends Component
             $this->city_id = null;
         } else {
             $this->city_id = null; // Désélectionner la ville existante
+        }
+    }
+
+    /**
+     * Suggère automatiquement une distance estimée (table city_distances, référence Douala)
+     * dès qu'une ville de destination est choisie. Reste éditable, non bloquant si absente.
+     */
+    public function updatedCityId(): void
+    {
+        if (! $this->city_id) {
+            $this->estimated_distance_km = '';
+            return;
+        }
+        $doualaId = \App\Models\City::where('name', 'Douala')->value('id');
+        if ($doualaId) {
+            $distance = \App\Models\CityDistance::between($doualaId, $this->city_id);
+            $this->estimated_distance_km = $distance !== null ? (string) $distance : '';
         }
     }
 
@@ -509,6 +602,7 @@ class Index extends Component
         }
         $missions = $query->orderByDesc('date_start')->paginate(12);
         $vehicles = Vehicle::query()
+            ->where('category', '!=', Vehicle::CATEGORY_MOTO)
             ->where(fn ($q) => $q->where('status', Vehicle::STATUS_AVAILABLE)->orWhere('id', $this->vehicle_id))
             ->orderBy('registration')
             ->get(['id', 'registration']);

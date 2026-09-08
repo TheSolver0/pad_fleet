@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $period = $request->query('period', 'month');
 
         $query = Mission::query()
-            ->whereIn('status', [Mission::STATUS_APPROVED, Mission::STATUS_COMPLETED]);
+            ->whereNotIn('status', [Mission::STATUS_REJECTED, Mission::STATUS_CANCELLED]);
 
         $query = match($period) {
             'month'   => (clone $query)->whereMonth('date_start', now()->month)->whereYear('date_start', now()->year),

@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/organisation/directions', \App\Livewire\Portal\Organisation\Directions\Index::class)->name('organisation.directions.index');
     Route::get('/organisation/departments', \App\Livewire\Portal\Organisation\Departments\Index::class)->name('organisation.departments.index');
     Route::get('/organisation/services', \App\Livewire\Portal\Organisation\OrgServices\Index::class)->name('organisation.services.index');
+    Route::get('/city-distances', \App\Livewire\Portal\CityDistances\Index::class)->name('city-distances.index');
     // Personnel
     Route::get('/drivers', DriversIndex::class)->name('drivers.index');
     Route::get('/drivers/driving-licenses', DrivingLicenses::class)->name('drivers.driving-licenses');
@@ -79,6 +80,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/vehicle-consumption/export/excel', [\App\Http\Controllers\ReportExportController::class, 'vehicleConsumptionExcel'])->name('reports.vehicle-consumption.export.excel');
     Route::get('/reports/vehicle-consumption/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'vehicleConsumptionPdf'])->name('reports.vehicle-consumption.export.pdf');
     Route::get('/reports/fleet/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'fleetGlobalPdf'])->name('reports.fleet.export.pdf');
+    Route::get('/reports/fleet-situation/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'fleetSituationPdf'])->name('reports.fleet-situation.export.pdf');
+    Route::get('/reports/fleet-situation/export/excel', [\App\Http\Controllers\ReportExportController::class, 'fleetSituationExcel'])->name('reports.fleet-situation.export.excel');
 
     Route::get('/reports/stock-movements/export/excel', [\App\Http\Controllers\ReportExportController::class, 'stockMovementsExcel'])->name('reports.stock-movements.export.excel');
     Route::get('/reports/stock-movements/export/pdf', [\App\Http\Controllers\ReportExportController::class, 'stockMovementsPdf'])->name('reports.stock-movements.export.pdf');

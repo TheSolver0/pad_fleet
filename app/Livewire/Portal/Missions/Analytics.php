@@ -30,7 +30,7 @@ class Analytics extends Component
 
         $query = Mission::query()
             ->whereBetween('date_start', [$start, $end])
-            ->with(['driver', 'demandeur.direction', 'technicians']);
+            ->with(['driver', 'vehicle', 'demandeur.direction', 'technicians']);
 
         if ($this->driver_id) {
             $query->where('driver_id', $this->driver_id);
@@ -54,6 +54,8 @@ class Analytics extends Component
             'postponed' => $missions->where('status', Mission::STATUS_POSTPONED)->count(),
             'completed' => $missions->where('status', Mission::STATUS_COMPLETED)->count(),
             'pending' => $missions->where('status', Mission::STATUS_PENDING)->count(),
+            'rejected' => $missions->where('status', Mission::STATUS_REJECTED)->count(),
+            'cancelled' => $missions->where('status', Mission::STATUS_CANCELLED)->count(),
         ];
 
         $topDrivers = $missions
@@ -78,6 +80,20 @@ class Analytics extends Component
             ])
             ->sortByDesc('missions')
             ->take(5)
+            ->values();
+
+        $topVehicles = $missions
+            ->groupBy('vehicle_id')
+            ->map(function ($items) {
+                $vehicle = $items->first()?->vehicle;
+                return [
+                    'name' => $vehicle ? $vehicle->registration : 'Non affecté',
+                    'missions' => $items->count(),
+                    'distance' => (int) $items->sum('distance_km'),
+                ];
+            })
+            ->sortByDesc('missions')
+            ->take(8)
             ->values();
 
         $topTechnicians = $missions
@@ -105,6 +121,7 @@ class Analytics extends Component
             'distance' => (int) $missions->sum('distance_km'),
             'by_status' => $countByStatus,
             'top_drivers' => $topDrivers,
+            'top_vehicles' => $topVehicles,
             'top_directions' => $topDirections,
             'top_technicians' => $topTechnicians,
         ];

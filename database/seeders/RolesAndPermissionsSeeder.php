@@ -58,7 +58,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'saisie-km',
             'signalement-anomalies',
             'carnets-bord',
-            // Directeur / Chef Service
+            // Chef Bureau Chauffeurs
+            'gestion-chauffeurs-bureau',
+            // Chef Département (ex Directeur / Chef Service)
             'demandes-reservation',
             'consultation-disponibilites',
             'approbations',
@@ -88,12 +90,13 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         $names = [
             'Administrateur',
-            'Chef Garage',
+            'Chef Service',
             'Mécanicien',
             'Magasinier',
             'Gestionnaire Flotte',
             'Chauffeur',
-            'Directeur / Chef Service',
+            'Chef Bureau Chauffeurs',
+            'Chef Département',
             'Contrôleur Financier',
             'Direction',
         ];
@@ -109,8 +112,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Administrateur — Tous droits
         $roles['Administrateur']->syncPermissions(array_values($permissions));
 
-        // Chef Garage
-        $roles['Chef Garage']->syncPermissions([
+        // Chef Service (ex Chef Garage)
+        $roles['Chef Service']->syncPermissions([
             $permissions['planification-maintenance'],
             $permissions['affectation-mecaniciens'],
             $permissions['validation-bons-sortie'],
@@ -154,13 +157,19 @@ class RolesAndPermissionsSeeder extends Seeder
             $permissions['suivi-assurances'],
             $permissions['ecarts'],
             $permissions['comptes-rendus'],
-
-
-
         ]);
 
-        // Directeur / Chef Service
-        $roles['Directeur / Chef Service']->syncPermissions([
+        // Chef Bureau Chauffeurs — accès restreint : consultation du planning des missions,
+        // saisie du compte-rendu de mission d'un chauffeur, et gestion de la liste des chauffeurs.
+        // Pas de création/suppression de véhicule ni de modification des autres champs mission.
+        $roles['Chef Bureau Chauffeurs']->syncPermissions([
+            $permissions['consultation-missions'],
+            $permissions['comptes-rendus'],
+            $permissions['gestion-chauffeurs-bureau'],
+        ]);
+
+        // Chef Département (ex Directeur / Chef Service)
+        $roles['Chef Département']->syncPermissions([
             $permissions['demandes-reservation'],
             $permissions['consultation-disponibilites'],
             $permissions['approbations'],

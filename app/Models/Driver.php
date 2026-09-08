@@ -30,14 +30,19 @@ class Driver extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function service(): BelongsTo
-    {
-        return $this->belongsTo(Service::class);
-    }
-
     public function direction(): BelongsTo
     {
         return $this->belongsTo(Direction::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function orgService(): BelongsTo
+    {
+        return $this->belongsTo(OrgService::class, 'org_service_id');
     }
 
     public function resourcePerson(): BelongsTo
@@ -78,6 +83,16 @@ class Driver extends Model
     public function getExpiredLicensesCountAttribute(): int
     {
         return $this->drivingLicenses()->where('expiry_date', '<', now())->count();
+    }
+
+    public function getIdDocumentRectoUrlAttribute(): ?string
+    {
+        return $this->id_document_recto_path ? asset('storage/' . $this->id_document_recto_path) : null;
+    }
+
+    public function getIdDocumentVersoUrlAttribute(): ?string
+    {
+        return $this->id_document_verso_path ? asset('storage/' . $this->id_document_verso_path) : null;
     }
 
     protected static function booted(): void
@@ -122,5 +137,26 @@ public function activeLeave(): \Illuminate\Database\Eloquent\Relations\HasOne
 public function getIsOnLeaveAttribute(): bool
 {
     return $this->activeLeave()->exists();
+}
+
+/** Le chauffeur est-il rattaché à la Direction des Affaires Générales (DAG) ? */
+public function isAtDag(): bool
+{
+    return $this->direction?->code === 'DAG';
+}
+
+/** Libellé rapide de l'affectation organisationnelle / garage du chauffeur. */
+public function getAssignmentLabelAttribute(): string
+{
+    if ($this->is_garage_driver) {
+        return 'Garage';
+    }
+    $parts = array_filter([
+        $this->direction?->name,
+        $this->department?->name,
+        $this->orgService?->name,
+    ]);
+
+    return $parts ? implode(' / ', $parts) : 'Non affecté';
 }
 }

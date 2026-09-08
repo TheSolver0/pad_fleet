@@ -37,8 +37,10 @@
                             <td>
                                 @if($d->demandeur_type === 'person')
                                     {{ $d->person?->name ?? '—' }}
-                                @else
+                                @elseif($d->demandeur_type === 'direction')
                                     {{ $d->direction?->name ?? '—' }}
+                                @else
+                                    <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td>{{ $d->service?->name ?? '—' }}</td>

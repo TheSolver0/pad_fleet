@@ -86,6 +86,15 @@
                                 <div class="border rounded p-2 bg-light">
                                     <div class="row g-2">
                                         <div class="col-12">
+                                            <label class="form-label small d-block">Type de demandeur</label>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <input type="radio" class="btn-check" name="new_demandeur_type" id="ndt_particulier" value="particulier" wire:model="new_demandeur_type">
+                                                <label class="btn btn-outline-secondary" for="ndt_particulier">Particulier</label>
+                                                <input type="radio" class="btn-check" name="new_demandeur_type" id="ndt_person" value="person" wire:model="new_demandeur_type">
+                                                <label class="btn btn-outline-secondary" for="ndt_person">Agent PAD</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
                                             <label class="form-label small">Nom complet <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control form-control-sm" wire:model="new_demandeur_name" placeholder="ex: Alain ATANGANA">
                                             @error('new_demandeur_name') <span class="invalid-feedback small">{{ $message }}</span> @enderror
@@ -123,7 +132,7 @@
                             @if(!$create_city)
                                 <div class="input-group">
                                     <input type="text" class="form-control" wire:model="destination" placeholder="ex: Bureau principal">
-                                    <select class="form-select" style="max-width: 200px;" wire:model="city_id">
+                                    <select class="form-select" style="max-width: 200px;" wire:model.live="city_id">
                                         <option value="">Ville...</option>
                                         @foreach($cities as $city)
                                             <option value="{{ $city->id }}">{{ $city->display_name }}</option>
@@ -131,6 +140,11 @@
                                     </select>
                                 </div>
                                 <div class="form-text">Sélectionnez une ville pré-enregistrée ou saisissez une destination personnalisée.</div>
+                                <div class="mt-2">
+                                    <label class="form-label small mb-1">Distance estimée (km)</label>
+                                    <input type="number" min="0" class="form-control form-control-sm" style="max-width:150px" wire:model="estimated_distance_km" placeholder="ex: 250">
+                                    <div class="form-text">Pré-remplie automatiquement si connue (depuis Douala), modifiable.</div>
+                                </div>
                             @else
                                 <div class="border rounded p-2 bg-light">
                                     <div class="row g-2">

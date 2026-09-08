@@ -14,11 +14,7 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>PORT AUTONOME DE DOUALA</h2>
-        <h3>DIRECTION DES AFFAIRES GENERALES — DGP</h3>
-        <p>Fiche de transfert (atelier / garage)</p>
-    </div>
+    @include('pdf.partials.header', ['headerTitle' => 'Fiche de transfert (atelier / garage)'])
 
     <div class="box">
         <strong>Bon de travail :</strong> {{ $workOrder->reference }}<br>

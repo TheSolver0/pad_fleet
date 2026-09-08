@@ -35,13 +35,18 @@ class Index extends Component
     public string $phone = '';
     public string $email = '';
     public ?int $direction_id = null;
+    public ?int $department_id = null;
+    public ?int $org_service_id = null;
     public ?int $resource_person_id = null;
     public bool $is_available = true;
     public bool $is_garage_driver = false;
     public string $notes = '';
     public $id_document_recto_file = null;
     public $id_document_verso_file = null;
-    
+    /** Chemins déjà enregistrés (aperçu/téléchargement en édition). */
+    public ?string $existing_id_document_recto_path = null;
+    public ?string $existing_id_document_verso_path = null;
+
 
     // Permis de conduire
     public array $driving_licenses = [];
@@ -59,6 +64,8 @@ class Index extends Component
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:100',
             'direction_id' => 'nullable|exists:directions,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'org_service_id' => 'nullable|exists:org_services,id',
             'resource_person_id' => 'nullable|exists:persons,id',
             'is_available' => 'boolean',
             'is_garage_driver' => 'boolean',
@@ -71,6 +78,17 @@ class Index extends Component
             'driving_licenses.*.issue_date' => 'required|date',
             'driving_licenses.*.expiry_date' => 'required|date|after:driving_licenses.*.issue_date',
         ];
+    }
+
+    public function updatedDirectionId(): void
+    {
+        $this->department_id = null;
+        $this->org_service_id = null;
+    }
+
+    public function updatedDepartmentId(): void
+    {
+        $this->org_service_id = null;
     }
 
     public function openCreate(): void
@@ -90,12 +108,16 @@ class Index extends Component
         $this->phone = $d->phone ?? '';
         $this->email = $d->email ?? '';
         $this->direction_id = $d->direction_id;
+        $this->department_id = $d->department_id;
+        $this->org_service_id = $d->org_service_id;
         $this->resource_person_id = $d->resource_person_id;
         $this->is_available = $d->is_available;
         $this->is_garage_driver = (bool) $d->is_garage_driver;
         $this->notes = $d->notes ?? '';
         $this->id_document_recto_file = null;
         $this->id_document_verso_file = null;
+        $this->existing_id_document_recto_path = $d->id_document_recto_path;
+        $this->existing_id_document_verso_path = $d->id_document_verso_path;
 
         // Charger les permis existants
         $this->driving_licenses = $d->drivingLicenses->map(function($license) {
@@ -121,6 +143,8 @@ class Index extends Component
             'phone' => $this->phone ?: null,
             'email' => $this->email ?: null,
             'direction_id' => $this->direction_id,
+            'department_id' => $this->department_id,
+            'org_service_id' => $this->org_service_id,
             'resource_person_id' => $this->resource_person_id,
             'is_available' => $this->is_available,
             'is_garage_driver' => $this->is_garage_driver,
@@ -200,12 +224,16 @@ class Index extends Component
         $this->phone = '';
         $this->email = '';
         $this->direction_id = null;
+        $this->department_id = null;
+        $this->org_service_id = null;
         $this->resource_person_id = null;
         $this->is_available = true;
         $this->is_garage_driver = false;
         $this->notes = '';
         $this->id_document_recto_file = null;
         $this->id_document_verso_file = null;
+        $this->existing_id_document_recto_path = null;
+        $this->existing_id_document_verso_path = null;
         $this->driving_licenses = [];
         $this->resetValidation();
     }
@@ -347,7 +375,7 @@ private function resetAssignmentForm(): void
 
     public function render(): View
     {
-        $query = Driver::query()->with(['direction:id,name', 'resourcePerson:id,name', 'drivingLicenses', 'activeAssignment.vehicle'])->withCount('missions');
+        $query = Driver::query()->with(['direction:id,name,code', 'department:id,name', 'orgService:id,name', 'resourcePerson:id,name', 'drivingLicenses', 'activeAssignment.vehicle'])->withCount('missions');
         $vehicles = \App\Models\Vehicle::orderBy('registration')->get();
         $missions = \App\Models\Mission::orderByDesc('date_start')->limit(100)->get();
         
@@ -399,6 +427,12 @@ private function resetAssignmentForm(): void
         
         $drivers = $query->orderBy('last_name')->paginate(12);
         $directions = Direction::orderBy('name')->get(['id', 'name']);
+        $departmentsForDirection = $this->direction_id
+            ? \App\Models\Department::where('direction_id', $this->direction_id)->orderBy('name')->get(['id', 'name', 'direction_id'])
+            : collect();
+        $orgServicesForDepartment = $this->department_id
+            ? \App\Models\OrgService::where('department_id', $this->department_id)->orderBy('name')->get(['id', 'name', 'department_id'])
+            : collect();
         $persons = Person::orderBy('name')->get(['id', 'name']);
         
         // Statistiques
@@ -419,6 +453,8 @@ private function resetAssignmentForm(): void
         return view('livewire.portal.drivers.index', [
             'drivers' => $drivers,
             'directions' => $directions,
+            'departmentsForDirection' => $departmentsForDirection,
+            'orgServicesForDepartment' => $orgServicesForDepartment,
             'persons' => $persons,
             'stats' => $stats,
             'vehicles'           => $vehicles,

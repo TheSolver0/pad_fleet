@@ -208,6 +208,56 @@
     </div>
     @endif
 
+    {{-- ══ SITUATION DU PARC ══ --}}
+    <div class="db-sec"><i class="bi bi-clipboard-data"></i> Situation du Parc</div>
+    <div class="activity-card mb-3" style="margin-top:0">
+        <div class="activity-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="small text-muted">Disponible / en mission / en réparation / hors service — véhicules et motos</span>
+            <div class="module-toolbar-actions">
+                <a class="btn btn-sm btn-outline-success" href="{{ route('reports.fleet-situation.export.excel') }}">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('reports.fleet-situation.export.pdf') }}" target="_blank">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Catégorie</th>
+                        <th class="text-center">Disponible</th>
+                        <th class="text-center">En mission</th>
+                        <th class="text-center">En réparation</th>
+                        <th class="text-center">Hors service</th>
+                        <th class="text-center">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($fleetSituation['rows'] as $row)
+                        <tr>
+                            <td class="fw-medium">{{ $row['label'] }}</td>
+                            <td class="text-center"><span class="badge bg-success bg-opacity-25 text-success">{{ $row['available'] }}</span></td>
+                            <td class="text-center"><span class="badge bg-primary bg-opacity-25 text-primary">{{ $row['in_use'] }}</span></td>
+                            <td class="text-center"><span class="badge bg-info bg-opacity-25 text-info">{{ $row['repair'] }}</span></td>
+                            <td class="text-center"><span class="badge bg-danger bg-opacity-25 text-danger">{{ $row['out_of_service'] }}</span></td>
+                            <td class="text-center fw-bold">{{ $row['total'] }}</td>
+                        </tr>
+                    @endforeach
+                    <tr class="table-light fw-bold">
+                        <td>Total général</td>
+                        <td class="text-center">{{ $fleetSituation['total']['available'] }}</td>
+                        <td class="text-center">{{ $fleetSituation['total']['in_use'] }}</td>
+                        <td class="text-center">{{ $fleetSituation['total']['repair'] }}</td>
+                        <td class="text-center">{{ $fleetSituation['total']['out_of_service'] }}</td>
+                        <td class="text-center">{{ $fleetSituation['total']['total'] }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     {{-- ══ KPI VÉHICULES ══ --}}
     <div class="db-sec"><i class="bi bi-car-front"></i> Parc véhicules</div>
     <div class="db-kpi-grid db-kpi-grid-4">
@@ -394,6 +444,29 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="db-card" style="margin-top:.6rem">
+        <div class="db-card-head">
+            <i class="bi bi-person-badge-fill" style="color:var(--pad-blue)"></i>
+            Chauffeurs affectés au garage
+            <span class="spacer"></span>
+            <a href="{{ route('drivers.index') }}" class="btn btn-sm btn-outline-primary py-1">Voir les chauffeurs</a>
+        </div>
+        <div style="padding:.6rem .85rem">
+            @forelse($garageDrivers as $garageName => $drivers)
+                <div class="mb-2">
+                    <div class="small fw-600 text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>{{ $garageName }}</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach($drivers as $d)
+                            <span class="badge {{ $d['is_available'] ? 'bg-success' : 'bg-secondary' }} bg-opacity-75">{{ $d['name'] }}</span>
+                        @endforeach
+                    </div>
+                </div>
+            @empty
+                <p class="text-muted small mb-0 text-center py-2">Aucun chauffeur affecté au garage pour le moment.</p>
+            @endforelse
         </div>
     </div>
 

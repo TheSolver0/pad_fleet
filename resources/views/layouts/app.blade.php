@@ -37,7 +37,8 @@
             --sidebar-collapsed: 72px;
         }
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { margin: 0; background: var(--page-bg); color: var(--text-primary); }
+        html, body { height: 100%; }
+        body { margin: 0; background: var(--page-bg); color: var(--text-primary); overflow: hidden; }
         .sidebar {
             position: fixed;
             top: 0;
@@ -176,9 +177,10 @@
         .sidebar-footer span { transition: opacity .2s; }
         .sidebar-footer-logo { height: 20px; width: auto; object-fit: contain; flex-shrink: 0; }
         .main-content {
-            flex: 1; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; position: relative;
+            flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; position: relative;
             margin-left: var(--sidebar-width);
             transition: margin-left .25s ease;
+            overflow: hidden;
         }
         .sidebar.collapsed + .main-content { margin-left: var(--sidebar-collapsed); }
         .topbar {
@@ -321,13 +323,14 @@
         }
         .sidebar.collapsed ~ main .app-footer { left: var(--sidebar-collapsed); }
         .app-footer-text { display: inline-block; }
+        .app-shell { height: 100%; }
     </style>
     @livewireStyles
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
 <body>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
-<div class="d-flex">
+<div class="d-flex app-shell">
     @include('layouts.components.navigation.sidebar')
     <main class="main-content">
         @include('layouts.components.navigation.header')

@@ -47,6 +47,11 @@ class Index extends Component
     public string $assignment_end_at = '';
     public string $notes = '';
 
+    /** Photos et documents ajoutés depuis la modale de création/édition (optionnel). */
+    public array $new_photos = [];
+    public array $new_documents = [];
+    public string $new_document_type = VehicleDocument::TYPE_OTHER;
+
     public string $doc_type = VehicleDocument::TYPE_ASSURANCE;
     public $doc_file = null;
     public string $doc_expires_at = '';
@@ -90,6 +95,9 @@ class Index extends Component
             'assignment_start_at' => 'nullable|date',
             'assignment_end_at' => 'nullable|date|after_or_equal:assignment_start_at',
             'notes' => 'nullable|string',
+            'new_photos.*' => 'nullable|image|max:5120',
+            'new_documents.*' => 'nullable|file|max:10240',
+            'new_document_type' => 'nullable|string|in:assurance,carte_grise,autre',
         ];
     }
 
@@ -143,12 +151,25 @@ class Index extends Component
             'notes' => $this->notes ?: null,
         ];
         if ($this->editingId) {
-            Vehicle::where('category', Vehicle::CATEGORY_MOTO)->findOrFail($this->editingId)->update($data);
+            $vehicle = Vehicle::where('category', Vehicle::CATEGORY_MOTO)->findOrFail($this->editingId);
+            $vehicle->update($data);
             $this->dispatch('notify', type: 'success', message: 'Moto mise à jour.');
         } else {
-            Vehicle::create($data);
+            $vehicle = Vehicle::create($data);
             $this->dispatch('notify', type: 'success', message: 'Moto créée.');
         }
+
+        foreach ($this->new_photos as $photo) {
+            if ($photo) {
+                VehiclePhoto::storeUpload($vehicle, $photo);
+            }
+        }
+        foreach ($this->new_documents as $document) {
+            if ($document) {
+                VehicleDocument::storeUpload($vehicle, $document, $this->new_document_type ?: VehicleDocument::TYPE_OTHER);
+            }
+        }
+
         $this->showFormModal = false;
         $this->resetForm();
     }
@@ -358,6 +379,9 @@ class Index extends Component
         $this->assignment_start_at = '';
         $this->assignment_end_at = '';
         $this->notes = '';
+        $this->new_photos = [];
+        $this->new_documents = [];
+        $this->new_document_type = VehicleDocument::TYPE_OTHER;
         $this->resetValidation();
     }
 

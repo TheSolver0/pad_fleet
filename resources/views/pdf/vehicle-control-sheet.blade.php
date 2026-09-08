@@ -66,9 +66,10 @@
 {{-- ══ EN-TÊTE ══ --}}
 <div class="header">
     <div class="header-logo">
-        <div class="header-logo-box">LOGO</div>
+        <img src="{{ public_path('img/logo.png') }}" style="max-height:40pt;max-width:55pt;" alt="PAD">
     </div>
     <div class="header-title">
+        <p style="font-size:7.5pt;color:#666;text-transform:uppercase;letter-spacing:0.3pt;margin-bottom:2pt;">Port Autonome de Douala — Direction des Affaires Générales</p>
         <h1>Fiche de Contrôle Véhicule</h1>
         <p>Avant et après déplacement</p>
     </div>
@@ -90,8 +91,8 @@
             <div class="info-value">{{ $sheet->driver?->full_name ?? '—' }}</div>
         </div>
         <div class="info-cell">
-            <div class="info-label">Lieu / Destination</div>
-            <div class="info-value">{{ $sheet->lieu ?? ($sheet->mission?->destination ?? '—') }}</div>
+            <div class="info-label">Lieu de départ</div>
+            <div class="info-value">{{ $sheet->lieu ?? '—' }}</div>
         </div>
         <div class="info-cell">
             <div class="info-label">N° Ordre de mission</div>
@@ -99,6 +100,10 @@
         </div>
     </div>
     <div class="info-grid-row">
+        <div class="info-cell">
+            <div class="info-label">Destination</div>
+            <div class="info-value">{{ $sheet->destination ?? ($sheet->mission?->destination ?? '—') }}</div>
+        </div>
         <div class="info-cell">
             <div class="info-label">Date départ</div>
             <div class="info-value">{{ $sheet->date_depart?->format('d/m/Y') ?? '—' }}</div>
@@ -108,12 +113,12 @@
             <div class="info-value">{{ $sheet->date_retour?->format('d/m/Y') ?? '—' }}</div>
         </div>
         <div class="info-cell">
-            <div class="info-label">KM départ</div>
-            <div class="info-value">{{ $sheet->km_depart !== null ? number_format($sheet->km_depart, 0, ',', ' ') . ' km' : '—' }}</div>
-        </div>
-        <div class="info-cell">
-            <div class="info-label">KM retour</div>
-            <div class="info-value">{{ $sheet->km_retour !== null ? number_format($sheet->km_retour, 0, ',', ' ') . ' km' : '—' }}</div>
+            <div class="info-label">KM départ / retour</div>
+            <div class="info-value">
+                {{ $sheet->km_depart !== null ? number_format($sheet->km_depart, 0, ',', ' ') : '—' }}
+                →
+                {{ $sheet->km_retour !== null ? number_format($sheet->km_retour, 0, ',', ' ') : '—' }} km
+            </div>
         </div>
     </div>
 </div>

@@ -49,6 +49,11 @@ class Index extends Component
     public string $assignment_end_at = '';
     public string $notes = '';
 
+    /** Photos et documents ajoutés depuis la modale de création/édition (optionnel). */
+    public array $new_photos = [];
+    public array $new_documents = [];
+    public string $new_document_type = VehicleDocument::TYPE_OTHER;
+
     public string $doc_type = VehicleDocument::TYPE_ASSURANCE;
     public $doc_file = null;
     public string $doc_expires_at = '';
@@ -98,6 +103,9 @@ class Index extends Component
             'assignment_start_at' => 'nullable|date',
             'assignment_end_at' => 'nullable|date|after_or_equal:assignment_start_at',
             'notes' => 'nullable|string',
+            'new_photos.*' => 'nullable|image|max:5120',
+            'new_documents.*' => 'nullable|file|max:10240',
+            'new_document_type' => 'nullable|string|in:assurance,carte_grise,autre',
         ];
     }
 
@@ -153,11 +161,39 @@ class Index extends Component
         ];
         if ($this->editingId) {
             $vehicle = Vehicle::findOrFail($this->editingId);
+            $previousMileage = $vehicle->mileage;
             $vehicle->update($data);
+            if ($previousMileage !== $data['mileage']) {
+                $vehicle->mileageLogs()->create([
+                    'mileage' => $data['mileage'],
+                    'source' => \App\Models\VehicleMileageLog::SOURCE_MANUAL,
+                    'recorded_at' => now(),
+                    'recorded_by' => auth()->id(),
+                ]);
+            }
             $this->dispatch('notify', type: 'success', message: 'Véhicule mis à jour.');
         } else {
             $vehicle = Vehicle::create($data);
+            if ($data['mileage'] > 0) {
+                $vehicle->mileageLogs()->create([
+                    'mileage' => $data['mileage'],
+                    'source' => \App\Models\VehicleMileageLog::SOURCE_MANUAL,
+                    'recorded_at' => now(),
+                    'recorded_by' => auth()->id(),
+                ]);
+            }
             $this->dispatch('notify', type: 'success', message: 'Véhicule créé.');
+        }
+
+        foreach ($this->new_photos as $photo) {
+            if ($photo) {
+                VehiclePhoto::storeUpload($vehicle, $photo);
+            }
+        }
+        foreach ($this->new_documents as $document) {
+            if ($document) {
+                VehicleDocument::storeUpload($vehicle, $document, $this->new_document_type ?: VehicleDocument::TYPE_OTHER);
+            }
         }
 
         $this->showFormModal = false;
@@ -413,6 +449,9 @@ class Index extends Component
         $this->assignment_start_at = '';
         $this->assignment_end_at = '';
         $this->notes = '';
+        $this->new_photos = [];
+        $this->new_documents = [];
+        $this->new_document_type = VehicleDocument::TYPE_OTHER;
         $this->showQuickAddDirection = false;
         $this->resetValidation();
     }
@@ -439,7 +478,7 @@ class Index extends Component
             ? VehicleModel::where('brand_id', $this->brand_id)->orderBy('name')->get(['id', 'name', 'brand_id'])
             : collect();
         $persons = Person::orderBy('name')->get(['id', 'name']);
-        $docVehicle = $this->docVehicleId ? Vehicle::with(['documents', 'photos', 'carteGrises'])->find($this->docVehicleId) : null;
+        $docVehicle = $this->docVehicleId ? Vehicle::with(['documents', 'photos', 'carteGrises', 'mileageLogs.recordedByUser'])->find($this->docVehicleId) : null;
         $directions = Direction::orderBy('name')->get(['id', 'name']);
         $departments = Department::when($this->quick_direction_id, fn ($q) => $q->where('direction_id', $this->quick_direction_id))
             ->orderBy('name')
